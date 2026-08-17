@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useTheme } from 'vuetify'
 import ExpenseInput from '@/components/ExpenseInput.vue'
 import MonthlyExpensesView from './MonthlyExpensesView.vue'
@@ -15,8 +15,17 @@ interface Expense {
 
 const theme = useTheme()
 const currentView = ref<View>('add-expense')
+const editingExpenseId = ref<number | null>(null)
 const expenses = ref<Expense[]>([])
 let expenseIdCounter = 1
+
+const editingExpense = computed(() => {
+  if (editingExpenseId.value === null) {
+    return undefined
+  }
+
+  return expenses.value.find(expense => expense.id === editingExpenseId.value)
+})
 
 onMounted(() => {
   const savedExpenses = localStorage.getItem('finfast-expenses')
@@ -41,20 +50,49 @@ watch(() => theme.global.name.value, (newTheme) => {
   localStorage.setItem('finfast-theme', newTheme)
 })
 
-function handleExpenseSubmit(payload: { amount: number; categoryId?: number }) {
-  const expense: Expense = {
-    id: expenseIdCounter++,
-    amount: payload.amount,
-    categoryId: payload.categoryId,
-    createdAt: new Date().toISOString()
+function handleExpenseSubmit(payload: { id?: number; amount: number; categoryId?: number }) {
+  if (payload.id !== undefined) {
+    const index = expenses.value.findIndex(expense => expense.id === payload.id)
+
+    if (index !== -1) {
+      expenses.value[index] = {
+        ...expenses.value[index]!,
+        amount: payload.amount,
+        categoryId: payload.categoryId
+      }
+    }
+  } else {
+    const expense: Expense = {
+      id: expenseIdCounter++,
+      amount: payload.amount,
+      categoryId: payload.categoryId,
+      createdAt: new Date().toISOString()
+    }
+
+    expenses.value.push(expense)
   }
 
-  expenses.value.push(expense)
+  editingExpenseId.value = null
   currentView.value = 'monthly-expenses'
 }
 
 function goToAddExpense() {
+  editingExpenseId.value = null
   currentView.value = 'add-expense'
+}
+
+function handleEditExpense(expense: Expense) {
+  editingExpenseId.value = expense.id
+  currentView.value = 'add-expense'
+}
+
+function handleEditCancel() {
+  editingExpenseId.value = null
+  currentView.value = 'monthly-expenses'
+}
+
+function handleDeleteExpense(id: number) {
+  expenses.value = expenses.value.filter(expense => expense.id !== id)
 }
 </script>
 
@@ -67,8 +105,10 @@ function goToAddExpense() {
       <v-fade-transition mode="out-in">
         <ExpenseInput
           v-if="currentView === 'add-expense'"
-          key="add-expense"
+          :key="editingExpenseId ?? 'new'"
+          :expense="editingExpense"
           @submit="handleExpenseSubmit"
+          @cancel="handleEditCancel"
         />
 
         <MonthlyExpensesView
@@ -76,6 +116,8 @@ function goToAddExpense() {
           key="monthly-expenses"
           :expenses="expenses"
           @add-expense="goToAddExpense"
+          @edit-expense="handleEditExpense"
+          @delete-expense="handleDeleteExpense"
         />
       </v-fade-transition>
     </v-container>

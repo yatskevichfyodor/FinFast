@@ -1,18 +1,32 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import CategoryPicker, { type Category } from '@/components/CategoryPicker.vue'
 
 type Step = 'amount' | 'category'
 
+interface ExpenseDraft {
+  id: number
+  amount: number
+  categoryId?: number
+}
+
+const props = defineProps<{
+  expense?: ExpenseDraft
+}>()
+
 const emit = defineEmits<{
-  submit: [payload: { amount: number; categoryId?: number }]
+  submit: [payload: { id?: number; amount: number; categoryId?: number }]
+  cancel: []
 }>()
 
 const theme = useTheme()
 const step = ref<Step>('amount')
 const amount = ref('')
 const selectedCategory = ref<number | null>(null)
+const skipCategoryWatch = ref(false)
+
+const isEditing = computed(() => props.expense !== undefined)
 
 const categories: Category[] = [
   {
@@ -122,12 +136,29 @@ function resetForm() {
   step.value = 'amount'
 }
 
+function loadExpense(expense?: ExpenseDraft) {
+  if (!expense) {
+    resetForm()
+    return
+  }
+
+  skipCategoryWatch.value = true
+  amount.value = String(expense.amount)
+  selectedCategory.value = expense.categoryId ?? null
+  step.value = 'amount'
+
+  nextTick(() => {
+    skipCategoryWatch.value = false
+  })
+}
+
 function submitExpense() {
   if (!canConfirmAmount.value) {
     return
   }
 
   emit('submit', {
+    id: props.expense?.id,
     amount: Number(amount.value),
     categoryId: selectedCategory.value || undefined
   })
@@ -140,7 +171,15 @@ function skipCategory() {
   submitExpense()
 }
 
+watch(() => props.expense, (expense) => {
+  loadExpense(expense)
+}, { immediate: true })
+
 watch(selectedCategory, (newCategory) => {
+  if (skipCategoryWatch.value) {
+    return
+  }
+
   if (newCategory !== null && step.value === 'category') {
     submitExpense()
   }
@@ -153,24 +192,36 @@ watch(selectedCategory, (newCategory) => {
       <div class="d-flex align-center justify-space-between">
         <div>
           <div class="text-h5 font-weight-bold">
-            Новый расход
+            {{ isEditing ? 'Редактирование расхода' : 'Новый расход' }}
           </div>
 
           <div class="text-body-2 text-medium-emphasis mt-1">
             {{
               step === 'amount'
                 ? 'Сколько вы потратили?'
-                : 'Расход почти готов'
+                : isEditing
+                  ? 'Обновите категорию при необходимости'
+                  : 'Расход почти готов'
             }}
           </div>
         </div>
 
-        <v-btn
-          :icon="theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night'"
-          variant="tonal"
-          color="primary"
-          @click="toggleTheme"
-        />
+        <div class="d-flex ga-2">
+          <v-btn
+            v-if="isEditing"
+            icon="mdi-close"
+            variant="tonal"
+            aria-label="Отменить редактирование"
+            @click="emit('cancel')"
+          />
+
+          <v-btn
+            :icon="theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night'"
+            variant="tonal"
+            color="primary"
+            @click="toggleTheme"
+          />
+        </div>
       </div>
     </div>
 

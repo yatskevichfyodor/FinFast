@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useTheme } from 'vuetify'
 
 interface Expense {
@@ -22,9 +22,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'add-expense': []
+  'edit-expense': [expense: Expense]
+  'delete-expense': [id: number]
 }>()
 
 const theme = useTheme()
+const deleteDialogOpen = ref(false)
+const expenseToDelete = ref<Expense | null>(null)
 const categories = [
   {
     id: 1,
@@ -145,6 +149,25 @@ const formatTime = (dateString: string) => {
 
 function toggleTheme() {
   theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+}
+
+function openDeleteDialog(expense: Expense) {
+  expenseToDelete.value = expense
+  deleteDialogOpen.value = true
+}
+
+function closeDeleteDialog() {
+  deleteDialogOpen.value = false
+  expenseToDelete.value = null
+}
+
+function confirmDelete() {
+  if (!expenseToDelete.value) {
+    return
+  }
+
+  emit('delete-expense', expenseToDelete.value.id)
+  closeDeleteDialog()
 }
 </script>
 
@@ -268,11 +291,77 @@ function toggleTheme() {
                   {{ expense.amount.toFixed(2) }}
                   <span><img src="/byn-symbol.webp" alt="BYN" class="currency-symbol" /></span>
                 </div>
+
+                <v-menu location="bottom end">
+                  <template #activator="{ props: menuProps }">
+                    <v-btn
+                      v-bind="menuProps"
+                      icon="mdi-dots-vertical"
+                      variant="text"
+                      size="small"
+                      class="expense-menu-btn ml-1"
+                      aria-label="Действия с расходом"
+                    />
+                  </template>
+
+                  <v-list density="compact" rounded="lg">
+                    <v-list-item
+                      prepend-icon="mdi-pencil-outline"
+                      title="Редактировать"
+                      @click="emit('edit-expense', expense)"
+                    />
+
+                    <v-list-item
+                      prepend-icon="mdi-delete-outline"
+                      title="Удалить"
+                      base-color="error"
+                      @click="openDeleteDialog(expense)"
+                    />
+                  </v-list>
+                </v-menu>
               </div>
             </v-card-text>
           </v-card>
         </div>
       </div>
+
+      <v-dialog
+        v-model="deleteDialogOpen"
+        max-width="400"
+      >
+        <v-card rounded="xl">
+          <v-card-title class="text-h6 font-weight-bold pt-5 px-5">
+            Удалить расход?
+          </v-card-title>
+
+          <v-card-text class="px-5">
+            <template v-if="expenseToDelete">
+              Расход на сумму
+              <strong>{{ expenseToDelete.amount.toFixed(2) }}</strong>
+              будет удалён без возможности восстановления.
+            </template>
+          </v-card-text>
+
+          <v-card-actions class="px-5 pb-5">
+            <v-spacer />
+
+            <v-btn
+              variant="text"
+              @click="closeDeleteDialog"
+            >
+              Отмена
+            </v-btn>
+
+            <v-btn
+              color="error"
+              variant="flat"
+              @click="confirmDelete"
+            >
+              Удалить
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <!-- Add New Expense Button -->
       <v-btn
@@ -478,6 +567,11 @@ function toggleTheme() {
   font-size: 18px;
   font-weight: 700;
   color: #263238;
+  white-space: nowrap;
+}
+
+.expense-menu-btn {
+  flex-shrink: 0;
 }
 
 .currency-symbol {
