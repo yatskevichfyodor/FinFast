@@ -174,7 +174,7 @@ function toggleTheme() {
 
           <div class="total-amount">
             {{ formattedTotal }}
-            <span>₾</span>
+            <span><img src="/byn-symbol.webp" alt="BYN" class="currency-symbol" /></span>
           </div>
         </v-card-text>
       </v-card>
@@ -214,7 +214,7 @@ function toggleTheme() {
                   .reduce((sum: number, exp: Expense) => sum + exp.amount, 0)
                   .toFixed(2)
               }}
-              ₾
+              <img src="/byn-symbol.webp" alt="BYN" class="currency-symbol" />
             </div>
           </div>
 
@@ -251,7 +251,7 @@ function toggleTheme() {
 
                 <div class="expense-amount">
                   {{ expense.amount.toFixed(2) }}
-                  <span>₾</span>
+                  <span><img src="/byn-symbol.webp" alt="BYN" class="currency-symbol" /></span>
                 </div>
               </div>
             </v-card-text>
@@ -336,9 +336,11 @@ function toggleTheme() {
   color: #263238;
 }
 
-.total-amount span {
-  font-size: 24px;
-  color: #546e7a;
+.total-amount .currency-symbol {
+  height: 28px;
+  width: auto;
+  vertical-align: middle;
+  margin-left: 4px;
 }
 
 .v-theme--dark .total-label {
@@ -347,10 +349,6 @@ function toggleTheme() {
 
 .v-theme--dark .total-amount {
   color: #E0E0E0;
-}
-
-.v-theme--dark .total-amount span {
-  color: #B0BEC5;
 }
 
 .empty-state {
@@ -380,6 +378,13 @@ function toggleTheme() {
   font-size: 14px;
   font-weight: 600;
   color: #263238;
+}
+
+.day-total .currency-symbol {
+  height: 10px;
+  width: auto;
+  vertical-align: middle;
+  margin-left: 2px;
 }
 
 .v-theme--dark .day-date {
@@ -460,17 +465,15 @@ function toggleTheme() {
   color: #263238;
 }
 
-.expense-amount span {
-  font-size: 14px;
-  color: #546e7a;
+.currency-symbol {
+  height: 12px;
+  width: auto;
+  vertical-align: middle;
+  margin-left: 2px;
 }
 
 .v-theme--dark .expense-amount {
   color: #E0E0E0;
-}
-
-.v-theme--dark .expense-amount span {
-  color: #B0BEC5;
 }
 
 @media (max-width: 600px) {
@@ -480,6 +483,10 @@ function toggleTheme() {
 
   .total-amount {
     font-size: 36px;
+  }
+
+  .total-amount .currency-symbol {
+    height: 24px;
   }
 }
 </style>

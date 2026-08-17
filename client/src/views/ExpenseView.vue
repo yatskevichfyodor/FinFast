@@ -220,7 +220,7 @@ watch(selectedCategory, (newCategory) => {
                     </span>
 
                     <span class="currency">
-                      ₾
+                      <img src="/byn-symbol.webp" alt="BYN" class="currency-symbol" />
                     </span>
                   </div>
 
@@ -342,7 +342,7 @@ watch(selectedCategory, (newCategory) => {
 
                       <div class="summary-amount">
                         {{ formattedAmount }}
-                        <span>₾</span>
+                        <img src="/byn-symbol.webp" alt="BYN" class="currency-symbol summary-currency" />
                       </div>
                     </div>
 
@@ -470,6 +470,17 @@ watch(selectedCategory, (newCategory) => {
   color: #607d8b;
 }
 
+.currency-symbol {
+  height: 16px;
+  width: auto;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+.summary-currency {
+  height: 14px;
+}
+
 .v-theme--dark .amount {
   color: #E0E0E0;
 }
@@ -549,21 +560,12 @@ watch(selectedCategory, (newCategory) => {
   color: #263238;
 }
 
-.summary-amount span {
-  font-size: 20px;
-  color: #546e7a;
-}
-
 .v-theme--dark .summary-label {
   color: #90A4AE;
 }
 
 .v-theme--dark .summary-amount {
   color: #E0E0E0;
-}
-
-.v-theme--dark .summary-amount span {
-  color: #B0BEC5;
 }
 
 /* Category */
@@ -617,6 +619,14 @@ watch(selectedCategory, (newCategory) => {
 
   .summary-amount {
     font-size: 32px;
+  }
+
+  .currency-symbol {
+    height: 14px;
+  }
+
+  .summary-currency {
+    height: 12px;
   }
 }
 </style>
