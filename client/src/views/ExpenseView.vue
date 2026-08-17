@@ -47,6 +47,12 @@ const categories = [
   },
   {
     id: 7,
+    name: 'Подписки',
+    icon: 'mdi-calendar-check',
+    color: '#FFCA28'
+  },
+  {
+    id: 8,
     name: 'Другое',
     icon: 'mdi-dots-horizontal-circle',
     color: '#78909C'

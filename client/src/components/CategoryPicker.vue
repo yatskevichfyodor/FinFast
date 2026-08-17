@@ -49,7 +49,7 @@ function selectCategory(categoryId: number) {
       <v-col
         v-for="category in categories"
         :key="category.id"
-        cols="4"
+        cols="3"
       >
         <v-card
           class="category-card"
