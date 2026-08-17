@@ -2,28 +2,16 @@
 import { computed, ref } from 'vue'
 import { useTheme } from 'vuetify'
 
-interface Expense {
-  id: number
-  amount: number
-  categoryId?: number
-  createdAt: string
-}
+import {
+  useExpenseStore,
+  type Expense
+} from '@/stores/expense'
 
-interface Category {
-  id: number
-  name: string
-  icon: string
-  color: string
-}
-
-const props = defineProps<{
-  expenses: Expense[]
-}>()
+const expenseStore = useExpenseStore()
 
 const emit = defineEmits<{
   'add-expense': []
   'edit-expense': [expense: Expense]
-  'delete-expense': [id: number]
 }>()
 
 const theme = useTheme()
@@ -99,18 +87,10 @@ const getCategoryDisplay = (categoryId: number | undefined) => {
   }
 }
 
-const totalAmount = computed(() => {
-  return props.expenses.reduce((sum: number, expense: Expense) => sum + expense.amount, 0)
-})
-
-const formattedTotal = computed(() => {
-  return totalAmount.value.toFixed(2)
-})
-
 const groupedExpenses = computed(() => {
   const groups: Record<string, Expense[]> = {}
 
-  props.expenses.forEach((expense: Expense) => {
+  expenseStore.expenses.forEach((expense: Expense) => {
     const date = new Date(expense.createdAt)
     const dateKey = date.toLocaleDateString('ru-RU', {
       day: 'numeric',
@@ -174,7 +154,7 @@ function confirmDelete() {
     return
   }
 
-  emit('delete-expense', expenseToDelete.value.id)
+  // emit('delete-expense', expenseToDelete.value.id)
   closeDeleteDialog()
 }
 </script>
@@ -208,7 +188,7 @@ function confirmDelete() {
       </div>
 
       <!-- Expenses List -->
-      <div v-if="expenses.length === 0" class="empty-state">
+      <div v-if="expenseStore.expenses.length === 0" class="empty-state">
         <v-icon
           icon="mdi-receipt-long-outline"
           size="64"

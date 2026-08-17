@@ -1,75 +1,46 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useTheme } from 'vuetify'
+
 import ExpenseInput from '@/components/ExpenseInput.vue'
-import ExpensesHistory from './ExpensesHistory.vue'
+import ExpensesHistory from '@/components/ExpensesHistory.vue'
+import {
+  useExpenseStore,
+  type Expense,
+  type ExpensePayload
+} from '@/stores/expense'
 
 type View = 'add-expense' | 'monthly-expenses'
 
-interface Expense {
-  id: number
-  amount: number
-  categoryId?: number
-  createdAt: string
-}
-
 const theme = useTheme()
+const expenseStore = useExpenseStore()
+
 const currentView = ref<View>('add-expense')
 const editingExpenseId = ref<number | null>(null)
-const expenses = ref<Expense[]>([])
-let expenseIdCounter = 1
 
-const editingExpense = computed(() => {
+const editingExpense = computed<Expense | undefined>(() => {
   if (editingExpenseId.value === null) {
     return undefined
   }
 
-  return expenses.value.find(expense => expense.id === editingExpenseId.value)
+  return expenseStore.getExpenseById(editingExpenseId.value)
 })
 
 onMounted(() => {
-  const savedExpenses = localStorage.getItem('finfast-expenses')
-  if (savedExpenses) {
-    expenses.value = JSON.parse(savedExpenses)
-    if (expenses.value.length > 0) {
-      expenseIdCounter = Math.max(...expenses.value.map(e => e.id)) + 1
-    }
-  }
+  expenseStore.loadExpenses()
 
   const savedTheme = localStorage.getItem('finfast-theme')
+
   if (savedTheme) {
     theme.global.name.value = savedTheme
   }
 })
 
-watch(expenses, (newExpenses) => {
-  localStorage.setItem('finfast-expenses', JSON.stringify(newExpenses))
-}, { deep: true })
-
-watch(() => theme.global.name.value, (newTheme) => {
-  localStorage.setItem('finfast-theme', newTheme)
-})
-
-function handleExpenseSubmit(payload: { id?: number; amount: number; categoryId?: number }) {
+function handleExpenseSubmit(payload: ExpensePayload) {
   if (payload.id !== undefined) {
-    const index = expenses.value.findIndex(expense => expense.id === payload.id)
-
-    if (index !== -1) {
-      expenses.value[index] = {
-        ...expenses.value[index]!,
-        amount: payload.amount,
-        categoryId: payload.categoryId
-      }
-    }
+    expenseStore.updateExpense(payload)
   } else {
-    const expense: Expense = {
-      id: expenseIdCounter++,
-      amount: payload.amount,
-      categoryId: payload.categoryId,
-      createdAt: new Date().toISOString()
-    }
-
-    expenses.value.push(expense)
+    expenseStore.addExpense(payload)
   }
 
   editingExpenseId.value = null
@@ -89,10 +60,6 @@ function handleEditExpense(expense: Expense) {
 function handleEditCancel() {
   editingExpenseId.value = null
   currentView.value = 'monthly-expenses'
-}
-
-function handleDeleteExpense(id: number) {
-  expenses.value = expenses.value.filter(expense => expense.id !== id)
 }
 </script>
 
@@ -114,10 +81,8 @@ function handleDeleteExpense(id: number) {
         <ExpensesHistory
           v-else
           key="monthly-expenses"
-          :expenses="expenses"
           @add-expense="goToAddExpense"
           @edit-expense="handleEditExpense"
-          @delete-expense="handleDeleteExpense"
         />
       </v-fade-transition>
     </v-container>
