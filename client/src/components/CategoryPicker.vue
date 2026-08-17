@@ -1,60 +1,60 @@
 <script setup lang="ts">
 export interface Category {
-  id: number
+  id: string
   name: string
   icon: string
   color: string
 }
 
 defineProps<{
-  modelValue: number | null
+  selectedCategoryId: string | null
 }>()
 
 const categories: Category[] = [
   {
-    id: 1,
+    id: 'food',
     name: 'Еда',
     icon: 'mdi-food',
     color: '#FF7043'
   },
   {
-    id: 2,
+    id: 'transport',
     name: 'Транспорт',
     icon: 'mdi-car',
     color: '#42A5F5'
   },
   {
-    id: 3,
+    id: 'home',
     name: 'Дом',
     icon: 'mdi-home',
     color: '#AB47BC'
   },
   {
-    id: 4,
+    id: 'shopping',
     name: 'Покупки',
     icon: 'mdi-shopping',
     color: '#EC407A'
   },
   {
-    id: 5,
+    id: 'entertainment',
     name: 'Развлечения',
     icon: 'mdi-gamepad-variant',
     color: '#7E57C2'
   },
   {
-    id: 6,
+    id: 'health',
     name: 'Здоровье',
     icon: 'mdi-heart-pulse',
     color: '#26A69A'
   },
   {
-    id: 7,
+    id: 'subscriptions',
     name: 'Подписки',
     icon: 'mdi-calendar-check',
     color: '#FFCA28'
   },
   {
-    id: 8,
+    id: 'other',
     name: 'Другое',
     icon: 'mdi-dots-horizontal-circle',
     color: '#78909C'
@@ -62,17 +62,17 @@ const categories: Category[] = [
 ]
 
 const emit = defineEmits<{
-  'update:modelValue': [value: number | null]
+  'update:selectedCategoryId': [value: string | null]
 }>()
 
-function selectCategory(categoryId: number) {
+function selectCategory(categoryId: string) {
   if (categoryId === undefined) {
-    emit('update:modelValue', null)
+    emit('update:selectedCategoryId', null)
     return
   }
 
   emit(
-    'update:modelValue',
+    'update:selectedCategoryId',
     categoryId
   )
 }
@@ -80,29 +80,17 @@ function selectCategory(categoryId: number) {
 
 <template>
   <div>
-    <div class="category-header">
-      <div>
-        <div class="text-subtitle-1 font-weight-bold">
-          Категория
-        </div>
-
-        <div class="text-body-2 text-medium-emphasis">
-          Необязательно
-        </div>
-      </div>
-    </div>
-
     <v-row dense class="mt-2">
       <v-col v-for="category in categories" :key="category.id" cols="3">
         <v-card class="category-card" :class="{
-          selected: modelValue === category.id
+          selected: selectedCategoryId === category.id
         }" :style="{
           '--category-color': category.color
         }" rounded="xl" elevation="0" @click="selectCategory(category.id)">
           <v-card-text class="category-content">
 
             <div class="category-icon" :class="{
-              selected: modelValue === category.id
+              selected: selectedCategoryId === category.id
             }" :style="{
               '--category-color': category.color
             }">
@@ -113,7 +101,7 @@ function selectCategory(categoryId: number) {
               {{ category.name }}
             </div>
 
-            <v-icon v-if="modelValue === category.id" icon="mdi-check-circle" class="check-icon" size="18" />
+            <v-icon v-if="selectedCategoryId === category.id" icon="mdi-check-circle" class="check-icon" size="18" />
 
           </v-card-text>
         </v-card>
@@ -127,14 +115,6 @@ function selectCategory(categoryId: number) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-
-.v-theme--dark .text-subtitle-1 {
-  color: #E0E0E0;
-}
-
-.v-theme--dark .text-body-2 {
-  color: #B0BEC5;
 }
 
 .category-card {
@@ -158,17 +138,6 @@ function selectCategory(categoryId: number) {
 
   box-shadow:
     0 6px 16px rgba(0, 0, 0, 0.06);
-}
-
-.v-theme--dark .category-card {
-  background: #1E1E1E;
-  border: 2px solid #2C2C2C;
-}
-
-.v-theme--dark .category-card:hover {
-  border-color: #3C3C3C;
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .category-card.selected {
@@ -214,12 +183,6 @@ function selectCategory(categoryId: number) {
     color 0.18s ease;
 }
 
-.v-theme--dark .category-icon {
-  background: color-mix(in srgb,
-      var(--category-color) 20%,
-      #1E1E1E);
-}
-
 .category-icon.selected {
   color: white;
 
@@ -231,10 +194,6 @@ function selectCategory(categoryId: number) {
   font-weight: 600;
   text-align: center;
   color: #455a64;
-}
-
-.v-theme--dark .category-name {
-  color: #B0BEC5;
 }
 
 .check-icon {

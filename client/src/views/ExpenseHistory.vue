@@ -7,13 +7,6 @@ import {
   type Expense
 } from '@/stores/expense'
 
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-
-function navigate(path: string) {
-  router.push(path)
-}
 const expenseStore = useExpenseStore()
 
 const emit = defineEmits<{
@@ -124,14 +117,6 @@ const groupedExpenses = computed(() => {
       return dateB.getTime() - dateA.getTime()
     })
 })
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long'
-  })
-}
 
 const formatTime = (dateString: string) => {
   const date = new Date(dateString)
@@ -299,18 +284,6 @@ function confirmDelete() {
   transition: background-color 0.3s ease;
 }
 
-.v-theme--dark .app-background {
-  background: #121212;
-}
-
-.v-theme--dark .text-h5 {
-  color: #E0E0E0;
-}
-
-.v-theme--dark .text-body-2 {
-  color: #B0BEC5;
-}
-
 .expense-page {
   min-height: 100vh;
   padding-top: 32px;
@@ -324,15 +297,6 @@ function confirmDelete() {
 
   border: 1px solid #d7ebe6;
 }
-
-.v-theme--dark .total-card {
-  background: linear-gradient(135deg,
-      #1E3A2F 0%,
-      #1A3A38 100%);
-
-  border: 1px solid #2C2C2C;
-}
-
 .total-label {
   font-size: 14px;
   font-weight: 500;
@@ -352,14 +316,6 @@ function confirmDelete() {
   width: auto;
   vertical-align: middle;
   margin-left: 4px;
-}
-
-.v-theme--dark .total-label {
-  color: #90A4AE;
-}
-
-.v-theme--dark .total-amount {
-  color: #E0E0E0;
 }
 
 .empty-state {
@@ -398,14 +354,6 @@ function confirmDelete() {
   margin-left: 2px;
 }
 
-.v-theme--dark .day-date {
-  color: #B0BEC5;
-}
-
-.v-theme--dark .day-total {
-  color: #E0E0E0;
-}
-
 .expense-card {
   background: #ffffff;
   border: 1px solid #edf0f3;
@@ -415,11 +363,6 @@ function confirmDelete() {
 .expense-card:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-.v-theme--dark .expense-card {
-  background: #1E1E1E;
-  border: 1px solid #2C2C2C;
 }
 
 .expense-icon {
@@ -434,12 +377,6 @@ function confirmDelete() {
       var(--category-color) 10%,
       white);
   margin-right: 12px;
-}
-
-.v-theme--dark .expense-icon {
-  background: color-mix(in srgb,
-      var(--category-color) 20%,
-      #1E1E1E);
 }
 
 .expense-info {
@@ -458,14 +395,6 @@ function confirmDelete() {
   margin-top: 2px;
 }
 
-.v-theme--dark .expense-category {
-  color: #E0E0E0;
-}
-
-.v-theme--dark .expense-time {
-  color: #90A4AE;
-}
-
 .expense-amount {
   font-size: 18px;
   font-weight: 700;
@@ -482,10 +411,6 @@ function confirmDelete() {
   width: auto;
   vertical-align: middle;
   margin-left: 2px;
-}
-
-.v-theme--dark .expense-amount {
-  color: #E0E0E0;
 }
 
 @media (max-width: 600px) {

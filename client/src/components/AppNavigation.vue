@@ -10,31 +10,18 @@ function navigate(path: string) {
 </script>
 
 <template>
-  <v-bottom-navigation
-    :model-value="route.path"
-    color="primary"
-    grow
-  >
-    <v-btn
-      value="/"
-      @click="navigate('/')"
-    >
+  <v-bottom-navigation :model-value="route.path" color="primary" grow>
+    <v-btn value="/" @click="navigate('/')">
       <v-icon>mdi-plus-circle-outline</v-icon>
       <span>Расход</span>
     </v-btn>
 
-    <v-btn
-      value="/expenses"
-      @click="navigate('/expenses')"
-    >
+    <v-btn value="/expenses" @click="navigate('/expenses')">
       <v-icon>mdi-format-list-bulleted</v-icon>
       <span>История</span>
     </v-btn>
 
-    <v-btn
-      value="/statistics"
-      @click="navigate('/statistics')"
-    >
+    <v-btn value="/statistics" @click="navigate('/statistics')">
       <v-icon>mdi-chart-pie-outline</v-icon>
       <span>Статистика</span>
     </v-btn>

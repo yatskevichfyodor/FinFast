@@ -2,14 +2,14 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
 export interface Expense {
-  id: number
+  id: string
   amount: number
-  categoryId?: number
+  categoryId?: string
   createdAt: string
 }
 
 export interface ExpensePayload {
-  id?: number
+  id?: string
   amount: number
   categoryId?: number
 }
@@ -18,8 +18,6 @@ const STORAGE_KEY = 'finfast-expenses'
 
 export const useExpenseStore = defineStore('expense', () => {
   const expenses = ref<Expense[]>([])
-
-  let nextId = 1
 
   function loadExpenses() {
     const savedExpenses = localStorage.getItem(STORAGE_KEY)
@@ -30,14 +28,8 @@ export const useExpenseStore = defineStore('expense', () => {
 
     try {
       expenses.value = JSON.parse(savedExpenses)
-
-      if (expenses.value.length > 0) {
-        nextId =
-          Math.max(...expenses.value.map(expense => expense.id)) + 1
-      }
     } catch {
       expenses.value = []
-      nextId = 1
     }
   }
 
@@ -48,9 +40,10 @@ export const useExpenseStore = defineStore('expense', () => {
     )
   }
 
-  function addExpense(payload: ExpensePayload) {
+  function addExpense(payload: ExpensePayload): string {
+    const newExpenseId = crypto.randomUUID();
     const expense: Expense = {
-      id: nextId++,
+      id: newExpenseId,
       amount: payload.amount,
       categoryId: payload.categoryId,
       createdAt: new Date().toISOString()
@@ -58,6 +51,7 @@ export const useExpenseStore = defineStore('expense', () => {
 
     expenses.value.push(expense)
     saveExpenses()
+    return newExpenseId;
   }
 
   function updateExpense(payload: ExpensePayload) {
@@ -82,7 +76,24 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
   }
 
-  function deleteExpense(id: number) {
+  function updateExpenseCategory(
+    expenseId: string,
+    categoryId?: string
+  ) {
+    const expense = expenses.value.find(
+      expense => expense.id === expenseId
+    )
+
+    if (!expense) {
+      return
+    }
+
+    expense.categoryId = categoryId
+
+    saveExpenses()
+  }
+
+  function deleteExpense(id: string) {
     expenses.value = expenses.value.filter(
       expense => expense.id !== id
     )
@@ -90,7 +101,7 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
   }
 
-  function getExpenseById(id: number) {
+  function getExpenseById(id: string) {
     return expenses.value.find(
       expense => expense.id === id
     )
@@ -101,6 +112,7 @@ export const useExpenseStore = defineStore('expense', () => {
     loadExpenses,
     addExpense,
     updateExpense,
+    updateExpenseCategory,
     deleteExpense,
     getExpenseById
   }
