@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import AddExpenseView from '../views/AddExpenseView.vue'
+import AddExpenseView from '@/views/AddExpenseView.vue'
 import ExpensesHistory from '@/views/ExpensesHistory.vue'
 import StatisticsView from '@/views/StatisticsView.vue'
 

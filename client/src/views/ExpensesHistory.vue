@@ -7,10 +7,16 @@ import {
   type Expense
 } from '@/stores/expense'
 
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+function navigate(path: string) {
+  router.push(path)
+}
 const expenseStore = useExpenseStore()
 
 const emit = defineEmits<{
-  'add-expense': []
   'edit-expense': [expense: Expense]
 }>()
 
@@ -161,10 +167,7 @@ function confirmDelete() {
 
 <template>
   <v-main class="app-background">
-    <v-container
-      class="expense-page"
-      max-width="600"
-    >
+    <v-container class="expense-page" max-width="600">
       <!-- Header -->
       <div class="mb-6">
         <div class="d-flex align-center justify-space-between">
@@ -178,23 +181,14 @@ function confirmDelete() {
             </div>
           </div>
 
-          <v-btn
-            :icon="theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night'"
-            variant="tonal"
-            color="primary"
-            @click="toggleTheme"
-          />
+          <v-btn :icon="theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night'" variant="tonal"
+            color="primary" @click="toggleTheme" />
         </div>
       </div>
 
       <!-- Expenses List -->
       <div v-if="expenseStore.expenses.length === 0" class="empty-state">
-        <v-icon
-          icon="mdi-receipt-long-outline"
-          size="64"
-          color="medium-emphasis"
-          class="mb-3"
-        />
+        <v-icon icon="mdi-receipt-long-outline" size="64" color="medium-emphasis" class="mb-3" />
 
         <div class="text-h6 font-weight-medium text-medium-emphasis mb-2">
           Пока нет расходов
@@ -206,11 +200,7 @@ function confirmDelete() {
       </div>
 
       <div v-else>
-        <div
-          v-for="[date, dayExpenses] in groupedExpenses"
-          :key="date"
-          class="day-group mb-5"
-        >
+        <div v-for="[date, dayExpenses] in groupedExpenses" :key="date" class="day-group mb-5">
           <div class="day-header">
             <div class="day-date">
               {{ date }}
@@ -226,25 +216,13 @@ function confirmDelete() {
             </div>
           </div>
 
-          <v-card
-            v-for="expense in dayExpenses"
-            :key="expense.id"
-            rounded="xl"
-            elevation="0"
-            class="expense-card mb-2"
-          >
+          <v-card v-for="expense in dayExpenses" :key="expense.id" rounded="xl" elevation="0" class="expense-card mb-2">
             <v-card-text class="pa-4">
               <div class="d-flex align-center">
-                <div
-                  class="expense-icon"
-                  :style="{
-                    '--category-color': getCategoryDisplay(expense.categoryId).color
-                  }"
-                >
-                  <v-icon
-                    :icon="getCategoryDisplay(expense.categoryId).icon"
-                    size="24"
-                  />
+                <div class="expense-icon" :style="{
+                  '--category-color': getCategoryDisplay(expense.categoryId).color
+                }">
+                  <v-icon :icon="getCategoryDisplay(expense.categoryId).icon" size="24" />
                 </div>
 
                 <div class="expense-info flex-grow-1">
@@ -264,29 +242,16 @@ function confirmDelete() {
 
                 <v-menu location="bottom end">
                   <template #activator="{ props: menuProps }">
-                    <v-btn
-                      v-bind="menuProps"
-                      icon="mdi-dots-vertical"
-                      variant="text"
-                      size="small"
-                      class="expense-menu-btn ml-1"
-                      aria-label="Действия с расходом"
-                    />
+                    <v-btn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" size="small"
+                      class="expense-menu-btn ml-1" aria-label="Действия с расходом" />
                   </template>
 
                   <v-list density="compact" rounded="lg">
-                    <v-list-item
-                      prepend-icon="mdi-pencil-outline"
-                      title="Редактировать"
-                      @click="emit('edit-expense', expense)"
-                    />
+                    <v-list-item prepend-icon="mdi-pencil-outline" title="Редактировать"
+                      @click="emit('edit-expense', expense)" />
 
-                    <v-list-item
-                      prepend-icon="mdi-delete-outline"
-                      title="Удалить"
-                      base-color="error"
-                      @click="openDeleteDialog(expense)"
-                    />
+                    <v-list-item prepend-icon="mdi-delete-outline" title="Удалить" base-color="error"
+                      @click="openDeleteDialog(expense)" />
                   </v-list>
                 </v-menu>
               </div>
@@ -295,10 +260,7 @@ function confirmDelete() {
         </div>
       </div>
 
-      <v-dialog
-        v-model="deleteDialogOpen"
-        max-width="400"
-      >
+      <v-dialog v-model="deleteDialogOpen" max-width="400">
         <v-card rounded="xl">
           <v-card-title class="text-h6 font-weight-bold pt-5 px-5">
             Удалить расход?
@@ -315,37 +277,16 @@ function confirmDelete() {
           <v-card-actions class="px-5 pb-5">
             <v-spacer />
 
-            <v-btn
-              variant="text"
-              @click="closeDeleteDialog"
-            >
+            <v-btn variant="text" @click="closeDeleteDialog">
               Отмена
             </v-btn>
 
-            <v-btn
-              color="error"
-              variant="flat"
-              @click="confirmDelete"
-            >
+            <v-btn color="error" variant="flat" @click="confirmDelete">
               Удалить
             </v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
-
-      <!-- Add New Expense Button -->
-      <v-btn
-        block
-        size="x-large"
-        rounded="xl"
-        color="primary"
-        elevation="2"
-        prepend-icon="mdi-plus"
-        class="mt-4"
-        @click="emit('add-expense')"
-      >
-        Добавить расход
-      </v-btn>
 
     </v-container>
   </v-main>
@@ -377,21 +318,17 @@ function confirmDelete() {
 }
 
 .total-card {
-  background: linear-gradient(
-    135deg,
-    #e8f5e9 0%,
-    #e0f2f1 100%
-  );
+  background: linear-gradient(135deg,
+      #e8f5e9 0%,
+      #e0f2f1 100%);
 
   border: 1px solid #d7ebe6;
 }
 
 .v-theme--dark .total-card {
-  background: linear-gradient(
-    135deg,
-    #1E3A2F 0%,
-    #1A3A38 100%
-  );
+  background: linear-gradient(135deg,
+      #1E3A2F 0%,
+      #1A3A38 100%);
 
   border: 1px solid #2C2C2C;
 }
@@ -493,20 +430,16 @@ function confirmDelete() {
   justify-content: center;
   border-radius: 12px;
   color: var(--category-color);
-  background: color-mix(
-    in srgb,
-    var(--category-color) 10%,
-    white
-  );
+  background: color-mix(in srgb,
+      var(--category-color) 10%,
+      white);
   margin-right: 12px;
 }
 
 .v-theme--dark .expense-icon {
-  background: color-mix(
-    in srgb,
-    var(--category-color) 20%,
-    #1E1E1E
-  );
+  background: color-mix(in srgb,
+      var(--category-color) 20%,
+      #1E1E1E);
 }
 
 .expense-info {

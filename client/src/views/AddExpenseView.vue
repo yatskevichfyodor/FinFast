@@ -47,11 +47,6 @@ function handleExpenseSubmit(payload: ExpensePayload) {
   currentView.value = 'monthly-expenses'
 }
 
-function goToAddExpense() {
-  editingExpenseId.value = null
-  currentView.value = 'add-expense'
-}
-
 function handleEditExpense(expense: Expense) {
   editingExpenseId.value = expense.id
   currentView.value = 'add-expense'
@@ -65,25 +60,11 @@ function handleEditCancel() {
 
 <template>
   <v-main class="app-background">
-    <v-container
-      class="expense-page"
-      max-width="600"
-    >
+    <v-container class="expense-page" max-width="600">
       <v-fade-transition mode="out-in">
-        <ExpenseInput
-          v-if="currentView === 'add-expense'"
-          :key="editingExpenseId ?? 'new'"
-          :expense="editingExpense"
-          @submit="handleExpenseSubmit"
-          @cancel="handleEditCancel"
-        />
-
-        <ExpensesHistory
-          v-else
-          key="monthly-expenses"
-          @add-expense="goToAddExpense"
-          @edit-expense="handleEditExpense"
-        />
+        <ExpenseInput v-if="currentView === 'add-expense'" :key="editingExpenseId ?? 'new'" :expense="editingExpense"
+          @submit="handleExpenseSubmit" @cancel="handleEditCancel" />
+        <ExpensesHistory v-else key="monthly-expenses" @edit-expense="handleEditExpense" />
       </v-fade-transition>
     </v-container>
   </v-main>
