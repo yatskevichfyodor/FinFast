@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useTheme } from 'vuetify'
 import CategoryPicker from '@/components/CategoryPicker.vue'
 import MonthlyExpensesView from './MonthlyExpensesView.vue'
@@ -154,6 +154,13 @@ function goToAddExpense() {
   currentView.value = 'add-expense'
   step.value = 'amount'
 }
+
+// Watch for category selection to automatically add expense
+watch(selectedCategory, (newCategory) => {
+  if (newCategory !== null && step.value === 'category') {
+    addExpense()
+  }
+})
 </script>
 
 <template>
@@ -380,23 +387,6 @@ function goToAddExpense() {
                 v-model="selectedCategory"
                 :categories="categories"
               />
-
-              <!-- Actions -->
-              <div class="actions">
-
-                <v-btn
-                  block
-                  size="x-large"
-                  rounded="xl"
-                  color="primary"
-                  elevation="2"
-                  prepend-icon="mdi-plus"
-                  @click="addExpense"
-                >
-                  Добавить расход
-                </v-btn>
-
-              </div>
 
             </div>
 
