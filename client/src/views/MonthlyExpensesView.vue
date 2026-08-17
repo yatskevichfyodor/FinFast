@@ -80,6 +80,21 @@ const getCategoryById = (id: number | undefined) => {
   return categories.find(cat => cat.id === id)
 }
 
+const getCategoryDisplay = (categoryId: number | undefined) => {
+  if (categoryId === undefined || categoryId === null) {
+    return {
+      name: 'Без категории',
+      icon: 'mdi-help-circle-outline',
+      color: '#9E9E9E'
+    }
+  }
+  return getCategoryById(categoryId) || {
+    name: 'Без категории',
+    icon: 'mdi-help-circle-outline',
+    color: '#9E9E9E'
+  }
+}
+
 const totalAmount = computed(() => {
   return props.expenses.reduce((sum: number, expense: Expense) => sum + expense.amount, 0)
 })
@@ -230,18 +245,18 @@ function toggleTheme() {
                 <div
                   class="expense-icon"
                   :style="{
-                    '--category-color': getCategoryById(expense.categoryId)?.color || '#78909C'
+                    '--category-color': getCategoryDisplay(expense.categoryId).color
                   }"
                 >
                   <v-icon
-                    :icon="getCategoryById(expense.categoryId)?.icon || 'mdi-dots-horizontal-circle'"
+                    :icon="getCategoryDisplay(expense.categoryId).icon"
                     size="24"
                   />
                 </div>
 
                 <div class="expense-info flex-grow-1">
                   <div class="expense-category">
-                    {{ getCategoryById(expense.categoryId)?.name || 'Без категории' }}
+                    {{ getCategoryDisplay(expense.categoryId).name }}
                   </div>
 
                   <div class="expense-time">
