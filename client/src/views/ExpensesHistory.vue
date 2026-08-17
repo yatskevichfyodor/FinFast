@@ -124,11 +124,19 @@ const groupedExpenses = computed(() => {
     groups[dateKey]!.push(expense)
   })
 
-  return Object.entries(groups).sort((a, b) => {
-    const dateA = new Date(a[1][0]?.createdAt || '')
-    const dateB = new Date(b[1][0]?.createdAt || '')
-    return dateB.getTime() - dateA.getTime()
-  })
+  return Object.entries(groups)
+    .map(([date, dayExpenses]) => {
+      const sortedDayExpenses = [...dayExpenses].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )
+
+      return [date, sortedDayExpenses] as const
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a[1][0]?.createdAt || '')
+      const dateB = new Date(b[1][0]?.createdAt || '')
+      return dateB.getTime() - dateA.getTime()
+    })
 })
 
 const formatDate = (dateString: string) => {
@@ -182,11 +190,11 @@ function confirmDelete() {
         <div class="d-flex align-center justify-space-between">
           <div>
             <div class="text-h5 font-weight-bold">
-              Расходы за месяц
+              История расходов
             </div>
 
             <div class="text-body-2 text-medium-emphasis mt-1">
-              Август 2026
+              Сначала новые
             </div>
           </div>
 
@@ -198,24 +206,6 @@ function confirmDelete() {
           />
         </div>
       </div>
-
-      <!-- Total Card -->
-      <v-card
-        rounded="xl"
-        elevation="0"
-        class="total-card mb-6"
-      >
-        <v-card-text class="pa-5">
-          <div class="total-label">
-            Всего за месяц
-          </div>
-
-          <div class="total-amount">
-            {{ formattedTotal }}
-            <span><img src="/byn-symbol.webp" alt="BYN" class="currency-symbol" /></span>
-          </div>
-        </v-card-text>
-      </v-card>
 
       <!-- Expenses List -->
       <div v-if="expenses.length === 0" class="empty-state">

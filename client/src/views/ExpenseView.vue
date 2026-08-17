@@ -2,7 +2,7 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import { useTheme } from 'vuetify'
 import ExpenseInput from '@/components/ExpenseInput.vue'
-import MonthlyExpensesView from './MonthlyExpensesView.vue'
+import ExpensesHistory from './ExpensesHistory.vue'
 
 type View = 'add-expense' | 'monthly-expenses'
 
@@ -111,7 +111,7 @@ function handleDeleteExpense(id: number) {
           @cancel="handleEditCancel"
         />
 
-        <MonthlyExpensesView
+        <ExpensesHistory
           v-else
           key="monthly-expenses"
           :expenses="expenses"
