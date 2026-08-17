@@ -1,134 +1,498 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import CategoryPicker from '@/components/CategoryPicker.vue'
 
-interface Category {
-  id: number
-  name: string
-  icon: string
-}
+type Step = 'amount' | 'category'
 
+const step = ref<Step>('amount')
 const amount = ref('')
-const categoryId = ref<number | null>(null)
+const selectedCategory = ref<number | null>(null)
 
-const categories: Category[] = [
-  { id: 1, name: 'Еда', icon: '🍔' },
-  { id: 2, name: 'Транспорт', icon: '🚕' },
-  { id: 3, name: 'Дом', icon: '🏠' },
-  { id: 4, name: 'Покупки', icon: '🛍️' },
-  { id: 5, name: 'Развлечения', icon: '🎮' },
-  { id: 6, name: 'Здоровье', icon: '💊' },
-  { id: 7, name: 'Другое', icon: '📦' }
+const categories = [
+  {
+    id: 1,
+    name: 'Еда',
+    icon: 'mdi-food',
+    color: '#FF7043'
+  },
+  {
+    id: 2,
+    name: 'Транспорт',
+    icon: 'mdi-car',
+    color: '#42A5F5'
+  },
+  {
+    id: 3,
+    name: 'Дом',
+    icon: 'mdi-home',
+    color: '#AB47BC'
+  },
+  {
+    id: 4,
+    name: 'Покупки',
+    icon: 'mdi-shopping',
+    color: '#EC407A'
+  },
+  {
+    id: 5,
+    name: 'Развлечения',
+    icon: 'mdi-gamepad-variant',
+    color: '#7E57C2'
+  },
+  {
+    id: 6,
+    name: 'Здоровье',
+    icon: 'mdi-heart-pulse',
+    color: '#26A69A'
+  },
+  {
+    id: 7,
+    name: 'Другое',
+    icon: 'mdi-dots-horizontal-circle',
+    color: '#78909C'
+  }
 ]
 
-function addExpense() {
-  const value = Number(amount.value)
+const formattedAmount = computed(() => {
+  if (!amount.value) {
+    return '0.00'
+  }
 
-  if (!value || value <= 0) {
+  return Number(amount.value).toFixed(2)
+})
+
+const canConfirmAmount = computed(() => {
+  return Number(amount.value) > 0
+})
+
+function addDigit(digit: string) {
+  if (digit === '.' && amount.value.includes('.')) {
+    return
+  }
+
+  if (amount.value === '0' && digit !== '.') {
+    amount.value = digit
+    return
+  }
+
+  const decimalPart = amount.value.split('.')[1]
+
+  if (decimalPart && decimalPart.length >= 2) {
+    return
+  }
+
+  amount.value += digit
+}
+
+function removeLastDigit() {
+  amount.value = amount.value.slice(0, -1)
+}
+
+function confirmAmount() {
+  if (!canConfirmAmount.value) {
+    return
+  }
+
+  step.value = 'category'
+}
+
+function goBackToAmount() {
+  step.value = 'amount'
+}
+
+function skipCategory() {
+  selectedCategory.value = null
+  addExpense()
+}
+
+function addExpense() {
+  if (!canConfirmAmount.value) {
     return
   }
 
   const expense = {
-    amount: value,
-    categoryId: categoryId.value,
+    amount: Number(amount.value),
+    categoryId: selectedCategory.value,
     createdAt: new Date().toISOString()
   }
 
-  console.log(expense)
+  console.log('New expense:', expense)
 
   amount.value = ''
-  categoryId.value = null
+  selectedCategory.value = null
+  step.value = 'amount'
 }
 </script>
 
 <template>
-    <v-main>
-      <v-container
-        class="fill-height"
-        max-width="600"
-      >
-        <v-card
-          class="mx-auto w-100"
-          elevation="3"
-          rounded="xl"
-        >
-          <v-card-title class="text-h5 font-weight-bold pa-6 pb-2">
-            Новый расход
-          </v-card-title>
+  <v-main class="app-background">
+    <v-container
+      class="expense-page"
+      max-width="600"
+    >
+      <!-- Header -->
+      <div class="mb-6">
+        <div class="text-h5 font-weight-bold">
+          Новый расход
+        </div>
 
-          <v-card-text class="pa-6">
+        <div class="text-body-2 text-medium-emphasis mt-1">
+          {{
+            step === 'amount'
+              ? 'Сколько вы потратили?'
+              : 'Расход почти готов'
+          }}
+        </div>
+      </div>
 
-            <!-- Сумма -->
-            <div class="text-center mb-6">
-              <div class="text-h3 font-weight-bold">
-                {{ amount || '0' }}
-                <span class="text-medium-emphasis">₾</span>
+      <v-fade-transition mode="out-in">
+
+        <!-- ================================= -->
+        <!-- STEP 1: AMOUNT -->
+        <!-- ================================= -->
+
+        <div v-if="step === 'amount'" key="amount">
+
+          <!-- Amount -->
+          <v-card
+            rounded="xl"
+            elevation="0"
+            class="amount-card mb-5"
+          >
+            <v-card-text class="py-8">
+              <div class="amount-display">
+                <span class="amount">
+                  {{ formattedAmount }}
+                </span>
+
+                <span class="currency">
+                  ₾
+                </span>
               </div>
-            </div>
 
-            <v-text-field
-              v-model="amount"
-              label="Сумма"
-              placeholder="Введите сумму"
-              type="number"
-              inputmode="decimal"
-              variant="outlined"
-              prepend-inner-icon="mdi-cash"
-              autofocus
-              class="mb-6"
-            />
+              <div class="text-center text-body-2 text-medium-emphasis mt-2 summary-label">
+                Введите сумму расхода
+              </div>
+            </v-card-text>
+          </v-card>
 
-            <!-- Категории -->
-            <div class="text-subtitle-1 font-weight-medium mb-3">
-              Категория
-            </div>
+          <!-- Keypad -->
+          <v-card
+            rounded="xl"
+            elevation="0"
+            class="keypad-card mb-5"
+          >
+            <v-card-text class="pa-3">
+              <v-row dense>
 
-            <v-row dense class="mb-6">
-              <v-col
-                v-for="category in categories"
-                :key="category.id"
-                cols="4"
-                sm="3"
-              >
-                <v-card
-                  :variant="
-                    categoryId === category.id
-                      ? 'elevated'
-                      : 'outlined'
-                  "
-                  :color="
-                    categoryId === category.id
-                      ? 'primary'
-                      : undefined
-                  "
-                  class="category-card text-center pa-3"
-                  rounded="lg"
-                  @click="categoryId = category.id"
+                <v-col
+                  v-for="digit in [
+                    '1', '2', '3',
+                    '4', '5', '6',
+                    '7', '8', '9'
+                  ]"
+                  :key="digit"
+                  cols="4"
                 >
-                  <div class="text-h4 mb-1">
-                    {{ category.icon }}
+                  <v-btn
+                    block
+                    height="64"
+                    variant="text"
+                    class="key-button"
+                    @click="addDigit(digit)"
+                  >
+                    {{ digit }}
+                  </v-btn>
+                </v-col>
+
+                <v-col cols="4">
+                  <v-btn
+                    block
+                    height="64"
+                    variant="text"
+                    class="key-button"
+                    @click="addDigit('.')"
+                  >
+                    .
+                  </v-btn>
+                </v-col>
+
+                <v-col cols="4">
+                  <v-btn
+                    block
+                    height="64"
+                    variant="text"
+                    class="key-button"
+                    @click="addDigit('0')"
+                  >
+                    0
+                  </v-btn>
+                </v-col>
+
+                <v-col cols="4">
+                  <v-btn
+                    block
+                    height="64"
+                    variant="text"
+                    class="key-button"
+                    @click="removeLastDigit"
+                  >
+                    <v-icon
+                      icon="mdi-backspace-outline"
+                      size="25"
+                    />
+                  </v-btn>
+                </v-col>
+
+              </v-row>
+            </v-card-text>
+          </v-card>
+
+          <!-- Confirm -->
+          <v-btn
+            block
+            size="x-large"
+            rounded="xl"
+            color="primary"
+            elevation="2"
+            :disabled="!canConfirmAmount"
+            prepend-icon="mdi-check"
+            @click="confirmAmount"
+          >
+            Подтвердить сумму
+          </v-btn>
+
+        </div>
+
+
+        <!-- ================================= -->
+        <!-- STEP 2: CATEGORY -->
+        <!-- ================================= -->
+
+        <div v-else key="category">
+
+          <!-- Amount summary -->
+          <v-card
+            rounded="xl"
+            elevation="0"
+            class="summary-card mb-6"
+          >
+            <v-card-text class="pa-5">
+
+              <div class="d-flex align-center justify-space-between">
+
+                <div>
+                  <div class="summary-label">
+                    Сумма расхода
                   </div>
 
-                  <div class="text-caption">
-                    {{ category.name }}
+                  <div class="summary-amount">
+                    {{ formattedAmount }}
+                    <span>₾</span>
                   </div>
-                </v-card>
-              </v-col>
-            </v-row>
+                </div>
 
-            <!-- Кнопка -->
+                <v-btn
+                  icon="mdi-pencil-outline"
+                  variant="tonal"
+                  color="primary"
+                  aria-label="Изменить сумму"
+                  @click="goBackToAmount"
+                />
+
+              </div>
+
+            </v-card-text>
+          </v-card>
+
+          <!-- Category -->
+          <div class="category-section">
+            <div class="category-header">
+              <div>
+                <div class="category-title">
+                  Если хотите, выберите категорию
+                </div>
+
+                <div class="category-subtitle">
+                  Это поможет удобнее отслеживать расходы
+                </div>
+              </div>
+
+              <v-btn
+                variant="text"
+                color="primary"
+                size="small"
+                @click="skipCategory"
+              >
+                Пропустить
+              </v-btn>
+            </div>
+          </div>
+
+          <CategoryPicker
+            v-model="selectedCategory"
+            :categories="categories"
+          />
+
+          <!-- Actions -->
+          <div class="actions">
+
             <v-btn
-              color="primary"
-              size="large"
               block
-              rounded="lg"
-              :disabled="!amount || Number(amount) <= 0"
+              size="x-large"
+              rounded="xl"
+              color="primary"
+              elevation="2"
+              prepend-icon="mdi-plus"
               @click="addExpense"
             >
               Добавить расход
             </v-btn>
 
-          </v-card-text>
-        </v-card>
-      </v-container>
-    </v-main>
+          </div>
+
+        </div>
+
+      </v-fade-transition>
+    </v-container>
+  </v-main>
 </template>
+
+<style scoped>
+.app-background {
+  min-height: 100vh;
+  background: #f6f8fb;
+}
+
+.expense-page {
+  min-height: 100vh;
+  padding-top: 32px;
+  padding-bottom: 40px;
+}
+
+/* Amount */
+
+.amount-card {
+  background: linear-gradient(
+    135deg,
+    #e8f5e9,
+    #e0f2f1
+  );
+}
+
+.amount-display {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.amount {
+  font-size: 52px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  color: #263238;
+}
+
+.currency {
+  font-size: 25px;
+  font-weight: 600;
+  color: #607d8b;
+}
+
+/* Keypad */
+
+.keypad-card {
+  background: #ffffff;
+  border: 1px solid #edf0f3;
+}
+
+.key-button {
+  border-radius: 16px;
+  font-size: 25px;
+  font-weight: 500;
+  color: #263238;
+}
+
+.key-button:hover {
+  background: #f1f8e9;
+}
+
+/* Summary */
+
+.summary-card {
+  background: linear-gradient(
+    135deg,
+    #e8f5e9 0%,
+    #e0f2f1 100%
+  );
+
+  border: 1px solid #d7ebe6;
+}
+
+.summary-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #607d8b;
+}
+
+.summary-amount {
+  margin-top: 4px;
+  font-size: 36px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #263238;
+}
+
+.summary-amount span {
+  font-size: 20px;
+  color: #546e7a;
+}
+
+/* Category */
+
+.category-section {
+  margin-bottom: 16px;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.category-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #263238;
+}
+
+.category-subtitle {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #78909c;
+}
+
+/* Actions */
+
+.actions {
+  margin-top: 20px;
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .expense-page {
+    padding: 20px 16px 32px;
+  }
+
+  .amount {
+    font-size: 46px;
+  }
+
+  .summary-amount {
+    font-size: 32px;
+  }
+}
+</style>
