@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useTheme } from 'vuetify'
 import CategoryPicker from '@/components/CategoryPicker.vue'
 
 type Step = 'amount' | 'category'
 
+const theme = useTheme()
 const step = ref<Step>('amount')
 const amount = ref('')
 const selectedCategory = ref<number | null>(null)
+
+function toggleTheme() {
+  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+}
 
 const categories = [
   {
@@ -138,16 +144,27 @@ function addExpense() {
     >
       <!-- Header -->
       <div class="mb-6">
-        <div class="text-h5 font-weight-bold">
-          Новый расход
-        </div>
+        <div class="d-flex align-center justify-space-between">
+          <div>
+            <div class="text-h5 font-weight-bold">
+              Новый расход
+            </div>
 
-        <div class="text-body-2 text-medium-emphasis mt-1">
-          {{
-            step === 'amount'
-              ? 'Сколько вы потратили?'
-              : 'Расход почти готов'
-          }}
+            <div class="text-body-2 text-medium-emphasis mt-1">
+              {{
+                step === 'amount'
+                  ? 'Сколько вы потратили?'
+                  : 'Расход почти готов'
+              }}
+            </div>
+          </div>
+
+          <v-btn
+            :icon="theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night'"
+            variant="tonal"
+            color="primary"
+            @click="toggleTheme"
+          />
         </div>
       </div>
 
@@ -176,7 +193,7 @@ function addExpense() {
                 </span>
               </div>
 
-              <div class="text-center text-body-2 text-medium-emphasis mt-2 summary-label">
+              <div class="text-center mt-2 summary-label">
                 Введите сумму расхода
               </div>
             </v-card-text>
@@ -368,6 +385,19 @@ function addExpense() {
 .app-background {
   min-height: 100vh;
   background: #f6f8fb;
+  transition: background-color 0.3s ease;
+}
+
+.v-theme--dark .app-background {
+  background: #121212;
+}
+
+.v-theme--dark .text-h5 {
+  color: #E0E0E0;
+}
+
+.v-theme--dark .text-body-2 {
+  color: #B0BEC5;
 }
 
 .expense-page {
@@ -383,6 +413,14 @@ function addExpense() {
     135deg,
     #e8f5e9,
     #e0f2f1
+  );
+}
+
+.v-theme--dark .amount-card {
+  background: linear-gradient(
+    135deg,
+    #1E3A2F,
+    #1A3A38
   );
 }
 
@@ -407,11 +445,24 @@ function addExpense() {
   color: #607d8b;
 }
 
+.v-theme--dark .amount {
+  color: #E0E0E0;
+}
+
+.v-theme--dark .currency {
+  color: #B0BEC5;
+}
+
 /* Keypad */
 
 .keypad-card {
   background: #ffffff;
   border: 1px solid #edf0f3;
+}
+
+.v-theme--dark .keypad-card {
+  background: #1E1E1E;
+  border: 1px solid #2C2C2C;
 }
 
 .key-button {
@@ -423,6 +474,14 @@ function addExpense() {
 
 .key-button:hover {
   background: #f1f8e9;
+}
+
+.v-theme--dark .key-button {
+  color: #E0E0E0;
+}
+
+.v-theme--dark .key-button:hover {
+  background: #2C2C2C;
 }
 
 /* Summary */
@@ -437,10 +496,24 @@ function addExpense() {
   border: 1px solid #d7ebe6;
 }
 
+.v-theme--dark .summary-card {
+  background: linear-gradient(
+    135deg,
+    #1E3A2F 0%,
+    #1A3A38 100%
+  );
+
+  border: 1px solid #2C2C2C;
+}
+
 .summary-label {
   font-size: 14px;
   font-weight: 500;
   color: #607d8b;
+}
+
+.v-theme--dark .summary-label {
+  color: #B0BEC5;
 }
 
 .summary-amount {
@@ -454,6 +527,18 @@ function addExpense() {
 .summary-amount span {
   font-size: 20px;
   color: #546e7a;
+}
+
+.v-theme--dark .summary-label {
+  color: #90A4AE;
+}
+
+.v-theme--dark .summary-amount {
+  color: #E0E0E0;
+}
+
+.v-theme--dark .summary-amount span {
+  color: #B0BEC5;
 }
 
 /* Category */
@@ -478,6 +563,14 @@ function addExpense() {
   margin-top: 4px;
   font-size: 14px;
   color: #78909c;
+}
+
+.v-theme--dark .category-title {
+  color: #E0E0E0;
+}
+
+.v-theme--dark .category-subtitle {
+  color: #90A4AE;
 }
 
 /* Actions */
