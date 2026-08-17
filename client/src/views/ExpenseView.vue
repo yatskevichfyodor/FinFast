@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useTheme } from 'vuetify'
 import CategoryPicker from '@/components/CategoryPicker.vue'
 import MonthlyExpensesView from './MonthlyExpensesView.vue'
@@ -21,6 +21,34 @@ const amount = ref('')
 const selectedCategory = ref<number | null>(null)
 const expenses = ref<Expense[]>([])
 let expenseIdCounter = 1
+
+// Load expenses from localStorage on mount
+onMounted(() => {
+  const savedExpenses = localStorage.getItem('finfast-expenses')
+  if (savedExpenses) {
+    expenses.value = JSON.parse(savedExpenses)
+    // Update counter to avoid ID conflicts
+    if (expenses.value.length > 0) {
+      expenseIdCounter = Math.max(...expenses.value.map(e => e.id)) + 1
+    }
+  }
+
+  // Load theme preference
+  const savedTheme = localStorage.getItem('finfast-theme')
+  if (savedTheme) {
+    theme.global.name.value = savedTheme
+  }
+})
+
+// Save expenses to localStorage whenever they change
+watch(expenses, (newExpenses) => {
+  localStorage.setItem('finfast-expenses', JSON.stringify(newExpenses))
+}, { deep: true })
+
+// Save theme preference whenever it changes
+watch(() => theme.global.name.value, (newTheme) => {
+  localStorage.setItem('finfast-theme', newTheme)
+})
 
 function toggleTheme() {
   theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
