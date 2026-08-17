@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useTheme } from 'vuetify'
 
 import ExpenseInput from '@/components/ExpenseInput.vue'
-import ExpensesHistory from '@/components/ExpensesHistory.vue'
+import ExpensesHistory from '@/views/ExpensesHistory.vue'
 import {
   useExpenseStore,
   type Expense,

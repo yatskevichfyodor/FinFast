@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AddExpenseView from '../views/AddExpenseView.vue'
-import ExpensesHistory from '@/components/ExpensesHistory.vue'
+import ExpensesHistory from '@/views/ExpensesHistory.vue'
 import StatisticsView from '@/views/StatisticsView.vue'
 
 const router = createRouter({
