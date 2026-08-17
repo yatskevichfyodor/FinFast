@@ -7,9 +7,59 @@ export interface Category {
 }
 
 defineProps<{
-  categories: Category[]
   modelValue: number | null
 }>()
+
+const categories: Category[] = [
+  {
+    id: 1,
+    name: 'Еда',
+    icon: 'mdi-food',
+    color: '#FF7043'
+  },
+  {
+    id: 2,
+    name: 'Транспорт',
+    icon: 'mdi-car',
+    color: '#42A5F5'
+  },
+  {
+    id: 3,
+    name: 'Дом',
+    icon: 'mdi-home',
+    color: '#AB47BC'
+  },
+  {
+    id: 4,
+    name: 'Покупки',
+    icon: 'mdi-shopping',
+    color: '#EC407A'
+  },
+  {
+    id: 5,
+    name: 'Развлечения',
+    icon: 'mdi-gamepad-variant',
+    color: '#7E57C2'
+  },
+  {
+    id: 6,
+    name: 'Здоровье',
+    icon: 'mdi-heart-pulse',
+    color: '#26A69A'
+  },
+  {
+    id: 7,
+    name: 'Подписки',
+    icon: 'mdi-calendar-check',
+    color: '#FFCA28'
+  },
+  {
+    id: 8,
+    name: 'Другое',
+    icon: 'mdi-dots-horizontal-circle',
+    color: '#78909C'
+  }
+]
 
 const emit = defineEmits<{
   'update:modelValue': [value: number | null]
@@ -42,54 +92,28 @@ function selectCategory(categoryId: number) {
       </div>
     </div>
 
-    <v-row
-      dense
-      class="mt-2"
-    >
-      <v-col
-        v-for="category in categories"
-        :key="category.id"
-        cols="3"
-      >
-        <v-card
-          class="category-card"
-          :class="{
-            selected: modelValue === category.id
-          }"
-          :style="{
-            '--category-color': category.color
-          }"
-          rounded="xl"
-          elevation="0"
-          @click="selectCategory(category.id)"
-        >
+    <v-row dense class="mt-2">
+      <v-col v-for="category in categories" :key="category.id" cols="3">
+        <v-card class="category-card" :class="{
+          selected: modelValue === category.id
+        }" :style="{
+          '--category-color': category.color
+        }" rounded="xl" elevation="0" @click="selectCategory(category.id)">
           <v-card-text class="category-content">
 
-            <div
-              class="category-icon"
-              :class="{
-                selected: modelValue === category.id
-              }"
-              :style="{
-                '--category-color': category.color
-              }"
-            >
-              <v-icon
-                :icon="category.icon"
-                size="26"
-              />
+            <div class="category-icon" :class="{
+              selected: modelValue === category.id
+            }" :style="{
+              '--category-color': category.color
+            }">
+              <v-icon :icon="category.icon" size="26" />
             </div>
 
             <div class="category-name">
               {{ category.name }}
             </div>
 
-            <v-icon
-              v-if="modelValue === category.id"
-              icon="mdi-check-circle"
-              class="check-icon"
-              size="18"
-            />
+            <v-icon v-if="modelValue === category.id" icon="mdi-check-circle" class="check-icon" size="18" />
 
           </v-card-text>
         </v-card>
@@ -151,12 +175,9 @@ function selectCategory(categoryId: number) {
   border-color: var(--category-color);
 
   box-shadow:
-    0 5px 15px
-    color-mix(
-      in srgb,
+    0 5px 15px color-mix(in srgb,
       var(--category-color) 18%,
-      transparent
-    );
+      transparent);
 }
 
 .category-content {
@@ -184,11 +205,9 @@ function selectCategory(categoryId: number) {
 
   color: var(--category-color);
 
-  background: color-mix(
-    in srgb,
-    var(--category-color) 10%,
-    white
-  );
+  background: color-mix(in srgb,
+      var(--category-color) 10%,
+      white);
 
   transition:
     background 0.18s ease,
@@ -196,11 +215,9 @@ function selectCategory(categoryId: number) {
 }
 
 .v-theme--dark .category-icon {
-  background: color-mix(
-    in srgb,
-    var(--category-color) 20%,
-    #1E1E1E
-  );
+  background: color-mix(in srgb,
+      var(--category-color) 20%,
+      #1E1E1E);
 }
 
 .category-icon.selected {

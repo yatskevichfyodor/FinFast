@@ -28,57 +28,6 @@ const skipCategoryWatch = ref(false)
 
 const isEditing = computed(() => props.expense !== undefined)
 
-const categories: Category[] = [
-  {
-    id: 1,
-    name: 'Еда',
-    icon: 'mdi-food',
-    color: '#FF7043'
-  },
-  {
-    id: 2,
-    name: 'Транспорт',
-    icon: 'mdi-car',
-    color: '#42A5F5'
-  },
-  {
-    id: 3,
-    name: 'Дом',
-    icon: 'mdi-home',
-    color: '#AB47BC'
-  },
-  {
-    id: 4,
-    name: 'Покупки',
-    icon: 'mdi-shopping',
-    color: '#EC407A'
-  },
-  {
-    id: 5,
-    name: 'Развлечения',
-    icon: 'mdi-gamepad-variant',
-    color: '#7E57C2'
-  },
-  {
-    id: 6,
-    name: 'Здоровье',
-    icon: 'mdi-heart-pulse',
-    color: '#26A69A'
-  },
-  {
-    id: 7,
-    name: 'Подписки',
-    icon: 'mdi-calendar-check',
-    color: '#FFCA28'
-  },
-  {
-    id: 8,
-    name: 'Другое',
-    icon: 'mdi-dots-horizontal-circle',
-    color: '#78909C'
-  }
-]
-
 const formattedAmount = computed(() => {
   if (!amount.value) {
     return '0.00'
@@ -207,31 +156,18 @@ watch(selectedCategory, (newCategory) => {
         </div>
 
         <div class="d-flex ga-2">
-          <v-btn
-            v-if="isEditing"
-            icon="mdi-close"
-            variant="tonal"
-            aria-label="Отменить редактирование"
-            @click="emit('cancel')"
-          />
+          <v-btn v-if="isEditing" icon="mdi-close" variant="tonal" aria-label="Отменить редактирование"
+            @click="emit('cancel')" />
 
-          <v-btn
-            :icon="theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night'"
-            variant="tonal"
-            color="primary"
-            @click="toggleTheme"
-          />
+          <v-btn :icon="theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night'" variant="tonal"
+            color="primary" @click="toggleTheme" />
         </div>
       </div>
     </div>
 
     <v-fade-transition mode="out-in">
       <div v-if="step === 'amount'" key="amount">
-        <v-card
-          rounded="xl"
-          elevation="0"
-          class="amount-card mb-5"
-        >
+        <v-card rounded="xl" elevation="0" class="amount-card mb-5">
           <v-card-text class="py-8">
             <div class="amount-display">
               <span class="amount">
@@ -249,95 +185,48 @@ watch(selectedCategory, (newCategory) => {
           </v-card-text>
         </v-card>
 
-        <v-card
-          rounded="xl"
-          elevation="0"
-          class="keypad-card mb-5"
-        >
+        <v-card rounded="xl" elevation="0" class="keypad-card mb-5">
           <v-card-text class="pa-3">
             <v-row dense>
-              <v-col
-                v-for="digit in [
-                  '1', '2', '3',
-                  '4', '5', '6',
-                  '7', '8', '9'
-                ]"
-                :key="digit"
-                cols="4"
-              >
-                <v-btn
-                  block
-                  height="64"
-                  variant="text"
-                  class="key-button"
-                  @click="addDigit(digit)"
-                >
+              <v-col v-for="digit in [
+                '1', '2', '3',
+                '4', '5', '6',
+                '7', '8', '9'
+              ]" :key="digit" cols="4">
+                <v-btn block height="64" variant="text" class="key-button" @click="addDigit(digit)">
                   {{ digit }}
                 </v-btn>
               </v-col>
 
               <v-col cols="4">
-                <v-btn
-                  block
-                  height="64"
-                  variant="text"
-                  class="key-button"
-                  @click="addDigit('.')"
-                >
+                <v-btn block height="64" variant="text" class="key-button" @click="addDigit('.')">
                   .
                 </v-btn>
               </v-col>
 
               <v-col cols="4">
-                <v-btn
-                  block
-                  height="64"
-                  variant="text"
-                  class="key-button"
-                  @click="addDigit('0')"
-                >
+                <v-btn block height="64" variant="text" class="key-button" @click="addDigit('0')">
                   0
                 </v-btn>
               </v-col>
 
               <v-col cols="4">
-                <v-btn
-                  block
-                  height="64"
-                  variant="text"
-                  class="key-button"
-                  @click="removeLastDigit"
-                >
-                  <v-icon
-                    icon="mdi-backspace-outline"
-                    size="25"
-                  />
+                <v-btn block height="64" variant="text" class="key-button" @click="removeLastDigit">
+                  <v-icon icon="mdi-backspace-outline" size="25" />
                 </v-btn>
               </v-col>
             </v-row>
           </v-card-text>
         </v-card>
 
-        <v-btn
-          block
-          size="x-large"
-          rounded="xl"
-          color="primary"
-          elevation="2"
-          :disabled="!canConfirmAmount"
-          prepend-icon="mdi-check"
-          @click="confirmAmount"
-        >
+        <v-btn block size="x-large" rounded="xl" color="primary" elevation="2" :disabled="!canConfirmAmount"
+          prepend-icon="mdi-check" @click="confirmAmount">
           Подтвердить сумму
         </v-btn>
       </div>
 
       <div v-else key="category">
-        <v-card
-          rounded="xl"
-          elevation="0"
-          class="summary-card mb-6"
-        >
+        <v-card rounded="xl" elevation="0" class="summary-card mb-6">
           <v-card-text class="pa-5">
             <div class="d-flex align-center justify-space-between">
               <div>
@@ -351,13 +240,8 @@ watch(selectedCategory, (newCategory) => {
                 </div>
               </div>
 
-              <v-btn
-                icon="mdi-pencil-outline"
-                variant="tonal"
-                color="primary"
-                aria-label="Изменить сумму"
-                @click="goBackToAmount"
-              />
+              <v-btn icon="mdi-pencil-outline" variant="tonal" color="primary" aria-label="Изменить сумму"
+                @click="goBackToAmount" />
             </div>
           </v-card-text>
         </v-card>
@@ -374,21 +258,13 @@ watch(selectedCategory, (newCategory) => {
               </div>
             </div>
 
-            <v-btn
-              variant="text"
-              color="primary"
-              size="small"
-              @click="skipCategory"
-            >
+            <v-btn variant="text" color="primary" size="small" @click="skipCategory">
               Пропустить
             </v-btn>
           </div>
         </div>
 
-        <CategoryPicker
-          v-model="selectedCategory"
-          :categories="categories"
-        />
+        <CategoryPicker v-model="selectedCategory" />
       </div>
     </v-fade-transition>
   </div>
@@ -404,19 +280,15 @@ watch(selectedCategory, (newCategory) => {
 }
 
 .amount-card {
-  background: linear-gradient(
-    135deg,
-    #e8f5e9,
-    #e0f2f1
-  );
+  background: linear-gradient(135deg,
+      #e8f5e9,
+      #e0f2f1);
 }
 
 .v-theme--dark .amount-card {
-  background: linear-gradient(
-    135deg,
-    #1E3A2F,
-    #1A3A38
-  );
+  background: linear-gradient(135deg,
+      #1E3A2F,
+      #1A3A38);
 }
 
 .amount-display {
@@ -489,21 +361,17 @@ watch(selectedCategory, (newCategory) => {
 }
 
 .summary-card {
-  background: linear-gradient(
-    135deg,
-    #e8f5e9 0%,
-    #e0f2f1 100%
-  );
+  background: linear-gradient(135deg,
+      #e8f5e9 0%,
+      #e0f2f1 100%);
 
   border: 1px solid #d7ebe6;
 }
 
 .v-theme--dark .summary-card {
-  background: linear-gradient(
-    135deg,
-    #1E3A2F 0%,
-    #1A3A38 100%
-  );
+  background: linear-gradient(135deg,
+      #1E3A2F 0%,
+      #1A3A38 100%);
 
   border: 1px solid #2C2C2C;
 }
