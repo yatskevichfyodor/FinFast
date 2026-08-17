@@ -2,13 +2,25 @@
 import { computed, ref } from 'vue'
 import { useTheme } from 'vuetify'
 import CategoryPicker from '@/components/CategoryPicker.vue'
+import MonthlyExpensesView from './MonthlyExpensesView.vue'
 
 type Step = 'amount' | 'category'
+type View = 'add-expense' | 'monthly-expenses'
+
+interface Expense {
+  id: number
+  amount: number
+  categoryId?: number
+  createdAt: string
+}
 
 const theme = useTheme()
+const currentView = ref<View>('add-expense')
 const step = ref<Step>('amount')
 const amount = ref('')
 const selectedCategory = ref<number | null>(null)
+const expenses = ref<Expense[]>([])
+let expenseIdCounter = 1
 
 function toggleTheme() {
   theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
@@ -122,16 +134,24 @@ function addExpense() {
     return
   }
 
-  const expense = {
+  const expense: Expense = {
+    id: expenseIdCounter++,
     amount: Number(amount.value),
-    categoryId: selectedCategory.value,
+    categoryId: selectedCategory.value || undefined,
     createdAt: new Date().toISOString()
   }
 
+  expenses.value.push(expense)
   console.log('New expense:', expense)
 
   amount.value = ''
   selectedCategory.value = null
+  step.value = 'amount'
+  currentView.value = 'monthly-expenses'
+}
+
+function goToAddExpense() {
+  currentView.value = 'add-expense'
   step.value = 'amount'
 }
 </script>
@@ -142,239 +162,254 @@ function addExpense() {
       class="expense-page"
       max-width="600"
     >
-      <!-- Header -->
-      <div class="mb-6">
-        <div class="d-flex align-center justify-space-between">
-          <div>
-            <div class="text-h5 font-weight-bold">
-              Новый расход
-            </div>
-
-            <div class="text-body-2 text-medium-emphasis mt-1">
-              {{
-                step === 'amount'
-                  ? 'Сколько вы потратили?'
-                  : 'Расход почти готов'
-              }}
-            </div>
-          </div>
-
-          <v-btn
-            :icon="theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night'"
-            variant="tonal"
-            color="primary"
-            @click="toggleTheme"
-          />
-        </div>
-      </div>
-
       <v-fade-transition mode="out-in">
 
-        <!-- ================================= -->
-        <!-- STEP 1: AMOUNT -->
-        <!-- ================================= -->
-
-        <div v-if="step === 'amount'" key="amount">
-
-          <!-- Amount -->
-          <v-card
-            rounded="xl"
-            elevation="0"
-            class="amount-card mb-5"
-          >
-            <v-card-text class="py-8">
-              <div class="amount-display">
-                <span class="amount">
-                  {{ formattedAmount }}
-                </span>
-
-                <span class="currency">
-                  ₾
-                </span>
-              </div>
-
-              <div class="text-center mt-2 summary-label">
-                Введите сумму расхода
-              </div>
-            </v-card-text>
-          </v-card>
-
-          <!-- Keypad -->
-          <v-card
-            rounded="xl"
-            elevation="0"
-            class="keypad-card mb-5"
-          >
-            <v-card-text class="pa-3">
-              <v-row dense>
-
-                <v-col
-                  v-for="digit in [
-                    '1', '2', '3',
-                    '4', '5', '6',
-                    '7', '8', '9'
-                  ]"
-                  :key="digit"
-                  cols="4"
-                >
-                  <v-btn
-                    block
-                    height="64"
-                    variant="text"
-                    class="key-button"
-                    @click="addDigit(digit)"
-                  >
-                    {{ digit }}
-                  </v-btn>
-                </v-col>
-
-                <v-col cols="4">
-                  <v-btn
-                    block
-                    height="64"
-                    variant="text"
-                    class="key-button"
-                    @click="addDigit('.')"
-                  >
-                    .
-                  </v-btn>
-                </v-col>
-
-                <v-col cols="4">
-                  <v-btn
-                    block
-                    height="64"
-                    variant="text"
-                    class="key-button"
-                    @click="addDigit('0')"
-                  >
-                    0
-                  </v-btn>
-                </v-col>
-
-                <v-col cols="4">
-                  <v-btn
-                    block
-                    height="64"
-                    variant="text"
-                    class="key-button"
-                    @click="removeLastDigit"
-                  >
-                    <v-icon
-                      icon="mdi-backspace-outline"
-                      size="25"
-                    />
-                  </v-btn>
-                </v-col>
-
-              </v-row>
-            </v-card-text>
-          </v-card>
-
-          <!-- Confirm -->
-          <v-btn
-            block
-            size="x-large"
-            rounded="xl"
-            color="primary"
-            elevation="2"
-            :disabled="!canConfirmAmount"
-            prepend-icon="mdi-check"
-            @click="confirmAmount"
-          >
-            Подтвердить сумму
-          </v-btn>
-
-        </div>
-
-
-        <!-- ================================= -->
-        <!-- STEP 2: CATEGORY -->
-        <!-- ================================= -->
-
-        <div v-else key="category">
-
-          <!-- Amount summary -->
-          <v-card
-            rounded="xl"
-            elevation="0"
-            class="summary-card mb-6"
-          >
-            <v-card-text class="pa-5">
-
-              <div class="d-flex align-center justify-space-between">
-
-                <div>
-                  <div class="summary-label">
-                    Сумма расхода
-                  </div>
-
-                  <div class="summary-amount">
-                    {{ formattedAmount }}
-                    <span>₾</span>
-                  </div>
-                </div>
-
-                <v-btn
-                  icon="mdi-pencil-outline"
-                  variant="tonal"
-                  color="primary"
-                  aria-label="Изменить сумму"
-                  @click="goBackToAmount"
-                />
-
-              </div>
-
-            </v-card-text>
-          </v-card>
-
-          <!-- Category -->
-          <div class="category-section">
-            <div class="category-header">
+        <!-- ADD EXPENSE VIEW -->
+        <div v-if="currentView === 'add-expense'" key="add-expense">
+          <!-- Header -->
+          <div class="mb-6">
+            <div class="d-flex align-center justify-space-between">
               <div>
-                <div class="category-title">
-                  Если хотите, выберите категорию
+                <div class="text-h5 font-weight-bold">
+                  Новый расход
                 </div>
 
-                <div class="category-subtitle">
-                  Это поможет удобнее отслеживать расходы
+                <div class="text-body-2 text-medium-emphasis mt-1">
+                  {{
+                    step === 'amount'
+                      ? 'Сколько вы потратили?'
+                      : 'Расход почти готов'
+                  }}
                 </div>
               </div>
 
               <v-btn
-                variant="text"
+                :icon="theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night'"
+                variant="tonal"
                 color="primary"
-                size="small"
-                @click="skipCategory"
-              >
-                Пропустить
-              </v-btn>
+                @click="toggleTheme"
+              />
             </div>
           </div>
 
-          <CategoryPicker
-            v-model="selectedCategory"
-            :categories="categories"
-          />
+          <v-fade-transition mode="out-in">
 
-          <!-- Actions -->
-          <div class="actions">
+            <!-- ================================= -->
+            <!-- STEP 1: AMOUNT -->
+            <!-- ================================= -->
 
-            <v-btn
-              block
-              size="x-large"
-              rounded="xl"
-              color="primary"
-              elevation="2"
-              prepend-icon="mdi-plus"
-              @click="addExpense"
-            >
-              Добавить расход
-            </v-btn>
+            <div v-if="step === 'amount'" key="amount">
 
-          </div>
+              <!-- Amount -->
+              <v-card
+                rounded="xl"
+                elevation="0"
+                class="amount-card mb-5"
+              >
+                <v-card-text class="py-8">
+                  <div class="amount-display">
+                    <span class="amount">
+                      {{ formattedAmount }}
+                    </span>
 
+                    <span class="currency">
+                      ₾
+                    </span>
+                  </div>
+
+                  <div class="text-center mt-2 summary-label">
+                    Введите сумму расхода
+                  </div>
+                </v-card-text>
+              </v-card>
+
+              <!-- Keypad -->
+              <v-card
+                rounded="xl"
+                elevation="0"
+                class="keypad-card mb-5"
+              >
+                <v-card-text class="pa-3">
+                  <v-row dense>
+
+                    <v-col
+                      v-for="digit in [
+                        '1', '2', '3',
+                        '4', '5', '6',
+                        '7', '8', '9'
+                      ]"
+                      :key="digit"
+                      cols="4"
+                    >
+                      <v-btn
+                        block
+                        height="64"
+                        variant="text"
+                        class="key-button"
+                        @click="addDigit(digit)"
+                      >
+                        {{ digit }}
+                      </v-btn>
+                    </v-col>
+
+                    <v-col cols="4">
+                      <v-btn
+                        block
+                        height="64"
+                        variant="text"
+                        class="key-button"
+                        @click="addDigit('.')"
+                      >
+                        .
+                      </v-btn>
+                    </v-col>
+
+                    <v-col cols="4">
+                      <v-btn
+                        block
+                        height="64"
+                        variant="text"
+                        class="key-button"
+                        @click="addDigit('0')"
+                      >
+                        0
+                      </v-btn>
+                    </v-col>
+
+                    <v-col cols="4">
+                      <v-btn
+                        block
+                        height="64"
+                        variant="text"
+                        class="key-button"
+                        @click="removeLastDigit"
+                      >
+                        <v-icon
+                          icon="mdi-backspace-outline"
+                          size="25"
+                        />
+                      </v-btn>
+                    </v-col>
+
+                  </v-row>
+                </v-card-text>
+              </v-card>
+
+              <!-- Confirm -->
+              <v-btn
+                block
+                size="x-large"
+                rounded="xl"
+                color="primary"
+                elevation="2"
+                :disabled="!canConfirmAmount"
+                prepend-icon="mdi-check"
+                @click="confirmAmount"
+              >
+                Подтвердить сумму
+              </v-btn>
+
+            </div>
+
+
+            <!-- ================================= -->
+            <!-- STEP 2: CATEGORY -->
+            <!-- ================================= -->
+
+            <div v-else key="category">
+
+              <!-- Amount summary -->
+              <v-card
+                rounded="xl"
+                elevation="0"
+                class="summary-card mb-6"
+              >
+                <v-card-text class="pa-5">
+
+                  <div class="d-flex align-center justify-space-between">
+
+                    <div>
+                      <div class="summary-label">
+                        Сумма расхода
+                      </div>
+
+                      <div class="summary-amount">
+                        {{ formattedAmount }}
+                        <span>₾</span>
+                      </div>
+                    </div>
+
+                    <v-btn
+                      icon="mdi-pencil-outline"
+                      variant="tonal"
+                      color="primary"
+                      aria-label="Изменить сумму"
+                      @click="goBackToAmount"
+                    />
+
+                  </div>
+
+                </v-card-text>
+              </v-card>
+
+              <!-- Category -->
+              <div class="category-section">
+                <div class="category-header">
+                  <div>
+                    <div class="category-title">
+                      Если хотите, выберите категорию
+                    </div>
+
+                    <div class="category-subtitle">
+                      Это поможет удобнее отслеживать расходы
+                    </div>
+                  </div>
+
+                  <v-btn
+                    variant="text"
+                    color="primary"
+                    size="small"
+                    @click="skipCategory"
+                  >
+                    Пропустить
+                  </v-btn>
+                </div>
+              </div>
+
+              <CategoryPicker
+                v-model="selectedCategory"
+                :categories="categories"
+              />
+
+              <!-- Actions -->
+              <div class="actions">
+
+                <v-btn
+                  block
+                  size="x-large"
+                  rounded="xl"
+                  color="primary"
+                  elevation="2"
+                  prepend-icon="mdi-plus"
+                  @click="addExpense"
+                >
+                  Добавить расход
+                </v-btn>
+
+              </div>
+
+            </div>
+
+          </v-fade-transition>
         </div>
+
+        <!-- MONTHLY EXPENSES VIEW -->
+        <MonthlyExpensesView
+          v-else
+          key="monthly-expenses"
+          :expenses="expenses"
+          @add-expense="goToAddExpense"
+        />
 
       </v-fade-transition>
     </v-container>
