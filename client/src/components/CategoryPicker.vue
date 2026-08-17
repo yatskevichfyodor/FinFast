@@ -40,16 +40,6 @@ function selectCategory(categoryId: number) {
           Необязательно
         </div>
       </div>
-
-      <v-btn
-        variant="text"
-        color="primary"
-        size="small"
-        :disabled="modelValue === null"
-        @click="emit('update:modelValue', null)"
-      >
-        Пропустить
-      </v-btn>
     </div>
 
     <v-row
