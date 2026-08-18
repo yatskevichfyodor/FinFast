@@ -59,8 +59,20 @@ function skipCategory() {
     <v-container class="expense-page" max-width="600">
 
       <div class="mb-6">
-        <div class="text-h5 font-weight-bold">
-          {{ isEditing ? 'Изменение категории' : 'Категория расхода' }}
+        <div class="d-flex align-center">
+          <div class="text-h5 font-weight-bold">
+            {{ isEditing ? 'Изменение категории' : 'Категория расхода' }}
+          </div>
+
+          <v-spacer />
+
+          <v-btn
+            variant="text"
+            color="primary"
+            @click="skipCategory"
+          >
+            Пропустить
+          </v-btn>
         </div>
 
         <div class="text-body-2 text-medium-emphasis mt-1">
@@ -71,16 +83,6 @@ function skipCategory() {
       <CategoryPicker
         v-model="selectedCategoryId"
       />
-
-      <div class="d-flex justify-end mt-6">
-        <v-btn
-          variant="text"
-          color="primary"
-          @click="skipCategory"
-        >
-          Пропустить
-        </v-btn>
-      </div>
 
     </v-container>
   </v-main>
