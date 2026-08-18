@@ -11,7 +11,7 @@ export interface Expense {
 export interface ExpensePayload {
   id?: string
   amount: number
-  categoryId?: number
+  categoryId?: string
 }
 
 const STORAGE_KEY = 'finfast-expenses'
