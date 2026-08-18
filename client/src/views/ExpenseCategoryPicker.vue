@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 import CategoryPicker, {
   type Category
@@ -7,6 +8,7 @@ import CategoryPicker, {
 
 import { useExpenseStore } from '@/stores/expense'
 
+const router = useRouter()
 const exprenseId = history.state.expenseId
 
 const props = defineProps<{
@@ -25,9 +27,11 @@ const selectedCategoryId = ref<string | null>(
 
 const isEditing = computed(() => exprenseId !== undefined)
 
-function handleCategoryChange(categoryId: string | null) {
-  selectedCategoryId.value = categoryId
+function navigateToHistory() {
+  router.push({ name: 'ExpenseHistory' })
+}
 
+function handleCategoryChange(categoryId: string | null) {
   if (exprenseId === undefined) {
     return
   }
@@ -38,6 +42,7 @@ function handleCategoryChange(categoryId: string | null) {
   )
 
   emit('done')
+  navigateToHistory()
 }
 
 function skipCategory() {
@@ -51,7 +56,14 @@ function skipCategory() {
   )
 
   emit('done')
+  navigateToHistory()
 }
+
+watch(selectedCategoryId, (newCategoryId) => {
+  if (newCategoryId !== null) {
+    handleCategoryChange(newCategoryId)
+  }
+})
 </script>
 
 <template>
@@ -81,7 +93,7 @@ function skipCategory() {
       </div>
 
       <CategoryPicker
-        v-model="selectedCategoryId"
+        v-model:selectedCategoryId="selectedCategoryId"
       />
 
     </v-container>
