@@ -27,7 +27,7 @@ const selectedCategoryId = ref<string | null>(
 const isEditing = computed(() => exprenseId !== undefined)
 
 function navigateToHistory() {
-  router.push({ name: 'ExpenseHistory' })
+  router.push({ name: 'ExpenseHistoryView' })
 }
 
 function handleCategoryChange(categoryId: string | null) {

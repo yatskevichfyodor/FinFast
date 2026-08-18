@@ -39,14 +39,14 @@ function handleSubmit(amount: number) {
   if (isEditing.value) {
     expenseStore.updateExpense(payload)
     router.push({
-      name: "ExpenseHistory",
+      name: "ExpenseHistoryView",
       params: { expenseId: props.id }
     })
   } else {
     const newExpenseId = expenseStore.addExpense(payload)
 
     router.push({
-      name: ExpenseCategorySelectionView.name,
+      name: "ExpenseCategorySelectionView",
       state: { expenseId: newExpenseId }
     })
   }
