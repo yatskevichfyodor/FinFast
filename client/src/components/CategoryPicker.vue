@@ -1,65 +1,9 @@
 <script setup lang="ts">
-export interface Category {
-  id: string
-  name: string
-  icon: string
-  color: string
-}
+import { CATEGORIES, type Category } from '@/constants/categories'
 
 defineProps<{
   selectedCategoryId: string | null
 }>()
-
-const categories: Category[] = [
-  {
-    id: 'food',
-    name: 'Еда',
-    icon: 'mdi-food',
-    color: '#FF7043'
-  },
-  {
-    id: 'transport',
-    name: 'Транспорт',
-    icon: 'mdi-car',
-    color: '#42A5F5'
-  },
-  {
-    id: 'home',
-    name: 'Дом',
-    icon: 'mdi-home',
-    color: '#AB47BC'
-  },
-  {
-    id: 'shopping',
-    name: 'Покупки',
-    icon: 'mdi-shopping',
-    color: '#EC407A'
-  },
-  {
-    id: 'entertainment',
-    name: 'Развлечения',
-    icon: 'mdi-gamepad-variant',
-    color: '#7E57C2'
-  },
-  {
-    id: 'health',
-    name: 'Здоровье',
-    icon: 'mdi-heart-pulse',
-    color: '#26A69A'
-  },
-  {
-    id: 'subscriptions',
-    name: 'Подписки',
-    icon: 'mdi-calendar-check',
-    color: '#FFCA28'
-  },
-  {
-    id: 'other',
-    name: 'Другое',
-    icon: 'mdi-dots-horizontal-circle',
-    color: '#78909C'
-  }
-]
 
 const emit = defineEmits<{
   'update:selectedCategoryId': [value: string | null]
@@ -81,7 +25,7 @@ function selectCategory(categoryId: string) {
 <template>
   <div>
     <v-row dense class="mt-2">
-      <v-col v-for="category in categories" :key="category.id" cols="3">
+      <v-col v-for="category in CATEGORIES" :key="category.id" cols="3">
         <v-card class="category-card" :class="{
           selected: selectedCategoryId === category.id
         }" :style="{
