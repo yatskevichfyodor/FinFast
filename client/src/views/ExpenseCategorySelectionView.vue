@@ -2,9 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
-import CategoryPicker, {
-  type Category
-} from '@/components/CategoryPicker.vue'
+import CategoryPicker from '@/components/CategoryPicker.vue'
+import type { Category } from '@/constants/categories'
 
 import { useExpenseStore } from '@/stores/expense'
 

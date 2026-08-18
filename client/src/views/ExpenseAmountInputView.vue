@@ -6,6 +6,7 @@ import {
   useExpenseStore,
   type ExpensePayload
 } from '@/stores/expense'
+import ExpenseCategorySelectionView from '@/views/ExpenseCategorySelectionView.vue'
 
 import { useRouter } from 'vue-router'
 
@@ -45,7 +46,7 @@ function handleSubmit(amount: number) {
     const newExpenseId = expenseStore.addExpense(payload)
 
     router.push({
-      name: "ExpenseCategoryPicker",
+      name: ExpenseCategorySelectionView.name,
       state: { expenseId: newExpenseId }
     })
   }

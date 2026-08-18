@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import ExpenseAmountInput from '@/views/ExpenseAmountInput.vue'
-import ExpenseHistory from '@/views/ExpenseHistory.vue'
-import StatisticsView from '@/views/Statistics.vue'
-import ExpenseCategoryPicker from '@/views/ExpenseCategoryPicker.vue'
+import ExpenseAmountInputView from '@/views/ExpenseAmountInputView.vue'
+import ExpenseHistoryView from '@/views/ExpenseHistoryView.vue'
+import StatisticsView from '@/views/StatisticsView.vue'
+import ExpenseCategorySelectionView from '@/views/ExpenseCategorySelectionView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -10,22 +10,22 @@ const router = createRouter({
     {
       name: 'home',
       path: '/',
-      component: ExpenseAmountInput
+      component: ExpenseAmountInputView
     },
     {
-      name: 'ExpenseAmountInput',
-      path: '/add-expense',
-      component: ExpenseAmountInput
+      name: 'ExpenseAmountInputView',
+      path: '/amount-input',
+      component: ExpenseAmountInputView
     },
     {
-      name: 'ExpenseCategoryPicker',
+      name: 'ExpenseCategorySelectionView',
       path: '/category-selection',
-      component: ExpenseCategoryPicker
+      component: ExpenseCategorySelectionView
     },
     {
-      name: 'ExpenseHistory',
+      name: 'ExpenseHistoryView',
       path: '/expense-history',
-      component: ExpenseHistory
+      component: ExpenseHistoryView
     },
     {
       name: 'StatisticsView',
