@@ -25,16 +25,16 @@ const initialAmount = ref<number | undefined>(
   route.query.amount ? Number(route.query.amount) : undefined
 )
 
-async function handleSubmit(amount: number) {
+function handleSubmit(amount: number) {
   if (isEditing.value) {
     const expenseId = route.query.id as string
     const categoryId = route.query.categoryId as string | undefined
 
-    await expenseStore.updateExpenseAmount(expenseId, amount)
+    expenseStore.updateExpenseAmount(expenseId, amount)
 
     // Preserve the category when editing amount
     if (categoryId !== undefined) {
-      await expenseStore.updateExpenseCategory(expenseId, categoryId)
+      expenseStore.updateExpenseCategory(expenseId, categoryId)
     }
 
     router.push({
@@ -44,7 +44,7 @@ async function handleSubmit(amount: number) {
     const payload: ExpensePayload = {
       amount
     }
-    const newExpenseId = await expenseStore.addExpense(payload)
+    const newExpenseId = expenseStore.addExpense(payload)
 
     router.push({
       name: "ExpenseCategorySelectionView",

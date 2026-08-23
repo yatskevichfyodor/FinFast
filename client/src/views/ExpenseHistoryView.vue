@@ -53,12 +53,12 @@ function closeDeleteDialog() {
   expenseToDelete.value = null
 }
 
-async function confirmDelete() {
+function confirmDelete() {
   if (!expenseToDelete.value) {
     return
   }
 
-  await expenseStore.deleteExpense(expenseToDelete.value.id)
+  expenseStore.deleteExpense(expenseToDelete.value.id)
   closeDeleteDialog()
 }
 

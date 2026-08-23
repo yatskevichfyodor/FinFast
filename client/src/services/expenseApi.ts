@@ -20,6 +20,21 @@ export async function createExpense(expense: ExpenseApiBody): Promise<void> {
   }
 }
 
+export async function getExpensesByIds(ids: string[]): Promise<ExpenseApiBody[]> {
+  if (ids.length === 0) {
+    return []
+  }
+
+  const params = new URLSearchParams({ ids: ids.join(',') })
+  const response = await fetch(`${API_BASE_URL}/expenses?${params.toString()}`)
+
+  if (!response.ok) {
+    throw new Error(`Failed to get expenses: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
 export async function updateExpense(id: string, updates: ExpenseApiBody): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
     method: 'PATCH',
@@ -44,8 +59,12 @@ export async function deleteExpense(id: string): Promise<void> {
   }
 }
 
-export async function getExpense(id: string): Promise<ExpenseApiBody> {
+export async function getExpense(id: string): Promise<ExpenseApiBody | undefined> {
   const response = await fetch(`${API_BASE_URL}/expenses/${id}`)
+
+  if (response.status === 404) {
+    return undefined
+  }
 
   if (!response.ok) {
     throw new Error(`Failed to get expense: ${response.statusText}`)
