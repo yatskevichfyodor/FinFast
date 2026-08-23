@@ -4,7 +4,18 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081
 const api = axios.create({ baseURL: API_BASE_URL })
 
 export interface ExpenseApiBody {
-  id?: string
+  id: string
+  amount?: number
+  categoryId?: string
+}
+
+export interface CreateExpenseRequest {
+  id: string
+  amount: number
+  categoryId?: string
+}
+
+export interface UpdateExpenseRequest {
   amount?: number
   categoryId?: string
 }
@@ -33,11 +44,11 @@ export async function getExpensesByIds(ids: string[]): Promise<ExpenseApiBody[]>
   return data
 }
 
-export async function createExpense(expense: ExpenseApiBody): Promise<void> {
+export async function createExpense(expense: CreateExpenseRequest): Promise<void> {
   await api.post('/expenses', expense)
 }
 
-export async function updateExpense(id: string, updates: ExpenseApiBody): Promise<void> {
+export async function updateExpense(id: string, updates: UpdateExpenseRequest): Promise<void> {
   await api.patch(`/expenses/${id}`, updates)
 }
 
