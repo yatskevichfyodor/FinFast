@@ -80,7 +80,8 @@ export const useExpenseStore = defineStore('expense', () => {
             await expenseApi.createExpense({
               id: expense.id,
               amount: expense.amount,
-              categoryId: expense.categoryId
+              categoryId: expense.categoryId,
+              createdAt: expense.createdAt
             })
           }
 

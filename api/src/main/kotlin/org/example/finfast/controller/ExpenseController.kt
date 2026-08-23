@@ -42,7 +42,8 @@ class ExpenseController(
         val expense = Expense(
             id = createExpenseDto.id,
             amount = createExpenseDto.amount!!,
-            categoryId = createExpenseDto.categoryId
+            categoryId = createExpenseDto.categoryId,
+            createdAt = createExpenseDto.createdAt,
         )
 
         expenseRepository.save(expense)

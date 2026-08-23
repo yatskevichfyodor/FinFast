@@ -7,7 +7,6 @@ import {
   useExpenseStore,
   type ExpensePayload
 } from '@/stores/expense'
-import ExpenseCategorySelectionView from '@/views/ExpenseCategorySelectionView.vue'
 
 const router = useRouter()
 const route = useRoute()

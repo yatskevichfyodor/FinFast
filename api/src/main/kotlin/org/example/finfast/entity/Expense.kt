@@ -2,6 +2,7 @@ package org.example.org.example.finfast.entity
 
 import jakarta.persistence.*
 import java.math.BigDecimal
+import java.time.Instant
 import java.util.UUID
 
 @Entity
@@ -16,5 +17,8 @@ class Expense(
     var amount: BigDecimal,
 
     @Column(name = "category")
-    var categoryId: String? = null
+    var categoryId: String? = null,
+
+    @Column(nullable = false, updatable = false)
+    val createdAt: Instant
 )

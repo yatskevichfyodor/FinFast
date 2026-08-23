@@ -9,10 +9,11 @@ export interface ExpenseApiBody {
   categoryId?: string
 }
 
-export interface CreateExpenseRequest {
+export interface CreateExpensePayload {
   id: string
   amount: number
-  categoryId?: string
+  categoryId?: string,
+  createdAt: string,
 }
 
 export interface UpdateExpenseRequest {
@@ -44,7 +45,7 @@ export async function getExpensesByIds(ids: string[]): Promise<ExpenseApiBody[]>
   return data
 }
 
-export async function createExpense(expense: CreateExpenseRequest): Promise<void> {
+export async function createExpense(expense: CreateExpensePayload): Promise<void> {
   await api.post('/expenses', expense)
 }
 
