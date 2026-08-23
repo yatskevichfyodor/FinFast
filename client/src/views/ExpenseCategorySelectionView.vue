@@ -30,12 +30,12 @@ function navigateToHistory() {
   router.push({ name: 'expense-history' })
 }
 
-function handleCategoryChange(categoryId: string | null) {
+async function handleCategoryChange(categoryId: string | null) {
   if (exprenseId === undefined) {
     return
   }
 
-  expenseStore.updateExpenseCategory(
+  await expenseStore.updateExpenseCategory(
     exprenseId,
     categoryId ?? undefined
   )
@@ -44,12 +44,12 @@ function handleCategoryChange(categoryId: string | null) {
   navigateToHistory()
 }
 
-function skipCategory() {
+async function skipCategory() {
   if (exprenseId === undefined) {
     return
   }
 
-  expenseStore.updateExpenseCategory(
+  await expenseStore.updateExpenseCategory(
     exprenseId,
     undefined
   )

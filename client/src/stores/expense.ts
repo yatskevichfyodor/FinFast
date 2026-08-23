@@ -1,11 +1,13 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import * as expenseApi from '@/services/expenseApi'
 
 export interface Expense {
   id: string
   amount: number
   categoryId?: string
   createdAt: string
+  isSynced: boolean
 }
 
 export interface ExpensePayload {
@@ -27,7 +29,12 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     try {
-      expenses.value = JSON.parse(savedExpenses)
+      const parsedExpenses = JSON.parse(savedExpenses) as Expense[]
+      // Ensure all expenses have isSynced field (for backward compatibility)
+      expenses.value = parsedExpenses.map(expense => ({
+        ...expense,
+        isSynced: expense.isSynced ?? false
+      }))
     } catch {
       expenses.value = []
     }
@@ -36,6 +43,15 @@ export const useExpenseStore = defineStore('expense', () => {
   // Load expenses from localStorage on store initialization
   loadExpenses()
 
+  async function syncExpenseWithApi(expense: Expense, apiCall: () => Promise<void>) {
+    try {
+      await apiCall()
+      expense.isSynced = true
+    } catch (error) {
+      console.error('Failed to sync expense with API:', error)
+    }
+  }
+
   function saveExpenses() {
     localStorage.setItem(
       STORAGE_KEY,
@@ -43,21 +59,31 @@ export const useExpenseStore = defineStore('expense', () => {
     )
   }
 
-  function addExpense(payload: ExpensePayload): string {
+  async function addExpense(payload: ExpensePayload): Promise<string> {
     const newExpenseId = crypto.randomUUID();
     const expense: Expense = {
       id: newExpenseId,
       amount: payload.amount,
       categoryId: payload.categoryId,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      isSynced: false
     }
 
     expenses.value.push(expense)
+
+    await syncExpenseWithApi(expense, () =>
+      expenseApi.createExpense({
+        id: newExpenseId,
+        amount: payload.amount,
+        categoryId: payload.categoryId
+      })
+    )
+
     saveExpenses()
     return newExpenseId;
   }
 
-  function updateExpense(payload: ExpensePayload) {
+  async function updateExpense(payload: ExpensePayload) {
     if (payload.id === undefined) {
       return
     }
@@ -73,13 +99,21 @@ export const useExpenseStore = defineStore('expense', () => {
     expenses.value[index] = {
       ...expenses.value[index]!,
       amount: payload.amount,
-      categoryId: payload.categoryId
+      categoryId: payload.categoryId,
+      isSynced: false
     }
+
+    await syncExpenseWithApi(expenses.value[index]!, () =>
+      expenseApi.updateExpense(payload.id, {
+        amount: payload.amount,
+        categoryId: payload.categoryId
+      })
+    )
 
     saveExpenses()
   }
 
-  function updateExpenseCategory(
+  async function updateExpenseCategory(
     expenseId: string,
     categoryId?: string
   ) {
@@ -92,11 +126,18 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     expense.categoryId = categoryId
+    expense.isSynced = false
+
+    await syncExpenseWithApi(expense, () =>
+      expenseApi.updateExpense(expenseId, {
+        categoryId: categoryId
+      })
+    )
 
     saveExpenses()
   }
 
-  function updateExpenseAmount(
+  async function updateExpenseAmount(
     expenseId: string,
     amount: number
   ) {
@@ -109,11 +150,26 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     expense.amount = amount
+    expense.isSynced = false
+
+    await syncExpenseWithApi(expense, () =>
+      expenseApi.updateExpense(expenseId, {
+        amount: amount
+      })
+    )
 
     saveExpenses()
   }
 
-  function deleteExpense(id: string) {
+  async function deleteExpense(id: string) {
+    // Try to sync with API first
+    try {
+      await expenseApi.deleteExpense(id)
+    } catch (error) {
+      console.error('Failed to sync expense deletion with API:', error)
+      // Continue with local deletion even if API sync fails
+    }
+
     expenses.value = expenses.value.filter(
       expense => expense.id !== id
     )
@@ -127,6 +183,35 @@ export const useExpenseStore = defineStore('expense', () => {
     )
   }
 
+  async function syncUnsyncedExpenses() {
+    const unsyncedExpenses = expenses.value.filter(expense => !expense.isSynced)
+
+    for (const expense of unsyncedExpenses) {
+      try {
+        // Try to create the expense first (in case it was never synced)
+        await expenseApi.createExpense({
+          id: expense.id,
+          amount: expense.amount,
+          categoryId: expense.categoryId
+        })
+        expense.isSynced = true
+      } catch (createError) {
+        // If create fails, try to update (expense might already exist on server)
+        try {
+          await expenseApi.updateExpense(expense.id, {
+            amount: expense.amount,
+            categoryId: expense.categoryId
+          })
+          expense.isSynced = true
+        } catch (updateError) {
+          console.error(`Failed to sync expense ${expense.id}:`, updateError)
+        }
+      }
+    }
+
+    saveExpenses()
+  }
+
   return {
     expenses,
     loadExpenses,
@@ -135,6 +220,7 @@ export const useExpenseStore = defineStore('expense', () => {
     updateExpenseCategory,
     updateExpenseAmount,
     deleteExpense,
-    getExpenseById
+    getExpenseById,
+    syncUnsyncedExpenses
   }
 })
