@@ -245,14 +245,6 @@ watch(
   color: #607d8b;
 }
 
-.currency-symbol {
-  height: 16px;
-  width: auto;
-  vertical-align: middle;
-  margin-left: 2px;
-}
-
-
 .keypad-card {
   background: #ffffff;
   border: 1px solid #edf0f3;
@@ -278,10 +270,6 @@ watch(
 @media (max-width: 600px) {
   .amount {
     font-size: 46px;
-  }
-
-  .currency-symbol {
-    height: 14px;
   }
 }
 </style>

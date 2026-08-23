@@ -67,21 +67,4 @@ function handleCancel() {
 </template>
 
 <style scoped>
-.app-background {
-  min-height: 100vh;
-  background: #f6f8fb;
-  transition: background-color 0.3s ease;
-}
-
-.expense-page {
-  min-height: 100vh;
-  padding-top: 32px;
-  padding-bottom: 40px;
-}
-
-@media (max-width: 600px) {
-  .expense-page {
-    padding: 20px 16px 32px;
-  }
-}
 </style>

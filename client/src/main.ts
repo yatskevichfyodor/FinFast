@@ -6,6 +6,7 @@ import vuetify from './plugins/vuetify'
 import { createPinia } from 'pinia'
 
 import './style.css'
+import './styles/common.css'
 
 const app = createApp(App)
 

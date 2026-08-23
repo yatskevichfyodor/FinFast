@@ -5,7 +5,8 @@ import {
   useExpenseStore,
   type Expense
 } from '@/stores/expense'
-import { CATEGORIES } from '@/constants/categories'
+import { getCategoryDisplay } from '@/utils/categoryHelpers'
+import { formatDate, formatTime } from '@/utils/dateHelpers'
 
 const expenseStore = useExpenseStore()
 
@@ -16,34 +17,11 @@ const emit = defineEmits<{
 const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)
 
-const getCategoryById = (id: string | undefined) => {
-  return CATEGORIES.find(cat => cat.id === id)
-}
-
-const getCategoryDisplay = (categoryId: string | undefined) => {
-  if (categoryId === undefined || categoryId === null) {
-    return {
-      name: 'Без категории',
-      icon: 'mdi-help-circle-outline',
-      color: '#9E9E9E'
-    }
-  }
-  return getCategoryById(categoryId) || {
-    name: 'Без категории',
-    icon: 'mdi-help-circle-outline',
-    color: '#9E9E9E'
-  }
-}
-
 const groupedExpenses = computed(() => {
   const groups: Record<string, Expense[]> = {}
 
   expenseStore.expenses.forEach((expense: Expense) => {
-    const date = new Date(expense.createdAt)
-    const dateKey = date.toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'long'
-    })
+    const dateKey = formatDate(expense.createdAt)
 
     if (!groups[dateKey]) {
       groups[dateKey] = []
@@ -66,14 +44,6 @@ const groupedExpenses = computed(() => {
       return dateB.getTime() - dateA.getTime()
     })
 })
-
-const formatTime = (dateString: string) => {
-  const date = new Date(dateString)
-  return date.toLocaleTimeString('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
 
 function openDeleteDialog(expense: Expense) {
   expenseToDelete.value = expense
@@ -220,45 +190,6 @@ function confirmDelete() {
 </template>
 
 <style scoped>
-.app-background {
-  min-height: 100vh;
-  background: #f6f8fb;
-}
-
-.expense-page {
-  min-height: 100vh;
-  padding-top: 32px;
-  padding-bottom: 40px;
-}
-
-.total-card {
-  background: linear-gradient(135deg,
-      #e8f5e9 0%,
-      #e0f2f1 100%);
-
-  border: 1px solid #d7ebe6;
-}
-.total-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #607d8b;
-}
-
-.total-amount {
-  margin-top: 8px;
-  font-size: 42px;
-  line-height: 1.2;
-  font-weight: 700;
-  color: #263238;
-}
-
-.total-amount .currency-symbol {
-  height: 28px;
-  width: auto;
-  vertical-align: middle;
-  margin-left: 4px;
-}
-
 .empty-state {
   text-align: center;
   padding: 60px 20px;
@@ -290,9 +221,6 @@ function confirmDelete() {
 
 .day-total .currency-symbol {
   height: 10px;
-  width: auto;
-  vertical-align: middle;
-  margin-left: 2px;
 }
 
 .expense-card {
@@ -347,24 +275,4 @@ function confirmDelete() {
   flex-shrink: 0;
 }
 
-.currency-symbol {
-  height: 12px;
-  width: auto;
-  vertical-align: middle;
-  margin-left: 2px;
-}
-
-@media (max-width: 600px) {
-  .expense-page {
-    padding: 20px 16px 32px;
-  }
-
-  .total-amount {
-    font-size: 36px;
-  }
-
-  .total-amount .currency-symbol {
-    height: 24px;
-  }
-}
 </style>

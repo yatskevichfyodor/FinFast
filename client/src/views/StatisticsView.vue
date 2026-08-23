@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { formatMonthName } from '@/utils/dateHelpers'
 
 interface CategoryStat {
   id: number
@@ -118,15 +119,7 @@ const formattedTotal = computed(() => {
 })
 
 const monthName = computed(() => {
-  return new Intl.DateTimeFormat('ru-RU', {
-    month: 'long',
-    year: 'numeric'
-  }).format(
-    new Date(
-      currentMonth.value.year,
-      currentMonth.value.month - 1
-    )
-  )
+  return formatMonthName(currentMonth.value.year, currentMonth.value.month)
 })
 
 const sortedCategories = computed(() => {
@@ -324,11 +317,6 @@ function getPercentage(amount: number) {
 </template>
 
 <style scoped>
-.statistics-page {
-  min-height: 100vh;
-  background: #f6f8fb;
-}
-
 /* Month */
 
 .month-selector {
