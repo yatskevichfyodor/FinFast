@@ -76,7 +76,7 @@ function editExpenseAmount(expense: Expense) {
 function editExpenseCategory(expense: Expense) {
   router.push({
     name: 'ExpenseCategorySelectionView',
-    state: { expenseId: expense.id }
+    state: { expenseId: expense.id, isEditing: true }
   })
 }
 </script>

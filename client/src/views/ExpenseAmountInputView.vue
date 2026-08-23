@@ -47,7 +47,7 @@ function handleSubmit(amount: number) {
 
     router.push({
       name: "ExpenseCategorySelectionView",
-      state: { expenseId: newExpenseId }
+      state: { expenseId: newExpenseId, isEditing: false }
     })
   }
 }

@@ -24,17 +24,13 @@ const selectedCategoryId = ref<string | null>(
   props.expenseCategory?.id ?? null
 )
 
-const isEditing = computed(() => exprenseId !== undefined)
+const isEditing = computed(() => history.state.isEditing === true)
 
 function navigateToHistory() {
   router.push({ name: 'expense-history' })
 }
 
 function handleCategoryChange(categoryId: string | null) {
-  if (exprenseId === undefined) {
-    return
-  }
-
   expenseStore.updateExpenseCategory(
     exprenseId,
     categoryId ?? undefined
@@ -45,10 +41,6 @@ function handleCategoryChange(categoryId: string | null) {
 }
 
 function skipCategory() {
-  if (exprenseId === undefined) {
-    return
-  }
-
   expenseStore.updateExpenseCategory(
     exprenseId,
     undefined
