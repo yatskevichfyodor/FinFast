@@ -33,6 +33,9 @@ export const useExpenseStore = defineStore('expense', () => {
     }
   }
 
+  // Load expenses from localStorage on store initialization
+  loadExpenses()
+
   function saveExpenses() {
     localStorage.setItem(
       STORAGE_KEY,
