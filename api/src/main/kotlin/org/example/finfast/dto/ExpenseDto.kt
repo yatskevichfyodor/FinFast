@@ -5,15 +5,15 @@ import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
-data class CreateExpenseDto(
+data class ExpenseDto(
     val id: UUID,
-    val amount: BigDecimal?,
+    val amount: BigDecimal,
     val categoryId: String?,
     val createdAt: Instant
 )
 
-fun Expense.toCreateDto() =
-    CreateExpenseDto(
+fun Expense.toDto() =
+    ExpenseDto(
         id = id,
         amount = amount,
         categoryId = categoryId,

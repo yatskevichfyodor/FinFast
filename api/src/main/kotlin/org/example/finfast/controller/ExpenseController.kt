@@ -1,10 +1,9 @@
 package org.example.org.example.finfast.controller
 
-import org.example.org.example.finfast.dto.CreateExpenseDto
+import org.example.org.example.finfast.dto.BatchUpdateExpenseDto
+import org.example.org.example.finfast.dto.ExpenseDto
 import org.example.org.example.finfast.dto.UpdateExpenseDto
-import org.example.org.example.finfast.dto.toCreateDto
-import org.example.org.example.finfast.entity.Expense
-import org.example.org.example.finfast.repository.ExpenseRepository
+import org.example.org.example.finfast.service.ExpenseService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.UUID
@@ -12,61 +11,59 @@ import java.util.UUID
 @RestController
 @RequestMapping("/expenses")
 class ExpenseController(
-    private val expenseRepository: ExpenseRepository
+    private val expenseService: ExpenseService
 ) {
     @GetMapping("/{id}")
     fun get(
         @PathVariable id: UUID
-    ): ResponseEntity<CreateExpenseDto> {
-        val expense = expenseRepository.findById(id)
-            .orElseThrow { RuntimeException("Expense not found") }
-
-        return ResponseEntity.ok(expense.toCreateDto())
+    ): ResponseEntity<ExpenseDto> {
+        return ResponseEntity.ok(
+            expenseService.get(id)
+        )
     }
 
     @GetMapping
     fun getByIds(
         @RequestParam ids: List<UUID>
-    ): ResponseEntity<List<CreateExpenseDto>> {
-        val expenses = expenseRepository.findAllById(ids)
-
+    ): ResponseEntity<List<ExpenseDto>> {
         return ResponseEntity.ok(
-            expenses.map { it.toCreateDto() }
+            expenseService.getByIds(ids)
         )
     }
 
     @PostMapping
     fun create(
-        @RequestBody createExpenseDto: CreateExpenseDto
+        @RequestBody dto: ExpenseDto
     ): ResponseEntity<Void> {
-        val expense = Expense(
-            id = createExpenseDto.id,
-            amount = createExpenseDto.amount!!,
-            categoryId = createExpenseDto.categoryId,
-            createdAt = createExpenseDto.createdAt,
-        )
-
-        expenseRepository.save(expense)
+        expenseService.create(dto)
 
         return ResponseEntity.status(201).build()
+    }
+
+    @PostMapping("/batch")
+    fun createBatch(
+        @RequestBody dtos: List<ExpenseDto>
+    ): ResponseEntity<Void> {
+        expenseService.createBatch(dtos)
+
+        return ResponseEntity.status(201).build()
+    }
+
+    @PatchMapping("/batch")
+    fun updateBatch(
+        @RequestBody dtos: List<BatchUpdateExpenseDto>
+    ): ResponseEntity<Void> {
+        expenseService.updateBatch(dtos)
+
+        return ResponseEntity.ok().build()
     }
 
     @PatchMapping("/{id}")
     fun update(
         @PathVariable id: UUID,
-        @RequestBody updateExpenseDto: UpdateExpenseDto
+        @RequestBody dto: UpdateExpenseDto
     ): ResponseEntity<Void> {
-        val expense = expenseRepository.findById(id)
-            .orElseThrow { RuntimeException("Expense not found") }
-
-        updateExpenseDto.amount?.let {
-            expense.amount = it
-        }
-        updateExpenseDto.categoryId?.let {
-            expense.categoryId = it
-        }
-
-        expenseRepository.save(expense)
+        expenseService.update(id, dto)
 
         return ResponseEntity.ok().build()
     }
@@ -75,12 +72,18 @@ class ExpenseController(
     fun delete(
         @PathVariable id: UUID
     ): ResponseEntity<Void> {
-
-        if (!expenseRepository.existsById(id)) {
-            return ResponseEntity.notFound().build()
+        return if (expenseService.delete(id)) {
+            ResponseEntity.noContent().build()
+        } else {
+            ResponseEntity.notFound().build()
         }
+    }
 
-        expenseRepository.deleteById(id)
+    @DeleteMapping("/batch")
+    fun deleteBatch(
+        @RequestBody ids: List<UUID>
+    ): ResponseEntity<Void> {
+        expenseService.deleteBatch(ids)
 
         return ResponseEntity.noContent().build()
     }
