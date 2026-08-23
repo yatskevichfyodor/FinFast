@@ -14,6 +14,27 @@ import java.util.UUID
 class ExpenseController(
     private val expenseRepository: ExpenseRepository
 ) {
+    @GetMapping("/{id}")
+    fun get(
+        @PathVariable id: UUID
+    ): ResponseEntity<CreateExpenseDto> {
+        val expense = expenseRepository.findById(id)
+            .orElseThrow { RuntimeException("Expense not found") }
+
+        return ResponseEntity.ok(expense.toCreateDto())
+    }
+
+    @GetMapping
+    fun getByIds(
+        @RequestParam ids: List<UUID>
+    ): ResponseEntity<List<CreateExpenseDto>> {
+        val expenses = expenseRepository.findAllById(ids)
+
+        return ResponseEntity.ok(
+            expenses.map { it.toCreateDto() }
+        )
+    }
+
     @PostMapping
     fun create(
         @RequestBody createExpenseDto: CreateExpenseDto
@@ -61,15 +82,5 @@ class ExpenseController(
         expenseRepository.deleteById(id)
 
         return ResponseEntity.noContent().build()
-    }
-
-    @GetMapping("/{id}")
-    fun get(
-        @PathVariable id: UUID
-    ): ResponseEntity<CreateExpenseDto> {
-        val expense = expenseRepository.findById(id)
-            .orElseThrow { RuntimeException("Expense not found") }
-
-        return ResponseEntity.ok(expense.toCreateDto())
     }
 }
