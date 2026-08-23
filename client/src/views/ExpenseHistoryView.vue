@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useTheme } from 'vuetify'
 
 import {
   useExpenseStore,
@@ -14,7 +13,6 @@ const emit = defineEmits<{
   'edit-expense': [expense: Expense]
 }>()
 
-const theme = useTheme()
 const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)
 
@@ -77,10 +75,6 @@ const formatTime = (dateString: string) => {
   })
 }
 
-function toggleTheme() {
-  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
-}
-
 function openDeleteDialog(expense: Expense) {
   expenseToDelete.value = expense
   deleteDialogOpen.value = true
@@ -116,9 +110,6 @@ function confirmDelete() {
               Сначала новые
             </div>
           </div>
-
-          <v-btn :icon="theme.global.current.value.dark ? 'mdi-weather-sunny' : 'mdi-weather-night'" variant="tonal"
-            color="primary" @click="toggleTheme" />
         </div>
       </div>
 
@@ -232,7 +223,6 @@ function confirmDelete() {
 .app-background {
   min-height: 100vh;
   background: #f6f8fb;
-  transition: background-color 0.3s ease;
 }
 
 .expense-page {
