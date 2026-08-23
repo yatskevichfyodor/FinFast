@@ -1,4 +1,7 @@
+import axios from 'axios'
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+const api = axios.create({ baseURL: API_BASE_URL })
 
 export interface ExpenseApiBody {
   id?: string
@@ -6,17 +9,16 @@ export interface ExpenseApiBody {
   categoryId?: string
 }
 
-export async function createExpense(expense: ExpenseApiBody): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/expenses`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(expense),
-  })
+export async function getExpense(id: string): Promise<ExpenseApiBody | undefined> {
+  try {
+    const { data } = await api.get<ExpenseApiBody>(`/expenses/${id}`)
+    return data
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return undefined
+    }
 
-  if (!response.ok) {
-    throw new Error(`Failed to create expense: ${response.statusText}`)
+    throw error
   }
 }
 
@@ -25,50 +27,20 @@ export async function getExpensesByIds(ids: string[]): Promise<ExpenseApiBody[]>
     return []
   }
 
-  const params = new URLSearchParams({ ids: ids.join(',') })
-  const response = await fetch(`${API_BASE_URL}/expenses?${params.toString()}`)
+  const { data } = await api.get<ExpenseApiBody[]>('/expenses', {
+    params: { ids: ids.join(',') }
+  })
+  return data
+}
 
-  if (!response.ok) {
-    throw new Error(`Failed to get expenses: ${response.statusText}`)
-  }
-
-  return response.json()
+export async function createExpense(expense: ExpenseApiBody): Promise<void> {
+  await api.post('/expenses', expense)
 }
 
 export async function updateExpense(id: string, updates: ExpenseApiBody): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(updates),
-  })
-
-  if (!response.ok) {
-    throw new Error(`Failed to update expense: ${response.statusText}`)
-  }
+  await api.patch(`/expenses/${id}`, updates)
 }
 
 export async function deleteExpense(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
-    method: 'DELETE',
-  })
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete expense: ${response.statusText}`)
-  }
-}
-
-export async function getExpense(id: string): Promise<ExpenseApiBody | undefined> {
-  const response = await fetch(`${API_BASE_URL}/expenses/${id}`)
-
-  if (response.status === 404) {
-    return undefined
-  }
-
-  if (!response.ok) {
-    throw new Error(`Failed to get expense: ${response.statusText}`)
-  }
-
-  return response.json()
+  await api.delete(`/expenses/${id}`)
 }
