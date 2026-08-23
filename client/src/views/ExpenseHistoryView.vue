@@ -15,10 +15,14 @@ const expenseStore = useExpenseStore()
 const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)
 
+const activeExpenses = computed(() =>
+  expenseStore.expenses.filter(expense => !expense.isDeleted)
+)
+
 const groupedExpenses = computed(() => {
   const groups: Record<string, Expense[]> = {}
 
-  expenseStore.expenses.forEach((expense: Expense) => {
+  activeExpenses.value.forEach((expense: Expense) => {
     const dateKey = formatDate(expense.createdAt)
 
     if (!groups[dateKey]) {
@@ -96,7 +100,7 @@ function editExpenseCategory(expense: Expense) {
       </div>
 
       <!-- Expenses List -->
-      <div v-if="expenseStore.expenses.length === 0" class="empty-state">
+      <div v-if="activeExpenses.length === 0" class="empty-state">
         <v-icon icon="mdi-receipt-long-outline" size="64" color="medium-emphasis" class="mb-3" />
 
         <div class="text-h6 font-weight-medium text-medium-emphasis mb-2">

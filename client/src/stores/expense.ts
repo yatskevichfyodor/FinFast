@@ -8,6 +8,7 @@ export interface Expense {
   categoryId?: string
   createdAt: string
   isSynced: boolean
+  isDeleted: boolean
 }
 
 export interface ExpensePayload {
@@ -33,7 +34,8 @@ export const useExpenseStore = defineStore('expense', () => {
       // Ensure all expenses have isSynced field (for backward compatibility)
       expenses.value = parsedExpenses.map(expense => ({
         ...expense,
-        isSynced: expense.isSynced ?? false
+        isSynced: expense.isSynced ?? false,
+        isDeleted: expense.isDeleted ?? false
       }))
     } catch {
       expenses.value = []
@@ -58,6 +60,17 @@ export const useExpenseStore = defineStore('expense', () => {
 
       for (const expense of unsyncedExpenses) {
         try {
+          if (expense.isDeleted) {
+            if (apiExpenseIds.has(expense.id)) {
+              await expenseApi.deleteExpense(expense.id)
+            }
+
+            expenses.value = expenses.value.filter(
+              localExpense => localExpense.id !== expense.id
+            )
+            continue
+          }
+
           if (apiExpenseIds.has(expense.id)) {
             await expenseApi.updateExpense(expense.id, {
               amount: expense.amount,
@@ -97,7 +110,8 @@ export const useExpenseStore = defineStore('expense', () => {
       amount: payload.amount,
       categoryId: payload.categoryId,
       createdAt: new Date().toISOString(),
-      isSynced: false
+      isSynced: false,
+      isDeleted: false
     }
 
     expenses.value.push(expense)
@@ -180,16 +194,19 @@ export const useExpenseStore = defineStore('expense', () => {
   }
 
   function deleteExpense(id: string) {
-    expenses.value = expenses.value.filter(
-      expense => expense.id !== id
-    )
+    const expense = expenses.value.find(expense => expense.id === id)
+
+    if (!expense) {
+      return
+    }
+
+    expense.isDeleted = true
+    expense.isSynced = false
 
     saveExpenses()
 
     // Sync deletion in background without blocking
-    expenseApi.deleteExpense(id).catch(error => {
-      console.error('Failed to sync expense deletion with API:', error)
-    })
+    syncExpenseWithApi()
   }
 
   function getExpenseById(id: string) {
