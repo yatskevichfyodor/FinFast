@@ -1,7 +1,8 @@
 package org.example.org.example.finfast.controller
 
-import org.example.org.example.finfast.dto.ExpenseDto
-import org.example.org.example.finfast.dto.toDto
+import org.example.org.example.finfast.dto.CreateExpenseDto
+import org.example.org.example.finfast.dto.UpdateExpenseDto
+import org.example.org.example.finfast.dto.toCreateDto
 import org.example.org.example.finfast.entity.Expense
 import org.example.org.example.finfast.repository.ExpenseRepository
 import org.springframework.http.ResponseEntity
@@ -15,12 +16,12 @@ class ExpenseController(
 ) {
     @PostMapping
     fun create(
-        @RequestBody expenseDto: ExpenseDto
+        @RequestBody createExpenseDto: CreateExpenseDto
     ): ResponseEntity<Void> {
         val expense = Expense(
-            id = expenseDto.id,
-            amount = expenseDto.amount!!,
-            categoryId = expenseDto.categoryId
+            id = createExpenseDto.id,
+            amount = createExpenseDto.amount!!,
+            categoryId = createExpenseDto.categoryId
         )
 
         expenseRepository.save(expense)
@@ -31,15 +32,15 @@ class ExpenseController(
     @PatchMapping("/{id}")
     fun update(
         @PathVariable id: UUID,
-        @RequestBody expenseDto: ExpenseDto
+        @RequestBody updateExpenseDto: UpdateExpenseDto
     ): ResponseEntity<Void> {
         val expense = expenseRepository.findById(id)
             .orElseThrow { RuntimeException("Expense not found") }
 
-        expenseDto.amount?.let {
+        updateExpenseDto.amount?.let {
             expense.amount = it
         }
-        expenseDto.categoryId?.let {
+        updateExpenseDto.categoryId?.let {
             expense.categoryId = it
         }
 
@@ -65,10 +66,10 @@ class ExpenseController(
     @GetMapping("/{id}")
     fun get(
         @PathVariable id: UUID
-    ): ResponseEntity<ExpenseDto> {
+    ): ResponseEntity<CreateExpenseDto> {
         val expense = expenseRepository.findById(id)
             .orElseThrow { RuntimeException("Expense not found") }
 
-        return ResponseEntity.ok(expense.toDto())
+        return ResponseEntity.ok(expense.toCreateDto())
     }
 }

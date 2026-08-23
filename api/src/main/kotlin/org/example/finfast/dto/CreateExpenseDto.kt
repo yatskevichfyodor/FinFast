@@ -4,14 +4,14 @@ import org.example.org.example.finfast.entity.Expense
 import java.math.BigDecimal
 import java.util.UUID
 
-data class ExpenseDto(
+data class CreateExpenseDto(
     val id: UUID,
     val amount: BigDecimal?,
     val categoryId: String?
 )
 
-fun Expense.toDto() =
-    ExpenseDto(
+fun Expense.toCreateDto() =
+    CreateExpenseDto(
         id = id,
         amount = amount,
         categoryId = categoryId
