@@ -11,12 +11,12 @@ function navigate(path: string) {
 
 <template>
   <v-bottom-navigation :model-value="route.path" color="primary" grow>
-    <v-btn value="/" @click="navigate('/')">
+    <v-btn value="/amount-input" @click="navigate('/amount-input')">
       <v-icon>mdi-plus-circle-outline</v-icon>
       <span>Расход</span>
     </v-btn>
 
-    <v-btn value="/expenses" @click="navigate('/expenses')">
+    <v-btn value="/expense-history" @click="navigate('/expense-history')">
       <v-icon>mdi-format-list-bulleted</v-icon>
       <span>История</span>
     </v-btn>
