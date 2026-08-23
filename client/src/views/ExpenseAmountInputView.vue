@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import ExpenseAmountInput from '@/components/ExpenseAmountInput.vue'
 import {
@@ -8,14 +9,8 @@ import {
 } from '@/stores/expense'
 import ExpenseCategorySelectionView from '@/views/ExpenseCategorySelectionView.vue'
 
-import { useRouter } from 'vue-router'
-
 const router = useRouter()
-
-const props = defineProps<{
-  id?: string,
-  amount?: number
-}>()
+const route = useRoute()
 
 const emit = defineEmits<{
   saved: []
@@ -24,25 +19,31 @@ const emit = defineEmits<{
 
 const expenseStore = useExpenseStore()
 
-const isEditing = computed(() => props.id !== undefined)
+const isEditing = computed(() => route.query.id !== undefined)
 
-const initialAmount = ref<number | undefined>(props.amount)
+const initialAmount = ref<number | undefined>(
+  route.query.amount ? Number(route.query.amount) : undefined
+)
 
 function handleSubmit(amount: number) {
-  const payload: ExpensePayload = {
-    amount,
-    ...(props.id !== undefined && {
-      id: props.id
-    })
-  }
-
   if (isEditing.value) {
-    expenseStore.updateExpense(payload)
+    const expenseId = route.query.id as string
+    const categoryId = route.query.categoryId as string | undefined
+
+    expenseStore.updateExpenseAmount(expenseId, amount)
+
+    // Preserve the category when editing amount
+    if (categoryId !== undefined) {
+      expenseStore.updateExpenseCategory(expenseId, categoryId)
+    }
+
     router.push({
-      name: "ExpenseHistoryView",
-      params: { expenseId: props.id }
+      name: "expense-history"
     })
   } else {
+    const payload: ExpensePayload = {
+      amount
+    }
     const newExpenseId = expenseStore.addExpense(payload)
 
     router.push({
@@ -60,7 +61,7 @@ function handleCancel() {
 <template>
   <v-main class="app-background">
     <v-container class="expense-page" max-width="600">
-      <ExpenseAmountInput :expenseId="undefined" :amount="initialAmount" :editing="isEditing" @submit="handleSubmit"
+      <ExpenseAmountInput :expenseId="route.query.id as string | undefined" :amount="initialAmount" :editing="isEditing" @submit="handleSubmit"
         @cancel="handleCancel" />
     </v-container>
   </v-main>

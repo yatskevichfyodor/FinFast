@@ -27,7 +27,7 @@ const selectedCategoryId = ref<string | null>(
 const isEditing = computed(() => exprenseId !== undefined)
 
 function navigateToHistory() {
-  router.push({ name: 'ExpenseHistoryView' })
+  router.push({ name: 'expense-history' })
 }
 
 function handleCategoryChange(categoryId: string | null) {
@@ -78,6 +78,7 @@ watch(selectedCategoryId, (newCategoryId) => {
           <v-spacer />
 
           <v-btn
+            v-if="!isEditing"
             variant="text"
             color="primary"
             @click="skipCategory"

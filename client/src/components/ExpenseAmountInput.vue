@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
-  expenseId?: number,
+  expenseId?: string,
   amount?: number
 }>()
 
@@ -13,7 +13,7 @@ const emit = defineEmits<{
 
 const amount = ref('')
 
-const isEditing = computed(() => !!props.expenseId)
+const isEditing = computed(() => props.expenseId !== undefined)
 
 const formattedAmount = computed(() => {
   if (!amount.value) {

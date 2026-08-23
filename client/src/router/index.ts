@@ -13,8 +13,13 @@ const router = createRouter({
       component: ExpenseAmountInputView
     },
     {
+      name: 'add',
+      path: '/add',
+      component: ExpenseAmountInputView
+    },
+    {
       name: 'ExpenseAmountInputView',
-      path: '/amount-input',
+      path: '/edit',
       component: ExpenseAmountInputView
     },
     {
@@ -23,7 +28,7 @@ const router = createRouter({
       component: ExpenseCategorySelectionView
     },
     {
-      name: 'ExpenseHistoryView',
+      name: 'expense-history',
       path: '/expense-history',
       component: ExpenseHistoryView
     },

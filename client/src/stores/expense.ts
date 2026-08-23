@@ -96,6 +96,23 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
   }
 
+  function updateExpenseAmount(
+    expenseId: string,
+    amount: number
+  ) {
+    const expense = expenses.value.find(
+      expense => expense.id === expenseId
+    )
+
+    if (!expense) {
+      return
+    }
+
+    expense.amount = amount
+
+    saveExpenses()
+  }
+
   function deleteExpense(id: string) {
     expenses.value = expenses.value.filter(
       expense => expense.id !== id
@@ -116,6 +133,7 @@ export const useExpenseStore = defineStore('expense', () => {
     addExpense,
     updateExpense,
     updateExpenseCategory,
+    updateExpenseAmount,
     deleteExpense,
     getExpenseById
   }

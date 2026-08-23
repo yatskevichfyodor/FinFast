@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import {
   useExpenseStore,
@@ -8,11 +9,8 @@ import {
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { formatDate, formatTime } from '@/utils/dateHelpers'
 
+const router = useRouter()
 const expenseStore = useExpenseStore()
-
-const emit = defineEmits<{
-  'edit-expense': [expense: Expense]
-}>()
 
 const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)
@@ -60,8 +58,22 @@ function confirmDelete() {
     return
   }
 
-  // emit('delete-expense', expenseToDelete.value.id)
+  expenseStore.deleteExpense(expenseToDelete.value.id)
   closeDeleteDialog()
+}
+
+function editExpenseAmount(expense: Expense) {
+  router.push({
+    name: 'ExpenseAmountInputView',
+    query: { id: expense.id, amount: expense.amount.toString(), categoryId: expense.categoryId }
+  })
+}
+
+function editExpenseCategory(expense: Expense) {
+  router.push({
+    name: 'ExpenseCategorySelectionView',
+    state: { expenseId: expense.id }
+  })
 }
 </script>
 
@@ -144,8 +156,11 @@ function confirmDelete() {
                   </template>
 
                   <v-list density="compact" rounded="lg">
-                    <v-list-item prepend-icon="mdi-pencil-outline" title="Редактировать"
-                      @click="emit('edit-expense', expense)" />
+                    <v-list-item prepend-icon="mdi-currency-usd" title="Редактировать сумму"
+                      @click="editExpenseAmount(expense)" />
+
+                    <v-list-item prepend-icon="mdi-tag-outline" title="Редактировать категорию"
+                      @click="editExpenseCategory(expense)" />
 
                     <v-list-item prepend-icon="mdi-delete-outline" title="Удалить" base-color="error"
                       @click="openDeleteDialog(expense)" />
@@ -184,6 +199,16 @@ function confirmDelete() {
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <v-btn
+        fab
+        color="primary"
+        size="large"
+        class="add-expense-btn"
+        @click="router.push({ name: 'home' })"
+      >
+        <v-icon icon="mdi-plus" size="24" />
+      </v-btn>
 
     </v-container>
   </v-main>
@@ -273,6 +298,20 @@ function confirmDelete() {
 
 .expense-menu-btn {
   flex-shrink: 0;
+}
+
+.add-expense-btn {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  z-index: 100;
+}
+
+@media (max-width: 600px) {
+  .add-expense-btn {
+    bottom: 90px;
+    right: 16px;
+  }
 }
 
 </style>
