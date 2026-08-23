@@ -54,5 +54,13 @@ export async function updateExpense(id: string, updates: UpdateExpenseRequest): 
 }
 
 export async function deleteExpense(id: string): Promise<void> {
-  await api.delete(`/expenses/${id}`)
+  try {
+    await api.delete(`/expenses/${id}`)
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return
+    }
+
+    throw error
+  }
 }

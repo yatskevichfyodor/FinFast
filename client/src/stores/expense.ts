@@ -57,38 +57,40 @@ export const useExpenseStore = defineStore('expense', () => {
           .map(expense => expense.id)
           .filter((id): id is string => id !== undefined)
       )
+      const deletedExpenseIds = new Set<string>()
 
-      for (const expense of unsyncedExpenses) {
+      for (const unsyncedExpense of unsyncedExpenses) {
         try {
-          if (expense.isDeleted) {
-            if (apiExpenseIds.has(expense.id)) {
-              await expenseApi.deleteExpense(expense.id)
-            }
-
-            expenses.value = expenses.value.filter(
-              localExpense => localExpense.id !== expense.id
-            )
+          if (unsyncedExpense.isDeleted) {
+            await expenseApi.deleteExpense(unsyncedExpense.id)
+            deletedExpenseIds.add(unsyncedExpense.id)
             continue
           }
 
-          if (apiExpenseIds.has(expense.id)) {
-            await expenseApi.updateExpense(expense.id, {
-              amount: expense.amount,
-              categoryId: expense.categoryId
+          if (apiExpenseIds.has(unsyncedExpense.id)) {
+            await expenseApi.updateExpense(unsyncedExpense.id, {
+              amount: unsyncedExpense.amount,
+              categoryId: unsyncedExpense.categoryId
             })
           } else {
             await expenseApi.createExpense({
-              id: expense.id,
-              amount: expense.amount,
-              categoryId: expense.categoryId,
-              createdAt: expense.createdAt
+              id: unsyncedExpense.id,
+              amount: unsyncedExpense.amount,
+              categoryId: unsyncedExpense.categoryId,
+              createdAt: unsyncedExpense.createdAt
             })
           }
 
-          expense.isSynced = true
+          unsyncedExpense.isSynced = true
         } catch (error) {
-          console.error(`Failed to sync expense ${expense.id}:`, error)
+          console.error(`Failed to sync expense ${unsyncedExpense.id}:`, error)
         }
+      }
+
+      if (deletedExpenseIds.size > 0) {
+        expenses.value = expenses.value.filter(
+          expense => !deletedExpenseIds.has(expense.id)
+        )
       }
 
       saveExpenses()
