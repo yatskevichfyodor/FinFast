@@ -4,7 +4,7 @@ server:
 spring:
   # Временные настройки встроенной БД для первого запуска без Docker
   datasource:
-    url: jdbc:h2:mem:finfast_db;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:file:./data/finfast
     username: sa
     password: sa
     driver-class-name: org.h2.Driver

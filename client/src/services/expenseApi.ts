@@ -39,10 +39,18 @@ export async function getExpensesByIds(ids: string[]): Promise<ExpenseApiBody[]>
     return []
   }
 
-  const { data } = await api.get<ExpenseApiBody[]>('/expenses', {
-    params: { ids: ids.join(',') }
-  })
-  return data
+  try {
+    const { data } = await api.get<ExpenseApiBody[]>('/expenses', {
+      params: { ids: ids.join(',') }
+    })
+    return data
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return []
+    }
+
+    throw error
+  }
 }
 
 export async function createExpense(expense: CreateExpensePayload): Promise<void> {
