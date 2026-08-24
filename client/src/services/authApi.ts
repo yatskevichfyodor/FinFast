@@ -32,6 +32,11 @@ export async function login(request: LoginRequest): Promise<TokenResponse> {
   return data
 }
 
+export async function me(): Promise<UserResponse> {
+  const { data } = await api.get<UserResponse>('/auth/me')
+  return data
+}
+
 export async function refresh(refreshToken: string): Promise<TokenResponse> {
   const { data } = await api.post<TokenResponse>('/auth/refresh', { refreshToken })
   return data

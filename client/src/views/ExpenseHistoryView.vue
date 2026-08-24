@@ -204,16 +204,6 @@ function editExpenseCategory(expense: Expense) {
         </v-card>
       </v-dialog>
 
-      <v-btn
-        fab
-        color="primary"
-        size="large"
-        class="add-expense-btn"
-        @click="router.push({ name: 'home' })"
-      >
-        <v-icon icon="mdi-plus" size="24" />
-      </v-btn>
-
     </v-container>
   </v-main>
 </template>
@@ -302,20 +292,6 @@ function editExpenseCategory(expense: Expense) {
 
 .expense-menu-btn {
   flex-shrink: 0;
-}
-
-.add-expense-btn {
-  position: fixed;
-  bottom: 80px;
-  right: 20px;
-  z-index: 100;
-}
-
-@media (max-width: 600px) {
-  .add-expense-btn {
-    bottom: 90px;
-    right: 16px;
-  }
 }
 
 </style>

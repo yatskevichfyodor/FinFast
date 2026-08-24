@@ -40,6 +40,14 @@ class AuthService(
         return issueTokens(user)
     }
 
+    @Transactional(readOnly = true)
+    fun currentUser(userId: UUID): UserResponse {
+        val user = userRepository.findById(userId).orElseThrow {
+            IllegalArgumentException("User not found")
+        }
+        return UserResponse(user.id, user.username)
+    }
+
     @Transactional
     fun refresh(request: RefreshRequest): TokenResponse {
         val old = refreshTokenRepository.findByTokenHash(hash(request.refreshToken))

@@ -35,7 +35,13 @@ class SecurityConfig(
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
-                it.requestMatchers("/auth/**", "/h2-console/**").permitAll()
+                it.requestMatchers(
+                    "/auth/register",
+                    "/auth/login",
+                    "/auth/refresh",
+                    "/auth/logout",
+                    "/h2-console/**"
+                ).permitAll()
                     .anyRequest().authenticated()
             }
             .headers {

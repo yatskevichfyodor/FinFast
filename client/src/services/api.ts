@@ -23,9 +23,9 @@ api.interceptors.response.use(
   response => response,
   error => {
     const requestUrl = error.config?.url ?? ''
-    const isAuthRequest = requestUrl.startsWith('/auth/')
+    const isLoginOrRegisterRequest = requestUrl === '/auth/login' || requestUrl === '/auth/register'
 
-    if (error.response?.status === 401 && !isAuthRequest && router.currentRoute.value.name !== 'login') {
+    if (error.response?.status === 401 && !isLoginOrRegisterRequest && router.currentRoute.value.name !== 'login') {
       localStorage.removeItem(ACCESS_TOKEN_KEY)
       localStorage.removeItem(REFRESH_TOKEN_KEY)
 
