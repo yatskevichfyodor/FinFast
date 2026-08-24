@@ -122,13 +122,18 @@ async function submit() {
           >
             Уже есть аккаунт? Войти
           </v-btn>
-          <v-btn
-            v-else
-            variant="text"
-            :to="{ name: 'register' }"
-          >
-            Нет аккаунта? Зарегистрироваться
-          </v-btn>
+          <template v-else>
+            <span class="auth-switch-label">Нет аккаунта?</span>
+            <v-btn
+              variant="text"
+              class="auth-switch-link"
+              color="primary"
+              density="comfortable"
+              :to="{ name: 'register' }"
+            >
+              Зарегистрироваться
+            </v-btn>
+          </template>
         </v-card-actions>
       </v-card>
     </v-container>
@@ -143,5 +148,15 @@ async function submit() {
 
 .auth-container {
   padding-top: 12vh;
+}
+
+.auth-switch-link {
+  padding-inline: 6px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.auth-switch-label {
+  color: rgba(var(--v-theme-on-surface), 0.65);
 }
 </style>
