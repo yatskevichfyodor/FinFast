@@ -25,6 +25,12 @@ export interface BatchUpdateExpenseRequest extends UpdateExpenseRequest {
   id: string
 }
 
+export interface SyncExpensesRequest {
+  create: CreateExpensePayload[]
+  update: BatchUpdateExpenseRequest[]
+  delete: string[]
+}
+
 export async function getExpense(id: string): Promise<ExpenseApiBody | undefined> {
   try {
     const { data } = await api.get<ExpenseApiBody>(`/expenses/${id}`)
@@ -67,6 +73,10 @@ export async function createExpensesBatch(expenses: CreateExpensePayload[]): Pro
   }
 
   await api.post('/expenses/batch', expenses)
+}
+
+export async function syncExpenses(request: SyncExpensesRequest): Promise<void> {
+  await api.post('/expenses/sync', request)
 }
 
 export async function updateExpense(id: string, updates: UpdateExpenseRequest): Promise<void> {

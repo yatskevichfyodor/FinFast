@@ -81,11 +81,32 @@ export const useExpenseStore = defineStore('expense', () => {
       pendingExpenses,
       apiExpenseIds
     )
-    const [deletedExpenseIds] = await Promise.all([
-      syncDeletedExpenses(deleted),
-      syncUpdatedExpenses(toUpdate),
-      syncCreatedExpenses(toCreate)
-    ])
+    const deletedExpenseIds = deleted.map(expense => expense.id)
+
+    if (deletedExpenseIds.length > 0 || toUpdate.length > 0 || toCreate.length > 0) {
+      await expenseApi.syncExpenses({
+        create: toCreate.map(expense => ({
+          id: expense.id,
+          amount: expense.amount,
+          categoryId: expense.categoryId,
+          createdAt: expense.createdAt
+        })),
+        update: toUpdate.map(expense => ({
+          id: expense.id,
+          amount: expense.amount,
+          categoryId: expense.categoryId
+        })),
+        delete: deletedExpenseIds
+      })
+
+      toUpdate.forEach(expense => {
+        expense.isSynced = true
+      })
+      toCreate.forEach(expense => {
+        expense.isSynced = true
+      })
+    }
+
     removeDeletedExpenses(
       new Set([
         ...deletedExpenseIds,
@@ -118,64 +139,6 @@ export const useExpenseStore = defineStore('expense', () => {
       toCreate: pendingExpenses.filter(
         expense => !expense.isDeleted && !apiExpenseIds.has(expense.id)
       )
-    }
-  }
-
-  async function syncDeletedExpenses(deletedExpenses: Expense[]) {
-    if (deletedExpenses.length === 0) {
-      return new Set<string>()
-    }
-
-    try {
-      const deletedExpensesIds = deletedExpenses.map(expense => expense.id)
-      await expenseApi.deleteExpensesBatch(deletedExpensesIds)
-      return new Set(deletedExpensesIds)
-    } catch (error) {
-      console.error('Failed to delete expenses batch:', error)
-      return new Set<string>()
-    }
-  }
-
-  async function syncUpdatedExpenses(expensesToUpdate: Expense[]) {
-    if (expensesToUpdate.length === 0) {
-      return
-    }
-
-    try {
-      await expenseApi.updateExpensesBatch(
-        expensesToUpdate.map(expense => ({
-          id: expense.id,
-          amount: expense.amount,
-          categoryId: expense.categoryId
-        }))
-      )
-      expensesToUpdate.forEach(expense => {
-        expense.isSynced = true
-      })
-    } catch (error) {
-      console.error('Failed to update expenses batch:', error)
-    }
-  }
-
-  async function syncCreatedExpenses(expensesToCreate: Expense[]) {
-    if (expensesToCreate.length === 0) {
-      return
-    }
-
-    try {
-      await expenseApi.createExpensesBatch(
-        expensesToCreate.map(expense => ({
-          id: expense.id,
-          amount: expense.amount,
-          categoryId: expense.categoryId,
-          createdAt: expense.createdAt
-        }))
-      )
-      expensesToCreate.forEach(expense => {
-        expense.isSynced = true
-      })
-    } catch (error) {
-      console.error('Failed to create expenses batch:', error)
     }
   }
 

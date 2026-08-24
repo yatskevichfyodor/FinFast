@@ -2,6 +2,7 @@ package org.example.org.example.finfast.controller
 
 import org.example.org.example.finfast.dto.BatchUpdateExpenseDto
 import org.example.org.example.finfast.dto.ExpenseDto
+import org.example.org.example.finfast.dto.SyncExpensesDto
 import org.example.org.example.finfast.dto.UpdateExpenseDto
 import org.example.org.example.finfast.service.ExpenseService
 import org.springframework.http.ResponseEntity
@@ -47,6 +48,15 @@ class ExpenseController(
         expenseService.createBatch(dtos)
 
         return ResponseEntity.status(201).build()
+    }
+
+    @PostMapping("/sync")
+    fun sync(
+        @RequestBody dto: SyncExpensesDto
+    ): ResponseEntity<Void> {
+        expenseService.sync(dto)
+
+        return ResponseEntity.ok().build()
     }
 
     @PatchMapping("/batch")
