@@ -7,8 +7,12 @@ export interface Expense {
   amount: number
   categoryId?: string
   createdAt: string
+  // whether the record has been synchronized with the API
   isSynced: boolean
+  // field for deletion syncronization, record will be deleted after synchronization
   isDeleted: boolean
+   // a record that has not yet been posted to the API and that needs to be deleted locally
+  isCreatedLocally: boolean
 }
 
 export interface ExpensePayload {
@@ -114,6 +118,7 @@ export const useExpenseStore = defineStore('expense', () => {
       })
       toCreate.forEach(expense => {
         expense.isSynced = true
+        expense.isCreatedLocally = false
       })
     }
 
@@ -178,10 +183,57 @@ export const useExpenseStore = defineStore('expense', () => {
         createdAt: expense.createdAt
       })
       expense.isSynced = true
+      expense.isCreatedLocally = false
       saveExpenses()
     } catch (error) {
       console.error('Failed to create expense:', error)
     }
+  }
+
+  async function updateExpenseDirectly(expense: Expense) {
+    try {
+      if (expense.isCreatedLocally) {
+        await expenseApi.createExpense({
+          id: expense.id,
+          amount: expense.amount,
+          categoryId: expense.categoryId,
+          createdAt: expense.createdAt
+        })
+        expense.isCreatedLocally = false
+      } else {
+        await expenseApi.updateExpense(expense.id, {
+          amount: expense.amount,
+          categoryId: expense.categoryId
+        })
+      }
+      expense.isSynced = true
+      saveExpenses()
+    } catch (error) {
+      console.error('Failed to update expense:', error)
+    }
+  }
+
+  async function deleteExpenseDirectly(
+    expense: Expense,
+    shouldDeleteOnApi: boolean
+  ) {
+    if (!shouldDeleteOnApi) {
+      removeDeletedExpenses(new Set([expense.id]))
+      saveExpenses()
+      return
+    }
+
+    try {
+      await expenseApi.deleteExpense(expense.id)
+      removeDeletedExpenses(new Set([expense.id]))
+      saveExpenses()
+    } catch (error) {
+      console.error('Failed to delete expense:', error)
+    }
+  }
+
+  function hasOtherPendingExpenses(expenseId: string) {
+    return getPendingExpenses().some(expense => expense.id !== expenseId)
   }
 
   function addExpense(payload: ExpensePayload): string {
@@ -193,7 +245,8 @@ export const useExpenseStore = defineStore('expense', () => {
       categoryId: payload.categoryId,
       createdAt: new Date().toISOString(),
       isSynced: false,
-      isDeleted: false
+      isDeleted: false,
+      isCreatedLocally: true
     }
 
     expenses.value.push(expense)
@@ -216,6 +269,7 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     const expenseId = payload.id
+    const hasPendingExpenses = hasOtherPendingExpenses(expenseId)
 
     const index = expenses.value.findIndex(
       expense => expense.id === expenseId
@@ -234,14 +288,18 @@ export const useExpenseStore = defineStore('expense', () => {
 
     saveExpenses()
 
-    // Sync in background without blocking
-    queueExpensesSyncWithApi()
+    if (hasPendingExpenses) {
+      queueExpensesSyncWithApi()
+    } else {
+      updateExpenseDirectly(expenses.value[index]!)
+    }
   }
 
   function updateExpenseCategory(
     expenseId: string,
     categoryId?: string
   ) {
+    const hasPendingExpenses = hasOtherPendingExpenses(expenseId)
     const expense = expenses.value.find(
       expense => expense.id === expenseId
     )
@@ -255,14 +313,18 @@ export const useExpenseStore = defineStore('expense', () => {
 
     saveExpenses()
 
-    // Sync in background without blocking
-    queueExpensesSyncWithApi()
+    if (hasPendingExpenses) {
+      queueExpensesSyncWithApi()
+    } else {
+      updateExpenseDirectly(expense)
+    }
   }
 
   function updateExpenseAmount(
     expenseId: string,
     amount: number
   ) {
+    const hasPendingExpenses = hasOtherPendingExpenses(expenseId)
     const expense = expenses.value.find(
       expense => expense.id === expenseId
     )
@@ -276,24 +338,32 @@ export const useExpenseStore = defineStore('expense', () => {
 
     saveExpenses()
 
-    // Sync in background without blocking
-    queueExpensesSyncWithApi()
+    if (hasPendingExpenses) {
+      queueExpensesSyncWithApi()
+    } else {
+      updateExpenseDirectly(expense)
+    }
   }
 
   function deleteExpense(id: string) {
+    const hasPendingExpenses = hasOtherPendingExpenses(id)
     const expense = expenses.value.find(expense => expense.id === id)
 
     if (!expense) {
       return
     }
 
+    const shouldDeleteOnApi = !expense.isCreatedLocally
     expense.isDeleted = true
     expense.isSynced = false
 
     saveExpenses()
 
-    // Sync deletion in background without blocking
-    queueExpensesSyncWithApi()
+    if (hasPendingExpenses) {
+      queueExpensesSyncWithApi()
+    } else {
+      deleteExpenseDirectly(expense, shouldDeleteOnApi)
+    }
   }
 
   function getExpenseById(id: string) {
