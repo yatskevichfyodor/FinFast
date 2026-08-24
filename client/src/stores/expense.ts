@@ -48,20 +48,22 @@ export const useExpenseStore = defineStore('expense', () => {
   let syncPromise: Promise<void> | null = null
   let syncRequested = false
 
-  async function requestExpenseSync() {
+  async function queueExpensesSyncWithApi(): Promise<void> {
+    syncRequested = true
+
     if (syncPromise) {
-      syncRequested = true
       return syncPromise
     }
 
     syncPromise = (async () => {
-      do {
+      while (syncRequested) {
         syncRequested = false
-        await syncPendingExpensesOnce()
-      } while (syncRequested)
+
+        await syncExpensesWithApi()
+      }
     })()
       .catch(error => {
-        console.error('Failed to sync expenses with API:', error)
+        console.error('Failed to sync expenses:', error)
       })
       .finally(() => {
         syncPromise = null
@@ -70,7 +72,7 @@ export const useExpenseStore = defineStore('expense', () => {
     return syncPromise
   }
 
-  async function syncPendingExpensesOnce() {
+  async function syncExpensesWithApi() {
     const pendingExpenses = getPendingExpenses()
 
     if (pendingExpenses.length === 0) {
@@ -209,7 +211,7 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
 
     // Sync in background without blocking
-    requestExpenseSync()
+    queueExpensesSyncWithApi()
 
     return newExpenseId;
   }
@@ -239,7 +241,7 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
 
     // Sync in background without blocking
-    requestExpenseSync()
+    queueExpensesSyncWithApi()
   }
 
   function updateExpenseCategory(
@@ -260,7 +262,7 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
 
     // Sync in background without blocking
-    requestExpenseSync()
+    queueExpensesSyncWithApi()
   }
 
   function updateExpenseAmount(
@@ -281,7 +283,7 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
 
     // Sync in background without blocking
-    requestExpenseSync()
+    queueExpensesSyncWithApi()
   }
 
   function deleteExpense(id: string) {
@@ -297,7 +299,7 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
 
     // Sync deletion in background without blocking
-    requestExpenseSync()
+    queueExpensesSyncWithApi()
   }
 
   function getExpenseById(id: string) {
@@ -307,7 +309,7 @@ export const useExpenseStore = defineStore('expense', () => {
   }
 
   async function syncUnsyncedExpenses() {
-    await requestExpenseSync()
+    await queueExpensesSyncWithApi()
   }
 
   return {
