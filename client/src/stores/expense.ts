@@ -77,7 +77,7 @@ export const useExpenseStore = defineStore('expense', () => {
     const apiExpenses = await expenseApi.getExpensesByIds(pendingExpenses.map(expense => expense.id))
     const apiExpenseIds = new Set(apiExpenses.map(apiExpense => apiExpense.id))
 
-    const { deleted, toUpdate, toCreate } = splitPendingExpenses(
+    const { deleted, locallyDeleted, toUpdate, toCreate } = splitPendingExpenses(
       pendingExpenses,
       apiExpenseIds
     )
@@ -86,7 +86,12 @@ export const useExpenseStore = defineStore('expense', () => {
       syncUpdatedExpenses(toUpdate),
       syncCreatedExpenses(toCreate)
     ])
-    removeDeletedExpenses(deletedExpenseIds)
+    removeDeletedExpenses(
+      new Set([
+        ...deletedExpenseIds,
+        ...locallyDeleted.map(expense => expense.id)
+      ])
+    )
 
     saveExpenses()
   }
@@ -101,7 +106,12 @@ export const useExpenseStore = defineStore('expense', () => {
     apiExpenseIds: Set<string>
   ) {
     return {
-      deleted: pendingExpenses.filter(expense => expense.isDeleted),
+      deleted: pendingExpenses.filter(
+        expense => expense.isDeleted && apiExpenseIds.has(expense.id)
+      ),
+      locallyDeleted: pendingExpenses.filter(
+        expense => expense.isDeleted && !apiExpenseIds.has(expense.id)
+      ),
       toUpdate: pendingExpenses.filter(
         expense => !expense.isDeleted && apiExpenseIds.has(expense.id)
       ),
