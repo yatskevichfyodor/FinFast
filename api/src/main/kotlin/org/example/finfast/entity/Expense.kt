@@ -22,6 +22,6 @@ class Expense(
     @Column(nullable = false, updatable = false)
     val createdAt: Instant,
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     val userId: UUID
 )
