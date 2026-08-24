@@ -21,6 +21,10 @@ export interface UpdateExpenseRequest {
   categoryId?: string
 }
 
+export interface BatchUpdateExpenseRequest extends UpdateExpenseRequest {
+  id: string
+}
+
 export async function getExpense(id: string): Promise<ExpenseApiBody | undefined> {
   try {
     const { data } = await api.get<ExpenseApiBody>(`/expenses/${id}`)
@@ -57,8 +61,26 @@ export async function createExpense(expense: CreateExpensePayload): Promise<void
   await api.post('/expenses', expense)
 }
 
+export async function createExpensesBatch(expenses: CreateExpensePayload[]): Promise<void> {
+  if (expenses.length === 0) {
+    return
+  }
+
+  await api.post('/expenses/batch', expenses)
+}
+
 export async function updateExpense(id: string, updates: UpdateExpenseRequest): Promise<void> {
   await api.patch(`/expenses/${id}`, updates)
+}
+
+export async function updateExpensesBatch(
+  updates: BatchUpdateExpenseRequest[]
+): Promise<void> {
+  if (updates.length === 0) {
+    return
+  }
+
+  await api.patch('/expenses/batch', updates)
 }
 
 export async function deleteExpense(id: string): Promise<void> {
@@ -71,4 +93,12 @@ export async function deleteExpense(id: string): Promise<void> {
 
     throw error
   }
+}
+
+export async function deleteExpensesBatch(ids: string[]): Promise<void> {
+  if (ids.length === 0) {
+    return
+  }
+
+  await api.delete('/expenses/batch', { data: ids })
 }
