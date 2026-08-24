@@ -45,58 +45,111 @@ export const useExpenseStore = defineStore('expense', () => {
   // Load expenses from localStorage on store initialization
   loadExpenses()
 
+  let syncPromise: Promise<void> | null = null
+  let syncRequested = false
+
   async function syncExpenseWithApi() {
-    try {
-      loadExpenses()
-      const unsyncedExpenses = expenses.value.filter(expense => !expense.isSynced)
-      const apiExpenses = await expenseApi.getExpensesByIds(
-        unsyncedExpenses.map(expense => expense.id)
-      )
-      const apiExpenseIds = new Set(
-        apiExpenses
-          .map(expense => expense.id)
-          .filter((id): id is string => id !== undefined)
-      )
-      const deletedExpenseIds = new Set<string>()
-
-      for (const unsyncedExpense of unsyncedExpenses) {
-        try {
-          if (unsyncedExpense.isDeleted) {
-            await expenseApi.deleteExpense(unsyncedExpense.id)
-            deletedExpenseIds.add(unsyncedExpense.id)
-            continue
-          }
-
-          if (apiExpenseIds.has(unsyncedExpense.id)) {
-            await expenseApi.updateExpense(unsyncedExpense.id, {
-              amount: unsyncedExpense.amount,
-              categoryId: unsyncedExpense.categoryId
-            })
-          } else {
-            await expenseApi.createExpense({
-              id: unsyncedExpense.id,
-              amount: unsyncedExpense.amount,
-              categoryId: unsyncedExpense.categoryId,
-              createdAt: unsyncedExpense.createdAt
-            })
-          }
-
-          unsyncedExpense.isSynced = true
-        } catch (error) {
-          console.error(`Failed to sync expense ${unsyncedExpense.id}:`, error)
-        }
-      }
-
-      if (deletedExpenseIds.size > 0) {
-        expenses.value = expenses.value.filter(
-          expense => !deletedExpenseIds.has(expense.id)
-        )
-      }
-
-      saveExpenses()
-    } catch (error) {
-      console.error('Failed to sync expenses with API:', error)
+    if (syncPromise) {
+      syncRequested = true
+      return syncPromise
     }
+
+    syncPromise = (async () => {
+      do {
+        syncRequested = false
+        await syncExpensesBatch()
+      } while (syncRequested)
+    })()
+      .catch(error => {
+        console.error('Failed to sync expenses with API:', error)
+      })
+      .finally(() => {
+        syncPromise = null
+      })
+
+    return syncPromise
+  }
+
+  async function syncExpensesBatch() {
+    loadExpenses()
+    const unsyncedExpenses = expenses.value.filter(expense => !expense.isSynced)
+
+    if (unsyncedExpenses.length === 0) {
+      return
+    }
+
+    const apiExpenses = await expenseApi.getExpensesByIds(
+      unsyncedExpenses.map(expense => expense.id)
+    )
+    const apiExpenseIds = new Set(
+      apiExpenses
+        .map(apiExpense => apiExpense.id)
+        .filter((id): id is string => id !== undefined)
+    )
+
+    const deletedExpenses = unsyncedExpenses.filter(expense => expense.isDeleted)
+    const expensesToUpdate = unsyncedExpenses.filter(
+      expense => !expense.isDeleted && apiExpenseIds.has(expense.id)
+    )
+    const expensesToCreate = unsyncedExpenses.filter(
+      expense => !expense.isDeleted && !apiExpenseIds.has(expense.id)
+    )
+
+    const deletedExpenseIds = new Set<string>()
+
+    if (deletedExpenses.length > 0) {
+      try {
+        await expenseApi.deleteExpensesBatch(
+          deletedExpenses.map(expense => expense.id)
+        )
+        deletedExpenses.forEach(expense => deletedExpenseIds.add(expense.id))
+      } catch (error) {
+        console.error('Failed to delete expenses batch:', error)
+      }
+    }
+
+    if (expensesToUpdate.length > 0) {
+      try {
+        await expenseApi.updateExpensesBatch(
+          expensesToUpdate.map(expense => ({
+            id: expense.id,
+            amount: expense.amount,
+            categoryId: expense.categoryId
+          }))
+        )
+        expensesToUpdate.forEach(expense => {
+          expense.isSynced = true
+        })
+      } catch (error) {
+        console.error('Failed to update expenses batch:', error)
+      }
+    }
+
+    if (expensesToCreate.length > 0) {
+      try {
+        await expenseApi.createExpensesBatch(
+          expensesToCreate.map(expense => ({
+            id: expense.id,
+            amount: expense.amount,
+            categoryId: expense.categoryId,
+            createdAt: expense.createdAt
+          }))
+        )
+        expensesToCreate.forEach(expense => {
+          expense.isSynced = true
+        })
+      } catch (error) {
+        console.error('Failed to create expenses batch:', error)
+      }
+    }
+
+    if (deletedExpenseIds.size > 0) {
+      expenses.value = expenses.value.filter(
+        expense => !deletedExpenseIds.has(expense.id)
+      )
+    }
+
+    saveExpenses()
   }
 
   function saveExpenses() {
