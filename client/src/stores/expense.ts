@@ -48,7 +48,7 @@ export const useExpenseStore = defineStore('expense', () => {
   let syncPromise: Promise<void> | null = null
   let syncRequested = false
 
-  async function syncExpenseWithApi() {
+  async function requestExpenseSync() {
     if (syncPromise) {
       syncRequested = true
       return syncPromise
@@ -57,7 +57,7 @@ export const useExpenseStore = defineStore('expense', () => {
     syncPromise = (async () => {
       do {
         syncRequested = false
-        await syncExpensesBatch()
+        await syncPendingExpensesOnce()
       } while (syncRequested)
     })()
       .catch(error => {
@@ -70,16 +70,15 @@ export const useExpenseStore = defineStore('expense', () => {
     return syncPromise
   }
 
-  async function syncExpensesBatch() {
-    loadExpenses()
-    const unsyncedExpenses = expenses.value.filter(expense => !expense.isSynced)
+  async function syncPendingExpensesOnce() {
+    const pendingExpenses = getPendingExpenses()
 
-    if (unsyncedExpenses.length === 0) {
+    if (pendingExpenses.length === 0) {
       return
     }
 
     const apiExpenses = await expenseApi.getExpensesByIds(
-      unsyncedExpenses.map(expense => expense.id)
+      pendingExpenses.map(expense => expense.id)
     )
     const apiExpenseIds = new Set(
       apiExpenses
@@ -87,69 +86,105 @@ export const useExpenseStore = defineStore('expense', () => {
         .filter((id): id is string => id !== undefined)
     )
 
-    const deletedExpenses = unsyncedExpenses.filter(expense => expense.isDeleted)
-    const expensesToUpdate = unsyncedExpenses.filter(
-      expense => !expense.isDeleted && apiExpenseIds.has(expense.id)
+    const { deleted, toUpdate, toCreate } = splitPendingExpenses(
+      pendingExpenses,
+      apiExpenseIds
     )
-    const expensesToCreate = unsyncedExpenses.filter(
-      expense => !expense.isDeleted && !apiExpenseIds.has(expense.id)
-    )
-
-    const deletedExpenseIds = new Set<string>()
-
-    if (deletedExpenses.length > 0) {
-      try {
-        await expenseApi.deleteExpensesBatch(
-          deletedExpenses.map(expense => expense.id)
-        )
-        deletedExpenses.forEach(expense => deletedExpenseIds.add(expense.id))
-      } catch (error) {
-        console.error('Failed to delete expenses batch:', error)
-      }
-    }
-
-    if (expensesToUpdate.length > 0) {
-      try {
-        await expenseApi.updateExpensesBatch(
-          expensesToUpdate.map(expense => ({
-            id: expense.id,
-            amount: expense.amount,
-            categoryId: expense.categoryId
-          }))
-        )
-        expensesToUpdate.forEach(expense => {
-          expense.isSynced = true
-        })
-      } catch (error) {
-        console.error('Failed to update expenses batch:', error)
-      }
-    }
-
-    if (expensesToCreate.length > 0) {
-      try {
-        await expenseApi.createExpensesBatch(
-          expensesToCreate.map(expense => ({
-            id: expense.id,
-            amount: expense.amount,
-            categoryId: expense.categoryId,
-            createdAt: expense.createdAt
-          }))
-        )
-        expensesToCreate.forEach(expense => {
-          expense.isSynced = true
-        })
-      } catch (error) {
-        console.error('Failed to create expenses batch:', error)
-      }
-    }
-
-    if (deletedExpenseIds.size > 0) {
-      expenses.value = expenses.value.filter(
-        expense => !deletedExpenseIds.has(expense.id)
-      )
-    }
+    const deletedExpenseIds = await syncDeletedExpenses(deleted)
+    await syncUpdatedExpenses(toUpdate)
+    await syncCreatedExpenses(toCreate)
+    removeDeletedExpenses(deletedExpenseIds)
 
     saveExpenses()
+  }
+
+  function getPendingExpenses() {
+    loadExpenses()
+    return expenses.value.filter(expense => !expense.isSynced)
+  }
+
+  function splitPendingExpenses(
+    pendingExpenses: Expense[],
+    apiExpenseIds: Set<string>
+  ) {
+    return {
+      deleted: pendingExpenses.filter(expense => expense.isDeleted),
+      toUpdate: pendingExpenses.filter(
+        expense => !expense.isDeleted && apiExpenseIds.has(expense.id)
+      ),
+      toCreate: pendingExpenses.filter(
+        expense => !expense.isDeleted && !apiExpenseIds.has(expense.id)
+      )
+    }
+  }
+
+  async function syncDeletedExpenses(deletedExpenses: Expense[]) {
+    if (deletedExpenses.length === 0) {
+      return new Set<string>()
+    }
+
+    try {
+      await expenseApi.deleteExpensesBatch(
+        deletedExpenses.map(expense => expense.id)
+      )
+      return new Set(deletedExpenses.map(expense => expense.id))
+    } catch (error) {
+      console.error('Failed to delete expenses batch:', error)
+      return new Set<string>()
+    }
+  }
+
+  async function syncUpdatedExpenses(expensesToUpdate: Expense[]) {
+    if (expensesToUpdate.length === 0) {
+      return
+    }
+
+    try {
+      await expenseApi.updateExpensesBatch(
+        expensesToUpdate.map(expense => ({
+          id: expense.id,
+          amount: expense.amount,
+          categoryId: expense.categoryId
+        }))
+      )
+      expensesToUpdate.forEach(expense => {
+        expense.isSynced = true
+      })
+    } catch (error) {
+      console.error('Failed to update expenses batch:', error)
+    }
+  }
+
+  async function syncCreatedExpenses(expensesToCreate: Expense[]) {
+    if (expensesToCreate.length === 0) {
+      return
+    }
+
+    try {
+      await expenseApi.createExpensesBatch(
+        expensesToCreate.map(expense => ({
+          id: expense.id,
+          amount: expense.amount,
+          categoryId: expense.categoryId,
+          createdAt: expense.createdAt
+        }))
+      )
+      expensesToCreate.forEach(expense => {
+        expense.isSynced = true
+      })
+    } catch (error) {
+      console.error('Failed to create expenses batch:', error)
+    }
+  }
+
+  function removeDeletedExpenses(deletedExpenseIds: Set<string>) {
+    if (deletedExpenseIds.size === 0) {
+      return
+    }
+
+    expenses.value = expenses.value.filter(
+      expense => !deletedExpenseIds.has(expense.id)
+    )
   }
 
   function saveExpenses() {
@@ -174,7 +209,7 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
 
     // Sync in background without blocking
-    syncExpenseWithApi()
+    requestExpenseSync()
 
     return newExpenseId;
   }
@@ -204,7 +239,7 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
 
     // Sync in background without blocking
-    syncExpenseWithApi()
+    requestExpenseSync()
   }
 
   function updateExpenseCategory(
@@ -225,7 +260,7 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
 
     // Sync in background without blocking
-    syncExpenseWithApi()
+    requestExpenseSync()
   }
 
   function updateExpenseAmount(
@@ -246,7 +281,7 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
 
     // Sync in background without blocking
-    syncExpenseWithApi()
+    requestExpenseSync()
   }
 
   function deleteExpense(id: string) {
@@ -262,7 +297,7 @@ export const useExpenseStore = defineStore('expense', () => {
     saveExpenses()
 
     // Sync deletion in background without blocking
-    syncExpenseWithApi()
+    requestExpenseSync()
   }
 
   function getExpenseById(id: string) {
@@ -272,7 +307,7 @@ export const useExpenseStore = defineStore('expense', () => {
   }
 
   async function syncUnsyncedExpenses() {
-    await syncExpenseWithApi()
+    await requestExpenseSync()
   }
 
   return {
