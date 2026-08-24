@@ -20,5 +20,8 @@ class Expense(
     var categoryId: String? = null,
 
     @Column(nullable = false, updatable = false)
-    val createdAt: Instant
+    val createdAt: Instant,
+
+    @Column(name = "user_id")
+    val userId: UUID
 )

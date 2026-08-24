@@ -10,6 +10,7 @@ import org.example.org.example.finfast.entity.Expense
 import org.example.org.example.finfast.repository.ExpenseRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.security.core.context.SecurityContextHolder
 import java.util.UUID
 
 @Service
@@ -19,15 +20,15 @@ class ExpenseService(
 
     @Transactional(readOnly = true)
     fun get(id: UUID): ExpenseDto {
-        val expense = expenseRepository.findById(id)
-            .orElseThrow { RuntimeException("Expense not found: $id") }
+        val expense = expenseRepository.findByIdAndUserId(id, currentUserId())
+            ?: throw RuntimeException("Expense not found: $id")
 
         return expense.toDto()
     }
 
     @Transactional(readOnly = true)
     fun getByIds(ids: List<UUID>): List<ExpenseDto> {
-        return expenseRepository.findAllById(ids)
+        return expenseRepository.findAllByIdInAndUserId(ids, currentUserId())
             .map { it.toDto() }
     }
 
@@ -37,7 +38,8 @@ class ExpenseService(
             id = dto.id,
             amount = dto.amount,
             categoryId = dto.categoryId,
-            createdAt = dto.createdAt
+            createdAt = dto.createdAt,
+            userId = currentUserId()
         )
 
         expenseRepository.save(expense)
@@ -50,7 +52,8 @@ class ExpenseService(
                 id = dto.id,
                 amount = dto.amount,
                 categoryId = dto.categoryId,
-                createdAt = dto.createdAt
+                createdAt = dto.createdAt,
+                userId = currentUserId()
             )
         }
 
@@ -69,8 +72,8 @@ class ExpenseService(
         id: UUID,
         dto: UpdateExpenseDto
     ) {
-        val expense = expenseRepository.findById(id)
-            .orElseThrow { RuntimeException("Expense not found: $id") }
+        val expense = expenseRepository.findByIdAndUserId(id, currentUserId())
+            ?: throw RuntimeException("Expense not found: $id")
 
         updateExpense(expense, dto)
 
@@ -80,10 +83,8 @@ class ExpenseService(
     @Transactional
     fun updateBatch(dtos: List<BatchUpdateExpenseDto>) {
         val expenses = dtos.map { batchUpdateDto ->
-            val expense = expenseRepository.findById(batchUpdateDto.id)
-                .orElseThrow {
-                    RuntimeException("Expense not found: ${batchUpdateDto.id}")
-                }
+            val expense = expenseRepository.findByIdAndUserId(batchUpdateDto.id, currentUserId())
+                ?: throw RuntimeException("Expense not found: ${batchUpdateDto.id}")
 
             updateExpense(expense, batchUpdateDto.toUpdateDto())
 
@@ -95,17 +96,17 @@ class ExpenseService(
 
     @Transactional
     fun delete(id: UUID): Boolean {
-        if (!expenseRepository.existsById(id)) {
+        if (!expenseRepository.existsByIdAndUserId(id, currentUserId())) {
             return false
         }
 
-        expenseRepository.deleteById(id)
+        expenseRepository.deleteByIdAndUserId(id, currentUserId())
         return true
     }
 
     @Transactional
     fun deleteBatch(ids: List<UUID>) {
-        expenseRepository.deleteAllById(ids)
+        expenseRepository.deleteAllByIdInAndUserId(ids, currentUserId())
     }
 
     private fun updateExpense(
@@ -119,5 +120,12 @@ class ExpenseService(
         dto.categoryId?.let {
             expense.categoryId = it
         }
+    }
+
+    private fun currentUserId(): UUID {
+        val authentication = SecurityContextHolder.getContext().authentication
+            ?.takeIf { it.isAuthenticated }
+            ?: throw IllegalStateException("Authenticated user is required")
+        return UUID.fromString(authentication.name)
     }
 }

@@ -15,3 +15,10 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: validate
+
+finfast:
+  jwt:
+    issuer: finfast-api
+    key-id: finfast-rs256-1
+    private-key-b64: ${FINFAST_JWT_PRIVATE_KEY_B64:}
+    public-key-b64: ${FINFAST_JWT_PUBLIC_KEY_B64:}
