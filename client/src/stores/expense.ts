@@ -169,7 +169,23 @@ export const useExpenseStore = defineStore('expense', () => {
     )
   }
 
+  async function createExpenseDirectly(expense: Expense) {
+    try {
+      await expenseApi.createExpense({
+        id: expense.id,
+        amount: expense.amount,
+        categoryId: expense.categoryId,
+        createdAt: expense.createdAt
+      })
+      expense.isSynced = true
+      saveExpenses()
+    } catch (error) {
+      console.error('Failed to create expense:', error)
+    }
+  }
+
   function addExpense(payload: ExpensePayload): string {
+    const hasPendingExpenses = getPendingExpenses().length > 0
     const newExpenseId = crypto.randomUUID();
     const expense: Expense = {
       id: newExpenseId,
@@ -183,8 +199,13 @@ export const useExpenseStore = defineStore('expense', () => {
     expenses.value.push(expense)
     saveExpenses()
 
-    // Sync in background without blocking
-    queueExpensesSyncWithApi()
+    if (hasPendingExpenses) {
+      // Sync in background without blocking
+      queueExpensesSyncWithApi()
+    } else {
+      // Create directly when there are no other pending expenses
+      createExpenseDirectly(expense)
+    }
 
     return newExpenseId;
   }
