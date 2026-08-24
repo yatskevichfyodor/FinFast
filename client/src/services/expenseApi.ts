@@ -26,9 +26,9 @@ export interface BatchUpdateExpenseRequest extends UpdateExpenseRequest {
 }
 
 export interface SyncExpensesRequest {
-  create: CreateExpensePayload[]
-  update: BatchUpdateExpenseRequest[]
-  delete: string[]
+  create?: CreateExpensePayload[]
+  update?: BatchUpdateExpenseRequest[]
+  delete?: string[]
 }
 
 export async function getExpense(id: string): Promise<ExpenseApiBody | undefined> {

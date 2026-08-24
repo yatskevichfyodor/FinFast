@@ -84,20 +84,30 @@ export const useExpenseStore = defineStore('expense', () => {
     const deletedExpenseIds = deleted.map(expense => expense.id)
 
     if (deletedExpenseIds.length > 0 || toUpdate.length > 0 || toCreate.length > 0) {
-      await expenseApi.syncExpenses({
-        create: toCreate.map(expense => ({
+      const syncRequest: expenseApi.SyncExpensesRequest = {}
+
+      if (toCreate.length > 0) {
+        syncRequest.create = toCreate.map(expense => ({
           id: expense.id,
           amount: expense.amount,
           categoryId: expense.categoryId,
           createdAt: expense.createdAt
-        })),
-        update: toUpdate.map(expense => ({
+        }))
+      }
+
+      if (toUpdate.length > 0) {
+        syncRequest.update = toUpdate.map(expense => ({
           id: expense.id,
           amount: expense.amount,
           categoryId: expense.categoryId
-        })),
-        delete: deletedExpenseIds
-      })
+        }))
+      }
+
+      if (deletedExpenseIds.length > 0) {
+        syncRequest.delete = deletedExpenseIds
+      }
+
+      await expenseApi.syncExpenses(syncRequest)
 
       toUpdate.forEach(expense => {
         expense.isSynced = true
