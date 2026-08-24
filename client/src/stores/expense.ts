@@ -31,12 +31,7 @@ export const useExpenseStore = defineStore('expense', () => {
 
     try {
       const parsedExpenses = JSON.parse(savedExpenses) as Expense[]
-      // Ensure all expenses have isSynced field (for backward compatibility)
-      expenses.value = parsedExpenses.map(expense => ({
-        ...expense,
-        isSynced: expense.isSynced ?? false,
-        isDeleted: expense.isDeleted ?? false
-      }))
+      expenses.value = parsedExpenses
     } catch {
       expenses.value = []
     }
@@ -79,22 +74,18 @@ export const useExpenseStore = defineStore('expense', () => {
       return
     }
 
-    const apiExpenses = await expenseApi.getExpensesByIds(
-      pendingExpenses.map(expense => expense.id)
-    )
-    const apiExpenseIds = new Set(
-      apiExpenses
-        .map(apiExpense => apiExpense.id)
-        .filter((id): id is string => id !== undefined)
-    )
+    const apiExpenses = await expenseApi.getExpensesByIds(pendingExpenses.map(expense => expense.id))
+    const apiExpenseIds = new Set(apiExpenses.map(apiExpense => apiExpense.id))
 
     const { deleted, toUpdate, toCreate } = splitPendingExpenses(
       pendingExpenses,
       apiExpenseIds
     )
-    const deletedExpenseIds = await syncDeletedExpenses(deleted)
-    await syncUpdatedExpenses(toUpdate)
-    await syncCreatedExpenses(toCreate)
+    const [deletedExpenseIds] = await Promise.all([
+      syncDeletedExpenses(deleted),
+      syncUpdatedExpenses(toUpdate),
+      syncCreatedExpenses(toCreate)
+    ])
     removeDeletedExpenses(deletedExpenseIds)
 
     saveExpenses()
@@ -126,10 +117,9 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     try {
-      await expenseApi.deleteExpensesBatch(
-        deletedExpenses.map(expense => expense.id)
-      )
-      return new Set(deletedExpenses.map(expense => expense.id))
+      const deletedExpensesIds = deletedExpenses.map(expense => expense.id)
+      await expenseApi.deleteExpensesBatch(deletedExpensesIds)
+      return new Set(deletedExpensesIds)
     } catch (error) {
       console.error('Failed to delete expenses batch:', error)
       return new Set<string>()
