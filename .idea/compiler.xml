@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="FinFast.auth" target="25" />
+      <module name="FinFast.auth.main" target="25" />
+      <module name="FinFast.auth.test" target="25" />
+    </bytecodeTargetLevel>
+  </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="com.example.FinFast" options="-parameters" />
