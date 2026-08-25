@@ -54,3 +54,9 @@ allOpen {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+tasks.register<JavaExec>("h2Console") {
+    classpath = configurations.runtimeClasspath.get()
+    mainClass.set("org.h2.tools.Console")
+    args("-web", "-browser")
+}
