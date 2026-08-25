@@ -25,10 +25,14 @@ class ExpenseController(
 
     @GetMapping
     fun getByIds(
-        @RequestParam ids: List<UUID>
+        @RequestParam(required = false) ids: List<UUID>?
     ): ResponseEntity<List<ExpenseDto>> {
         return ResponseEntity.ok(
-            expenseService.getByIds(ids)
+            if (ids == null) {
+                expenseService.getAll()
+            } else {
+                expenseService.getByIds(ids)
+            }
         )
     }
 

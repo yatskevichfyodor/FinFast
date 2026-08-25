@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import {
@@ -11,6 +11,10 @@ import { formatDate, formatTime } from '@/utils/dateHelpers'
 
 const router = useRouter()
 const expenseStore = useExpenseStore()
+
+onMounted(() => {
+  void expenseStore.refreshExpenses()
+})
 
 const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)

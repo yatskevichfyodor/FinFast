@@ -64,15 +64,44 @@ export const useExpenseStore = defineStore('expense', () => {
 
         await syncExpensesWithApi()
       }
-    })()
-      .catch(error => {
-        console.error('Failed to sync expenses:', error)
-      })
-      .finally(() => {
+    })().finally(() => {
         syncPromise = null
       })
 
     return syncPromise
+  }
+
+  async function refreshExpenses() {
+    const userId = authStore.userId
+    if (!userId) {
+      return
+    }
+
+    await loadExpenses()
+
+    try {
+      await queueExpensesSyncWithApi()
+      const apiExpenses = await expenseApi.getExpenses()
+      const localExpenseIds = new Set(expenses.value.map(expense => expense.id))
+      const missingExpenses = apiExpenses
+        .filter(expense => !localExpenseIds.has(expense.id))
+        .map(expense => ({
+          id: expense.id,
+          amount: expense.amount ?? 0,
+          categoryId: expense.categoryId,
+          createdAt: expense.createdAt,
+          isSynced: true,
+          isDeleted: false,
+          isCreatedLocally: false
+        }))
+
+      if (missingExpenses.length > 0) {
+        expenses.value.push(...missingExpenses)
+        persistExpenses()
+      }
+    } catch (error) {
+      console.error('Failed to refresh expenses:', error)
+    }
   }
 
   async function syncExpensesWithApi() {
@@ -270,7 +299,9 @@ export const useExpenseStore = defineStore('expense', () => {
 
     if (hasPendingExpenses) {
       // Sync in background without blocking
-      queueExpensesSyncWithApi()
+      void queueExpensesSyncWithApi().catch(error => {
+        console.error('Failed to sync expenses:', error)
+      })
     } else {
       // Create directly when there are no other pending expenses
       createExpenseDirectly(expense)
@@ -305,7 +336,9 @@ export const useExpenseStore = defineStore('expense', () => {
     persistExpenses()
 
     if (hasPendingExpenses) {
-      queueExpensesSyncWithApi()
+      void queueExpensesSyncWithApi().catch(error => {
+        console.error('Failed to sync expenses:', error)
+      })
     } else {
       updateExpenseDirectly(expenses.value[index]!)
     }
@@ -330,7 +363,9 @@ export const useExpenseStore = defineStore('expense', () => {
     persistExpenses()
 
     if (hasPendingExpenses) {
-      queueExpensesSyncWithApi()
+      void queueExpensesSyncWithApi().catch(error => {
+        console.error('Failed to sync expenses:', error)
+      })
     } else {
       updateExpenseDirectly(expense)
     }
@@ -355,7 +390,9 @@ export const useExpenseStore = defineStore('expense', () => {
     persistExpenses()
 
     if (hasPendingExpenses) {
-      queueExpensesSyncWithApi()
+      void queueExpensesSyncWithApi().catch(error => {
+        console.error('Failed to sync expenses:', error)
+      })
     } else {
       updateExpenseDirectly(expense)
     }
@@ -376,7 +413,9 @@ export const useExpenseStore = defineStore('expense', () => {
     persistExpenses()
 
     if (hasPendingExpenses) {
-      queueExpensesSyncWithApi()
+      void queueExpensesSyncWithApi().catch(error => {
+        console.error('Failed to sync expenses:', error)
+      })
     } else {
       deleteExpenseDirectly(expense, shouldDeleteOnApi)
     }
@@ -395,6 +434,7 @@ export const useExpenseStore = defineStore('expense', () => {
   return {
     expenses,
     loadExpenses,
+    refreshExpenses,
     addExpense,
     updateExpense,
     updateExpenseCategory,

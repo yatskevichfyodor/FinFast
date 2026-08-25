@@ -32,6 +32,12 @@ class ExpenseService(
             .map { it.toDto() }
     }
 
+    @Transactional(readOnly = true)
+    fun getAll(): List<ExpenseDto> {
+        return expenseRepository.findAllByUserIdOrderByCreatedAtDesc(currentUserId())
+            .map { it.toDto() }
+    }
+
     @Transactional
     fun create(dto: ExpenseDto) {
         val expense = Expense(
