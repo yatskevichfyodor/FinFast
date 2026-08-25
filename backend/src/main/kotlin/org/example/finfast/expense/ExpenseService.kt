@@ -1,11 +1,11 @@
 package org.example.finfast.service
 
-import org.example.finfast.dto.BatchUpdateExpenseDto
-import org.example.finfast.dto.ExpenseDto
-import org.example.finfast.dto.SyncExpensesDto
-import org.example.finfast.dto.UpdateExpenseDto
-import org.example.finfast.dto.toDto
-import org.example.finfast.dto.toUpdateDto
+import org.example.finfast.expense.dto.BatchUpdateExpenseDto
+import org.example.finfast.expense.dto.ExpenseDto
+import org.example.finfast.expense.dto.SyncExpensesDto
+import org.example.finfast.expense.dto.UpdateExpenseDto
+import org.example.finfast.expense.dto.toDto
+import org.example.finfast.expense.dto.toUpdateDto
 import org.example.finfast.entity.Expense
 import org.example.finfast.repository.ExpenseRepository
 import org.springframework.stereotype.Service

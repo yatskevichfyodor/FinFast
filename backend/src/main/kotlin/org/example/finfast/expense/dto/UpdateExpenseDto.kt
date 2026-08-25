@@ -1,15 +1,14 @@
-package org.example.finfast.dto
+package org.example.finfast.expense.dto
 
+import org.example.finfast.entity.Expense
 import java.math.BigDecimal
-import java.util.*
 
-class BatchUpdateExpenseDto(
-    val id: UUID,
+data class UpdateExpenseDto(
     val amount: BigDecimal?,
     val categoryId: String?
 )
 
-fun BatchUpdateExpenseDto.toUpdateDto() =
+fun Expense.toUpdateDto() =
     UpdateExpenseDto(
         amount = amount,
         categoryId = categoryId
