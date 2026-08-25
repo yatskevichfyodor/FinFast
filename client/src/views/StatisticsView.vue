@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useExpenseStore, type Expense } from '@/stores/expense'
+import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { formatMonthName } from '@/utils/dateHelpers'
 
 interface CategoryStat {
-  id: number
+  id: string
   name: string
   icon: string
   color: string
@@ -16,99 +18,79 @@ interface MonthStat {
   categories: CategoryStat[]
 }
 
-const months = ref<MonthStat[]>([
-  {
-    year: 2026,
-    month: 8,
-    categories: [
-      {
-        id: 1,
-        name: 'Еда',
-        icon: 'mdi-food',
-        color: '#FF7043',
-        amount: 520
-      },
-      {
-        id: 2,
-        name: 'Транспорт',
-        icon: 'mdi-car',
-        color: '#42A5F5',
-        amount: 190
-      },
-      {
-        id: 3,
-        name: 'Дом',
-        icon: 'mdi-home',
-        color: '#AB47BC',
-        amount: 150
-      },
-      {
-        id: 4,
-        name: 'Покупки',
-        icon: 'mdi-shopping',
-        color: '#EC407A',
-        amount: 280
-      },
-      {
-        id: 5,
-        name: 'Развлечения',
-        icon: 'mdi-gamepad-variant',
-        color: '#7E57C2',
-        amount: 65
-      },
-      {
-        id: 6,
-        name: 'Здоровье',
-        icon: 'mdi-heart-pulse',
-        color: '#26A69A',
-        amount: 40
-      }
-    ]
-  },
-  {
-    year: 2026,
-    month: 7,
-    categories: [
-      {
-        id: 1,
-        name: 'Еда',
-        icon: 'mdi-food',
-        color: '#FF7043',
-        amount: 430
-      },
-      {
-        id: 2,
-        name: 'Транспорт',
-        icon: 'mdi-car',
-        color: '#42A5F5',
-        amount: 160
-      },
-      {
-        id: 3,
-        name: 'Дом',
-        icon: 'mdi-home',
-        color: '#AB47BC',
-        amount: 210
-      },
-      {
-        id: 4,
-        name: 'Покупки',
-        icon: 'mdi-shopping',
-        color: '#EC407A',
-        amount: 320
-      }
-    ]
-  }
-])
+const expenseStore = useExpenseStore()
 
 const selectedMonthIndex = ref(0)
 
-const currentMonth = computed(() => {
-  return months.value[selectedMonthIndex.value]!
+onMounted(() => {
+  void expenseStore.refreshExpenses()
 })
 
+const activeExpenses = computed(() =>
+  expenseStore.expenses.filter((expense: Expense) => !expense.isDeleted)
+)
+
+const months = computed<MonthStat[]>(() => {
+  const monthGroups = new Map<string, {
+    year: number
+    month: number
+    categories: Map<string, number>
+  }>()
+
+  activeExpenses.value.forEach(expense => {
+    const date = new Date(expense.createdAt)
+    if (Number.isNaN(date.getTime())) {
+      return
+    }
+
+    const year = date.getFullYear()
+    const month = date.getMonth() + 1
+    const monthKey = `${year}-${String(month).padStart(2, '0')}`
+    const categoryId = expense.categoryId ?? '__uncategorized__'
+    const group = monthGroups.get(monthKey) ?? {
+      year,
+      month,
+      categories: new Map<string, number>()
+    }
+
+    group.categories.set(
+      categoryId,
+      (group.categories.get(categoryId) ?? 0) + expense.amount
+    )
+    monthGroups.set(monthKey, group)
+  })
+
+  return [...monthGroups.values()]
+    .sort((a, b) => b.year - a.year || b.month - a.month)
+    .map(group => ({
+      year: group.year,
+      month: group.month,
+      categories: [...group.categories.entries()].map(([id, amount]) => {
+        const category = id === '__uncategorized__'
+          ? getCategoryDisplay(undefined)
+          : getCategoryDisplay(id)
+
+        return {
+          id,
+          name: category.name,
+          icon: category.icon,
+          color: category.color,
+          amount
+        }
+      })
+    }))
+})
+
+watch(months, value => {
+  if (selectedMonthIndex.value >= value.length) {
+    selectedMonthIndex.value = Math.max(value.length - 1, 0)
+  }
+})
+
+const currentMonth = computed(() => months.value[selectedMonthIndex.value])
+
 const totalAmount = computed(() => {
-  return currentMonth.value.categories.reduce(
+  return (currentMonth.value?.categories ?? []).reduce(
     (total, category) => total + category.amount,
     0
   )
@@ -119,11 +101,15 @@ const formattedTotal = computed(() => {
 })
 
 const monthName = computed(() => {
+  if (!currentMonth.value) {
+    return 'Нет данных'
+  }
+
   return formatMonthName(currentMonth.value.year, currentMonth.value.month)
 })
 
 const sortedCategories = computed(() => {
-  return [...currentMonth.value.categories]
+  return [...(currentMonth.value?.categories ?? [])]
     .sort((a, b) => b.amount - a.amount)
 })
 
@@ -210,7 +196,7 @@ function getPercentage(amount: number) {
 
           <div class="total-amount">
             {{ formattedTotal }}
-            <span>₾</span>
+            <span>₽</span>
           </div>
 
           <div class="total-caption">
@@ -260,7 +246,7 @@ function getPercentage(amount: number) {
                   </span>
 
                   <span class="category-amount">
-                    {{ category.amount.toFixed(2) }} ₾
+                    {{ category.amount.toFixed(2) }} ₽
                   </span>
                 </div>
 
