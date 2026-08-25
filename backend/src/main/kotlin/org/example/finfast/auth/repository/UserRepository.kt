@@ -1,5 +1,6 @@
 package org.example.finfast.auth
 
+import org.example.finfast.auth.entity.User
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 

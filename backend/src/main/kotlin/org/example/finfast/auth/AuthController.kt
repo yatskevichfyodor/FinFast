@@ -1,5 +1,10 @@
 package org.example.finfast.auth
 
+import org.example.finfast.auth.dto.LoginRequest
+import org.example.finfast.auth.dto.LogoutRequest
+import org.example.finfast.auth.dto.RefreshRequest
+import org.example.finfast.auth.dto.RegisterRequest
+import org.example.finfast.auth.dto.UserResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.core.annotation.AuthenticationPrincipal

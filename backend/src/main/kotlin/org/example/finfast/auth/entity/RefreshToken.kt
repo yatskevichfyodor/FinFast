@@ -1,4 +1,4 @@
-package org.example.finfast.auth
+package org.example.finfast.auth.entity
 
 import jakarta.persistence.*
 import java.time.Instant

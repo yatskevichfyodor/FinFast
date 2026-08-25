@@ -9,54 +9,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c08fe06e-4a23-42b0-a64b-0fb143e00ef1" name="Changes" comment="fix package paths">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/FinFast.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/kotlinc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.idea/kotlinc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/.idea/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.idea/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/.idea/.name" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.idea/.name" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/.idea/kotlinc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/build.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/gradle.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/gradle/wrapper/gradle-wrapper.jar" beforeDir="false" afterPath="$PROJECT_DIR$/backend/gradle/wrapper/gradle-wrapper.jar" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/gradlew" beforeDir="false" afterPath="$PROJECT_DIR$/backend/gradlew" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/gradlew.bat" beforeDir="false" afterPath="$PROJECT_DIR$/backend/gradlew.bat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/settings.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/backend/settings.gradle.kts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/Application.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/Application.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/auth/AuthConfig.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/AuthConfig.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/auth/AuthController.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/AuthController.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/auth/AuthDtos.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/AuthDtos.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/auth/AuthService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/AuthService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/auth/JwtKeyProvider.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/JwtKeyProvider.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/auth/JwtService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/JwtService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/auth/RefreshToken.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/RefreshToken.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/auth/RefreshTokenRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/RefreshTokenRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/auth/User.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/User.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/auth/UserRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/UserRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/config/CorsConfig.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/config/CorsConfig.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/config/SecurityConfig.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/config/SecurityConfig.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/controller/ExpenseController.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/controller/ExpenseController.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/dto/BatchUpdateExpenseDto.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/dto/BatchUpdateExpenseDto.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/dto/ExpenseDto.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/dto/ExpenseDto.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/dto/SyncExpensesDto.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/dto/SyncExpensesDto.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/dto/UpdateExpenseDto.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/dto/UpdateExpenseDto.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/entity/Expense.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/entity/Expense.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/repository/ExpenseRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/repository/ExpenseRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/kotlin/org/example/finfast/service/ExpenseService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/service/ExpenseService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/resources/db/migration/V1__create_expenses.sql" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V1__create_expenses.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/resources/db/migration/V2__add_expense_owner.sql" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V2__add_expense_owner.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/resources/db/migration/V3__create_auth_tables.sql" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V3__create_auth_tables.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/api/src/main/resources/db/migration/V4__make_expense_owner_required.sql" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/db/migration/V4__make_expense_owner_required.sql" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/SecurityConfig.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/AuthController.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/AuthController.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/AuthDtos.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/AuthService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/auth/AuthService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/kotlin/org/example/finfast/config/SecurityConfig.kt" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -114,7 +74,7 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-    <option name="RESET_MODE" value="MIXED" />
+    <option name="RESET_MODE" value="HARD" />
   </component>
   <component name="McpProjectServerCommands">
     <commands />
@@ -122,61 +82,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000000154266495" />
-      <entry key="S2" value="1.0111446877386718" />
-      <entry key="S5" value="1.1656631156577273" />
-      <entry key="S10" value="1.4316295924772475" />
-      <entry key="S30" value="2.565409985202529" />
-      <entry key="S60" value="4.15889037431419" />
-      <entry key="M2" value="8.313680664165862" />
-      <entry key="M5" value="26.89066891969719" />
-      <entry key="M10" value="56.57245824586584" />
-      <entry key="M15" value="85.9861704966873" />
-      <entry key="M30" value="192.31058540021192" />
-      <entry key="H1" value="441.7556084627366" />
-      <entry key="H2" value="866.7718528261275" />
-      <entry key="H4" value="1344.168922656626" />
-      <entry key="D1" value="2065.4480341544254" />
-      <entry key="W1" value="2237.5285327993597" />
+      <entry key="MS100" value="1.7330174595436363" />
+      <entry key="MS500" value="5.124468740867751" />
+      <entry key="S2" value="13.547653527653093" />
+      <entry key="S5" value="23.395338649853272" />
+      <entry key="S10" value="31.972736886206267" />
+      <entry key="S30" value="42.35395301551495" />
+      <entry key="S60" value="52.93151001377331" />
+      <entry key="M2" value="79.632918182759" />
+      <entry key="M5" value="134.3694104687325" />
+      <entry key="M10" value="185.1749467860897" />
+      <entry key="M15" value="223.13960017874408" />
+      <entry key="M30" value="336.7423158356519" />
+      <entry key="H1" value="587.8411326523392" />
+      <entry key="H2" value="1015.9730107277111" />
+      <entry key="H4" value="1500.7434653711632" />
+      <entry key="D1" value="2238.8077514100682" />
+      <entry key="W1" value="2415.6577848817155" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
-      <entry key="S10" value="2.1215756191222478E-254" />
-      <entry key="S30" value="2.768340493179915E-85" />
-      <entry key="S60" value="5.261502155449455E-43" />
-      <entry key="M2" value="7.253621271785066E-22" />
-      <entry key="M5" value="3.5012412453284662E-9" />
-      <entry key="M10" value="5.9208382172758886E-5" />
-      <entry key="M15" value="0.0015324889177593948" />
-      <entry key="M30" value="0.044261934808719705" />
-      <entry key="H1" value="0.3003033171986434" />
-      <entry key="H2" value="0.8979539838992127" />
-      <entry key="H4" value="1.6190855531407249" />
-      <entry key="D1" value="2.70204235451285" />
-      <entry key="W1" value="2.9553757525938784" />
+      <entry key="S10" value="3.4699552330224173E-264" />
+      <entry key="S30" value="1.5139375375261177E-88" />
+      <entry key="S60" value="1.230421690936132E-44" />
+      <entry key="M2" value="1.1092437473053784E-22" />
+      <entry key="M5" value="1.6520031880901268E-9" />
+      <entry key="M10" value="4.067032257932815E-5" />
+      <entry key="M15" value="0.0011930545215088622" />
+      <entry key="M30" value="0.03905367145669143" />
+      <entry key="H1" value="0.28208231984771026" />
+      <entry key="H2" value="0.8702859056586627" />
+      <entry key="H4" value="1.5939464688027856" />
+      <entry key="D1" value="2.6950043758604942" />
+      <entry key="W1" value="2.9542748325687103" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9659363289248456" />
-      <entry key="MS500" value="0.9930925107359023" />
-      <entry key="S2" value="1.0093901696879632" />
-      <entry key="S5" value="1.1648324661799423" />
-      <entry key="S10" value="1.4310924121946702" />
-      <entry key="S30" value="2.5632526329497867" />
-      <entry key="S60" value="4.154253496235431" />
-      <entry key="M2" value="8.308499014199699" />
-      <entry key="M5" value="26.88698347664057" />
-      <entry key="M10" value="56.57011154303521" />
-      <entry key="M15" value="85.98584325467688" />
-      <entry key="M30" value="192.35341746165946" />
-      <entry key="H1" value="442.0544322598475" />
-      <entry key="H2" value="867.6683660519694" />
-      <entry key="H4" value="1345.7868965308041" />
-      <entry key="D1" value="2068.14979445754" />
-      <entry key="W1" value="2240.4838649974117" />
+      <entry key="MS100" value="1.6576254365838112" />
+      <entry key="MS500" value="5.083568316988713" />
+      <entry key="S2" value="13.520741172156393" />
+      <entry key="S5" value="23.376424073707938" />
+      <entry key="S10" value="31.9596924395312" />
+      <entry key="S30" value="42.34815416231774" />
+      <entry key="S60" value="52.92776168784562" />
+      <entry key="M2" value="79.6293988931611" />
+      <entry key="M5" value="134.3659644348724" />
+      <entry key="M10" value="185.17230595963878" />
+      <entry key="M15" value="223.13861260478905" />
+      <entry key="M30" value="336.7797157064708" />
+      <entry key="H1" value="588.1216222179303" />
+      <entry key="H2" value="1016.8417969751316" />
+      <entry key="H4" value="1502.3362653192837" />
+      <entry key="D1" value="2241.502465721454" />
+      <entry key="W1" value="2418.6120149247085" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -190,40 +150,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
-    "Gradle.Build api.executor": "Run",
-    "Gradle.Build backend.executor": "Run",
-    "Gradle.api [:auth:build].executor": "Run",
-    "Gradle.api [:auth:clean].executor": "Run",
-    "Gradle.api [build].executor": "Run",
-    "Gradle.api [clean].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "Spring Boot.Application.executor": "Run",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "master",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/user/IdeaProjects/FinFast",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.jshint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.jshint": "",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "reference.settingsdialog.project.gradle",
-    "ts.external.directory.path": "C:\\Users\\user\\IdeaProjects\\FinFast\\client\\node_modules\\typescript\\lib",
-    "ultimate.editor.notification.dismissed.VueFreeTierEditorNotificationProvider": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_MARK_IGNORED_FILES_AS_EXCLUDED&quot;: &quot;true&quot;,
+    &quot;Gradle.Build api.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.Build backend.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.api [:auth:build].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.api [:auth:clean].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.api [build].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.api [clean].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;Spring Boot.Application.executor&quot;: &quot;Run&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/user/IdeaProjects/FinFast&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.jshint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.project.gradle&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\user\\IdeaProjects\\FinFast\\client\\node_modules\\typescript\\lib&quot;,
+    &quot;ultimate.editor.notification.dismissed.VueFreeTierEditorNotificationProvider&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\user\IdeaProjects\FinFast" />
