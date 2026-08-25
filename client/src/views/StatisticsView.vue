@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useExpenseStore, type Expense } from '@/stores/expense'
+import { useAuthStore } from '@/stores/auth'
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { formatMonthName } from '@/utils/dateHelpers'
 
@@ -19,12 +20,19 @@ interface MonthStat {
 }
 
 const expenseStore = useExpenseStore()
+const authStore = useAuthStore()
 
 const selectedMonthIndex = ref(0)
 
-onMounted(() => {
-  void expenseStore.refreshExpenses()
-})
+watch(() => authStore.userId, userId => {
+  if (!userId) {
+    return
+  }
+
+  void expenseStore.refreshExpenses().catch(error => {
+    console.error('Failed to refresh expenses for statistics:', error)
+  })
+}, { immediate: true })
 
 const activeExpenses = computed(() =>
   expenseStore.expenses.filter((expense: Expense) => !expense.isDeleted)
