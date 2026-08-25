@@ -1,13 +1,13 @@
-package org.example.org.example.finfast.service
+package org.example.finfast.service
 
-import org.example.org.example.finfast.dto.BatchUpdateExpenseDto
-import org.example.org.example.finfast.dto.ExpenseDto
-import org.example.org.example.finfast.dto.SyncExpensesDto
-import org.example.org.example.finfast.dto.UpdateExpenseDto
-import org.example.org.example.finfast.dto.toDto
-import org.example.org.example.finfast.dto.toUpdateDto
-import org.example.org.example.finfast.entity.Expense
-import org.example.org.example.finfast.repository.ExpenseRepository
+import org.example.finfast.dto.BatchUpdateExpenseDto
+import org.example.finfast.dto.ExpenseDto
+import org.example.finfast.dto.SyncExpensesDto
+import org.example.finfast.dto.UpdateExpenseDto
+import org.example.finfast.dto.toDto
+import org.example.finfast.dto.toUpdateDto
+import org.example.finfast.entity.Expense
+import org.example.finfast.repository.ExpenseRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.security.core.context.SecurityContextHolder

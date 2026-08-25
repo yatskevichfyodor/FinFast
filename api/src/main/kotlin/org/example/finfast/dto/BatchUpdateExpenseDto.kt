@@ -1,4 +1,4 @@
-package org.example.org.example.finfast.dto
+package org.example.finfast.dto
 
 import java.math.BigDecimal
 import java.util.*

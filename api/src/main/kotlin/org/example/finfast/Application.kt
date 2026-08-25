@@ -1,4 +1,4 @@
-package org.example.org.example.finfast
+package org.example.finfast
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication

@@ -1,4 +1,4 @@
-package org.example.org.example.finfast.config
+package org.example.finfast.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

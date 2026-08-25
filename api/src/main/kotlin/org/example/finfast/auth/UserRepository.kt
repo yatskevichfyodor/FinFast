@@ -1,4 +1,4 @@
-package org.example.org.example.finfast.auth
+package org.example.finfast.auth
 
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID

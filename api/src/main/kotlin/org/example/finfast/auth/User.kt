@@ -1,4 +1,4 @@
-package org.example.org.example.finfast.auth
+package org.example.finfast.auth
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

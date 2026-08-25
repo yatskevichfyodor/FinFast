@@ -1,4 +1,4 @@
-package org.example.org.example.finfast.auth
+package org.example.finfast.auth
 
 import com.nimbusds.jose.jwk.RSAKey
 import com.nimbusds.jose.jwk.JWKSet

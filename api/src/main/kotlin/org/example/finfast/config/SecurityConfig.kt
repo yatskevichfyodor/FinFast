@@ -1,6 +1,6 @@
-package org.example.org.example.finfast.config
+package org.example.finfast.config
 
-import org.example.org.example.finfast.auth.JwtKeyProvider
+import org.example.finfast.auth.JwtKeyProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity

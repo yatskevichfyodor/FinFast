@@ -1,6 +1,6 @@
-package org.example.org.example.finfast.dto
+package org.example.finfast.dto
 
-import org.example.org.example.finfast.entity.Expense
+import org.example.finfast.entity.Expense
 import java.math.BigDecimal
 
 data class UpdateExpenseDto(
