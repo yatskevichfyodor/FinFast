@@ -1,6 +1,8 @@
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import * as expenseApi from '@/services/expenseApi'
+import { loadExpenses as loadStoredExpenses, saveExpenses as saveStoredExpenses } from '@/services/expenseStorage'
+import { useAuthStore } from '@/stores/auth'
 
 export interface Expense {
   id: string
@@ -21,28 +23,46 @@ export interface ExpensePayload {
   categoryId?: string
 }
 
-const STORAGE_KEY = 'finfast-expenses'
-
 export const useExpenseStore = defineStore('expense', () => {
+  const authStore = useAuthStore()
+  const expensesByUser = new Map<string, Expense[]>()
   const expenses = ref<Expense[]>([])
+  let loadedUserId: string | null = null
+  let loadVersion = 0
 
-  function loadExpenses() {
-    const savedExpenses = localStorage.getItem(STORAGE_KEY)
+  async function loadExpenses() {
+    const userId = authStore.userId
+    const currentLoadVersion = ++loadVersion
 
-    if (!savedExpenses) {
+    loadedUserId = null
+    expenses.value = []
+
+    if (!userId) {
       return
     }
 
-    try {
-      const parsedExpenses = JSON.parse(savedExpenses) as Expense[]
-      expenses.value = parsedExpenses
-    } catch {
-      expenses.value = []
+    const cachedExpenses = expensesByUser.get(userId)
+    if (cachedExpenses) {
+      loadedUserId = userId
+      expenses.value = cachedExpenses
+      return
     }
+
+    const storedExpenses = await loadStoredExpenses(userId)
+    if (currentLoadVersion !== loadVersion || authStore.userId !== userId) {
+      return
+    }
+
+    expensesByUser.set(userId, storedExpenses)
+    loadedUserId = userId
+    expenses.value = storedExpenses
   }
 
-  // Load expenses from localStorage on store initialization
-  loadExpenses()
+  watch(() => authStore.userId, () => {
+    void loadExpenses().catch(error => {
+      console.error('Failed to load expenses:', error)
+    })
+  }, { immediate: true })
 
   let syncPromise: Promise<void> | null = null
   let syncRequested = false
@@ -129,11 +149,14 @@ export const useExpenseStore = defineStore('expense', () => {
       ])
     )
 
-    saveExpenses()
+    persistExpenses()
   }
 
   function getPendingExpenses() {
-    loadExpenses()
+    if (loadedUserId !== authStore.userId) {
+      return []
+    }
+
     return expenses.value.filter(expense => !expense.isSynced)
   }
 
@@ -168,10 +191,19 @@ export const useExpenseStore = defineStore('expense', () => {
   }
 
   function saveExpenses() {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(expenses.value)
-    )
+    const userId = authStore.userId
+    if (!userId || loadedUserId !== userId) {
+      throw new Error('Cannot save expenses without a loaded user')
+    }
+
+    expensesByUser.set(userId, expenses.value)
+    return saveStoredExpenses(userId, expenses.value)
+  }
+
+  function persistExpenses() {
+    void saveExpenses().catch(error => {
+      console.error('Failed to save expenses:', error)
+    })
   }
 
   async function createExpenseDirectly(expense: Expense) {
@@ -184,7 +216,7 @@ export const useExpenseStore = defineStore('expense', () => {
       })
       expense.isSynced = true
       expense.isCreatedLocally = false
-      saveExpenses()
+      persistExpenses()
     } catch (error) {
       console.error('Failed to create expense:', error)
     }
@@ -207,7 +239,7 @@ export const useExpenseStore = defineStore('expense', () => {
         })
       }
       expense.isSynced = true
-      saveExpenses()
+      persistExpenses()
     } catch (error) {
       console.error('Failed to update expense:', error)
     }
@@ -219,14 +251,14 @@ export const useExpenseStore = defineStore('expense', () => {
   ) {
     if (!shouldDeleteOnApi) {
       removeDeletedExpenses(new Set([expense.id]))
-      saveExpenses()
+      persistExpenses()
       return
     }
 
     try {
       await expenseApi.deleteExpense(expense.id)
       removeDeletedExpenses(new Set([expense.id]))
-      saveExpenses()
+      persistExpenses()
     } catch (error) {
       console.error('Failed to delete expense:', error)
     }
@@ -250,7 +282,7 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     expenses.value.push(expense)
-    saveExpenses()
+    persistExpenses()
 
     if (hasPendingExpenses) {
       // Sync in background without blocking
@@ -286,7 +318,7 @@ export const useExpenseStore = defineStore('expense', () => {
       isSynced: false
     }
 
-    saveExpenses()
+    persistExpenses()
 
     if (hasPendingExpenses) {
       queueExpensesSyncWithApi()
@@ -311,7 +343,7 @@ export const useExpenseStore = defineStore('expense', () => {
     expense.categoryId = categoryId
     expense.isSynced = false
 
-    saveExpenses()
+    persistExpenses()
 
     if (hasPendingExpenses) {
       queueExpensesSyncWithApi()
@@ -336,7 +368,7 @@ export const useExpenseStore = defineStore('expense', () => {
     expense.amount = amount
     expense.isSynced = false
 
-    saveExpenses()
+    persistExpenses()
 
     if (hasPendingExpenses) {
       queueExpensesSyncWithApi()
@@ -357,7 +389,7 @@ export const useExpenseStore = defineStore('expense', () => {
     expense.isDeleted = true
     expense.isSynced = false
 
-    saveExpenses()
+    persistExpenses()
 
     if (hasPendingExpenses) {
       queueExpensesSyncWithApi()

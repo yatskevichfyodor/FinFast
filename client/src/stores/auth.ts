@@ -8,6 +8,7 @@ const REFRESH_TOKEN_KEY = 'finfast-refresh-token'
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(localStorage.getItem(ACCESS_TOKEN_KEY))
   const refreshToken = ref<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY))
+  const userId = ref<string | null>(null)
   const username = ref<string | null>(null)
 
   const isAuthenticated = computed(() => accessToken.value !== null)
@@ -31,11 +32,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function loadCurrentUser() {
     if (!accessToken.value) {
+      userId.value = null
       username.value = null
       return
     }
 
     const user = await authApi.me()
+    userId.value = user.id
     username.value = user.username
   }
 
@@ -52,6 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
     const currentRefreshToken = refreshToken.value
     accessToken.value = null
     refreshToken.value = null
+    userId.value = null
     username.value = null
     localStorage.removeItem(ACCESS_TOKEN_KEY)
     localStorage.removeItem(REFRESH_TOKEN_KEY)
@@ -63,6 +67,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     accessToken,
+    userId,
     username,
     isAuthenticated,
     register,
