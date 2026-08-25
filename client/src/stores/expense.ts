@@ -3,25 +3,9 @@ import { defineStore } from 'pinia'
 import * as expenseApi from '@/services/expenseApi'
 import { loadExpenses as loadStoredExpenses, saveExpenses as saveStoredExpenses } from '@/services/expenseStorage'
 import { useAuthStore } from '@/stores/auth'
+import type { Expense, ExpensePayload } from '@/types/expense'
 
-export interface Expense {
-  id: string
-  amount: number
-  categoryId?: string
-  createdAt: string
-  // whether the record has been synchronized with the API
-  isSynced: boolean
-  // field for deletion syncronization, record will be deleted after synchronization
-  isDeleted: boolean
-   // a record that has not yet been posted to the API and that needs to be deleted locally
-  isCreatedLocally: boolean
-}
-
-export interface ExpensePayload {
-  id?: string
-  amount: number
-  categoryId?: string
-}
+export type { Expense, ExpensePayload } from '@/types/expense'
 
 export const useExpenseStore = defineStore('expense', () => {
   const authStore = useAuthStore()

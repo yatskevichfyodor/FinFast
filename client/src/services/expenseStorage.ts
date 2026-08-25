@@ -1,5 +1,5 @@
 import { toRaw } from 'vue'
-import type { Expense } from '@/stores/expense'
+import type { Expense } from '@/types/expense'
 
 const DATABASE_NAME = 'finfast'
 const DATABASE_VERSION = 2
