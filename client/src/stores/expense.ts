@@ -173,6 +173,10 @@ export const useExpenseStore = defineStore('expense', () => {
     return expenses.value.filter(expense => !expense.isSynced)
   }
 
+  function getPendingExpensesCount() {
+    return getPendingExpenses().length
+  }
+
   function splitPendingExpenses(
     pendingExpenses: Expense[],
     apiExpenseIds: Set<string>
@@ -441,6 +445,7 @@ export const useExpenseStore = defineStore('expense', () => {
     updateExpenseAmount,
     deleteExpense,
     getExpenseById,
+    getPendingExpensesCount,
     syncUnsyncedExpenses
   }
 })

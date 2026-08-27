@@ -103,7 +103,11 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(USERNAME_KEY)
 
     if (currentRefreshToken) {
-      await authApi.logout(currentRefreshToken)
+      try {
+        await authApi.logout(currentRefreshToken)
+      } catch (error) {
+        console.warn('Failed to log out from the server:', error)
+      }
     }
   }
 
