@@ -24,6 +24,9 @@ const showTransferDialog = ref(false)
 
 const isRegistration = computed(() => route.name === 'register')
 const title = computed(() => isRegistration.value ? 'Регистрация' : 'Вход')
+const isOfflineMode = computed(() =>
+  !isRegistration.value && !isCheckingService.value && !isServiceAvailable.value
+)
 
 async function checkAuthService() {
   if (isRegistration.value) {
@@ -116,7 +119,49 @@ onMounted(() => {
 <template>
   <v-main class="auth-page">
     <v-container class="auth-container" max-width="440">
-      <v-card class="pa-6" elevation="3">
+      <v-card
+        class="auth-card pa-6"
+        :class="{ 'auth-card--offline': isOfflineMode }"
+        elevation="3"
+      >
+        <template v-if="isOfflineMode">
+          <div class="offline-header">
+            <div class="offline-icon" aria-hidden="true">
+              <v-icon icon="mdi-wifi-off" size="28" />
+            </div>
+            <div class="offline-status">Оффлайн-режим</div>
+          </div>
+
+          <v-card-title class="offline-title">Сервис временно недоступен</v-card-title>
+          <p class="offline-description">
+            Вы можете продолжить работу с расходами на этом устройстве.
+          </p>
+
+          <div class="offline-details">
+            <div class="offline-detail">
+              <v-icon icon="mdi-content-save-outline" size="20" />
+              <span>Данные сохранятся локально</span>
+            </div>
+            <div class="offline-detail offline-detail--transfer">
+              <v-icon icon="mdi-account-sync-outline" size="20" />
+              <span>Когда соединение восстановится, войдите в аккаунт — мы предложим перенести сохранённые расходы.</span>
+            </div>
+          </div>
+
+          <v-btn
+            class="offline-action"
+            color="primary"
+            block
+            size="large"
+            type="button"
+            @click="continueWithoutAccount"
+          >
+            Продолжить без аккаунта
+            <v-icon end icon="mdi-arrow-right" />
+          </v-btn>
+        </template>
+
+        <template v-else>
         <v-card-title class="text-h5 text-center">{{ title }}</v-card-title>
 
         <v-alert
@@ -145,6 +190,7 @@ onMounted(() => {
 
         <v-form class="mt-4" @submit.prevent="submit">
           <v-text-field
+            v-if="!isOfflineMode"
             v-model="username"
             label="Логин"
             autocomplete="username"
@@ -152,6 +198,7 @@ onMounted(() => {
             required
           />
           <v-text-field
+            v-if="!isOfflineMode"
             v-model="password"
             label="Пароль"
             type="password"
@@ -167,6 +214,7 @@ onMounted(() => {
             required
           />
           <v-btn
+            v-if="!isOfflineMode"
             class="mt-2"
             color="primary"
             block
@@ -189,13 +237,13 @@ onMounted(() => {
 
         <v-card-actions class="justify-center mt-3">
           <v-btn
-            v-if="isRegistration"
+            v-if="isRegistration && !isOfflineMode"
             variant="text"
             :to="{ name: 'login' }"
           >
             Уже есть аккаунт? Войти
           </v-btn>
-          <template v-else>
+          <template v-else-if="!isOfflineMode">
             <span class="auth-switch-label">Нет аккаунта?</span>
             <v-btn
               variant="text"
@@ -208,6 +256,7 @@ onMounted(() => {
             </v-btn>
           </template>
         </v-card-actions>
+        </template>
       </v-card>
     </v-container>
 
@@ -232,11 +281,107 @@ onMounted(() => {
 <style scoped>
 .auth-page {
   min-height: 100vh;
-  background: #f6f8fb;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(33, 150, 243, 0.13), transparent 32%),
+    radial-gradient(circle at 88% 90%, rgba(3, 218, 198, 0.12), transparent 30%),
+    #f6f8fb;
 }
 
 .auth-container {
   padding-top: 12vh;
+}
+
+.auth-card {
+  border: 1px solid rgba(33, 150, 243, 0.08);
+}
+
+.auth-card--offline {
+  overflow: hidden;
+  padding: 32px !important;
+  border-color: rgba(3, 150, 150, 0.18);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(241, 252, 250, 0.96));
+}
+
+.offline-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.offline-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 16px;
+  color: #00796b;
+  background: #dff7f2;
+}
+
+.offline-status {
+  color: #00796b;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.offline-title {
+  max-width: 100%;
+  overflow: visible;
+  padding: 0;
+  color: #16343a;
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.offline-description {
+  margin: 12px 0 24px;
+  color: rgba(22, 52, 58, 0.68);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.offline-details {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 28px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(223, 247, 242, 0.62);
+}
+
+.offline-detail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #28565b;
+  font-size: 14px;
+}
+
+.offline-detail--transfer {
+  align-items: flex-start;
+}
+
+.offline-detail--transfer span {
+  line-height: 1.45;
+}
+
+.offline-detail .v-icon {
+  flex: 0 0 auto;
+  color: #00897b;
+}
+
+.offline-action {
+  min-height: 48px;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .auth-switch-link {
@@ -247,5 +392,19 @@ onMounted(() => {
 
 .auth-switch-label {
   color: rgba(var(--v-theme-on-surface), 0.65);
+}
+
+@media (max-width: 600px) {
+  .auth-container {
+    padding-top: 8vh;
+  }
+
+  .auth-card--offline {
+    padding: 24px !important;
+  }
+
+  .offline-title {
+    font-size: 22px;
+  }
 }
 </style>
