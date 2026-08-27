@@ -6,7 +6,7 @@ import ExpenseCategorySelectionView from '@/views/ExpenseCategorySelectionView.v
 import AuthView from '@/views/AuthView.vue'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       name: 'home',

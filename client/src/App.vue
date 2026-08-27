@@ -9,10 +9,6 @@ const router = useRouter()
 const authStore = useAuthStore()
 const showNavigation = computed(() => route.meta.requiresAuth === true)
 
-if (authStore.accessToken) {
-  void authStore.loadCurrentUser()
-}
-
 async function logout() {
   await authStore.logout()
   await router.push({ name: 'login' })
