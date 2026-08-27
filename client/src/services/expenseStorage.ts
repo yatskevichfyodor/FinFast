@@ -93,3 +93,7 @@ export async function saveExpenses(userId: string, expenses: Expense[]): Promise
     }
   })
 }
+
+export async function deleteExpenses(userId: string): Promise<void> {
+  await saveExpenses(userId, [])
+}

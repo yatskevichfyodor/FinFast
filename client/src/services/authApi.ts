@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios'
 import { api } from '@/services/api'
 
 export interface RegisterRequest {
@@ -35,6 +36,15 @@ export async function login(request: LoginRequest): Promise<TokenResponse> {
 export async function me(): Promise<UserResponse> {
   const { data } = await api.get<UserResponse>('/auth/me')
   return data
+}
+
+export async function isAvailable(): Promise<boolean> {
+  try {
+    await api.get('/auth/me', { timeout: 3000 })
+    return true
+  } catch (error) {
+    return isAxiosError(error) && error.response !== undefined
+  }
 }
 
 export async function refresh(refreshToken: string): Promise<TokenResponse> {

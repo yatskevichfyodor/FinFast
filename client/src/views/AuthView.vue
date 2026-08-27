@@ -1,21 +1,39 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { isAxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useExpenseStore } from '@/stores/expense'
+import { loadExpenses as loadStoredExpenses } from '@/services/expenseStorage'
+import * as authApi from '@/services/authApi'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const expenseStore = useExpenseStore()
 
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const errorMessage = ref('')
 const isSubmitting = ref(false)
+const isCheckingService = ref(false)
+const isServiceAvailable = ref(true)
+const anonymousExpensesCount = ref(0)
+const showTransferDialog = ref(false)
 
 const isRegistration = computed(() => route.name === 'register')
 const title = computed(() => isRegistration.value ? 'Регистрация' : 'Вход')
+
+async function checkAuthService() {
+  if (isRegistration.value) {
+    return
+  }
+
+  isCheckingService.value = true
+  isServiceAvailable.value = await authApi.isAvailable()
+  isCheckingService.value = false
+}
 
 function getErrorMessage(error: unknown) {
   if (isAxiosError(error)) {
@@ -51,7 +69,16 @@ async function submit() {
       await router.push({ name: 'login', query: { registered: 'true' } })
     } else {
       await authStore.login(username.value, password.value)
-      await router.push({ name: 'home' })
+      const profileId = localStorage.getItem('finfast-anonymous-profile')
+      if (profileId) {
+        anonymousExpensesCount.value = (await loadStoredExpenses(`anonymous:${profileId}`)).length
+      }
+
+      if (anonymousExpensesCount.value > 0) {
+        showTransferDialog.value = true
+      } else {
+        await router.push({ name: 'home' })
+      }
     }
   } catch (error) {
     errorMessage.value = getErrorMessage(error)
@@ -59,6 +86,31 @@ async function submit() {
     isSubmitting.value = false
   }
 }
+
+async function continueWithoutAccount() {
+  authStore.continueWithoutAccount()
+  await router.push({ name: 'home' })
+}
+
+async function transferAnonymousExpenses() {
+  errorMessage.value = ''
+  try {
+    await expenseStore.transferAnonymousExpenses()
+    showTransferDialog.value = false
+    await router.push({ name: 'home' })
+  } catch {
+    errorMessage.value = 'Не удалось перенести расходы. Попробуйте ещё раз.'
+  }
+}
+
+async function skipTransfer() {
+  showTransferDialog.value = false
+  await router.push({ name: 'home' })
+}
+
+onMounted(() => {
+  void checkAuthService()
+})
 </script>
 
 <template>
@@ -78,6 +130,15 @@ async function submit() {
 
         <v-alert v-if="errorMessage" class="mt-4" type="error" variant="tonal">
           {{ errorMessage }}
+        </v-alert>
+
+        <v-alert
+          v-if="!isRegistration && !isCheckingService && !isServiceAvailable"
+          class="mt-4"
+          type="warning"
+          variant="tonal"
+        >
+          Сервис авторизации недоступен. Можно продолжить без аккаунта и пользоваться данными этого устройства.
         </v-alert>
 
         <v-form class="mt-4" @submit.prevent="submit">
@@ -112,6 +173,16 @@ async function submit() {
           >
             {{ title }}
           </v-btn>
+          <v-btn
+            v-if="!isRegistration"
+            class="mt-3"
+            block
+            variant="text"
+            type="button"
+            @click="continueWithoutAccount"
+          >
+            Продолжить без аккаунта
+          </v-btn>
         </v-form>
 
         <v-card-actions class="justify-center mt-3">
@@ -137,6 +208,22 @@ async function submit() {
         </v-card-actions>
       </v-card>
     </v-container>
+
+    <v-dialog v-model="showTransferDialog" max-width="440" persistent>
+      <v-card>
+        <v-card-title>Перенести локальные расходы?</v-card-title>
+        <v-card-text>
+          Найдено расходов: {{ anonymousExpensesCount }}. Перенести их в ваш аккаунт?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="skipTransfer">Оставить локально</v-btn>
+          <v-btn color="primary" :loading="isSubmitting" @click="transferAnonymousExpenses">
+            Перенести
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-main>
 </template>
 

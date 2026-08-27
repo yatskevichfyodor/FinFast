@@ -11,6 +11,8 @@ export const useExpenseStore = defineStore('expense', () => {
   const authStore = useAuthStore()
   const expensesByUser = new Map<string, Expense[]>()
   const expenses = ref<Expense[]>([])
+  const isSyncing = ref(false)
+  const syncError = ref<string | null>(null)
   let loadedUserId: string | null = null
   let loadVersion = 0
 
@@ -43,9 +45,15 @@ export const useExpenseStore = defineStore('expense', () => {
   }
 
   watch(() => authStore.userId, () => {
-    void loadExpenses().catch(error => {
-      console.error('Failed to load expenses:', error)
-    })
+    void loadExpenses()
+      .then(() => {
+        if (navigator.onLine && authStore.isAuthenticated && !authStore.isAnonymous) {
+          return refreshExpenses()
+        }
+      })
+      .catch(error => {
+        console.error('Failed to load expenses:', error)
+      })
   }, { immediate: true })
 
   let syncPromise: Promise<void> | null = null
@@ -73,7 +81,7 @@ export const useExpenseStore = defineStore('expense', () => {
 
   async function refreshExpenses() {
     const userId = authStore.userId
-    if (!userId) {
+    if (!userId || authStore.isAnonymous || !authStore.accessToken) {
       return
     }
 
@@ -105,13 +113,21 @@ export const useExpenseStore = defineStore('expense', () => {
   }
 
   async function syncExpensesWithApi() {
+    if (authStore.isAnonymous || !authStore.accessToken) {
+      return
+    }
+
     const pendingExpenses = getPendingExpenses()
 
     if (pendingExpenses.length === 0) {
       return
     }
 
-    const apiExpenses = await expenseApi.getExpensesByIds(pendingExpenses.map(expense => expense.id))
+    isSyncing.value = true
+    syncError.value = null
+
+    try {
+      const apiExpenses = await expenseApi.getExpensesByIds(pendingExpenses.map(expense => expense.id))
     const apiExpenseIds = new Set(apiExpenses.map(apiExpense => apiExpense.id))
 
     const { deleted, locallyDeleted, toUpdate, toCreate } = splitPendingExpenses(
@@ -162,7 +178,13 @@ export const useExpenseStore = defineStore('expense', () => {
       ])
     )
 
-    persistExpenses()
+      persistExpenses()
+    } catch (error) {
+      syncError.value = 'Не удалось синхронизировать расходы'
+      throw error
+    } finally {
+      isSyncing.value = false
+    }
   }
 
   function getPendingExpenses() {
@@ -435,8 +457,49 @@ export const useExpenseStore = defineStore('expense', () => {
     await queueExpensesSyncWithApi()
   }
 
+  async function transferAnonymousExpenses() {
+    if (!authStore.userId || authStore.isAnonymous) {
+      return 0
+    }
+
+    const anonymousProfile = localStorage.getItem('finfast-anonymous-profile')
+    if (!anonymousProfile) {
+      return 0
+    }
+
+    const anonymousUserId = `anonymous:${anonymousProfile}`
+    const anonymousExpenses = await loadStoredExpenses(anonymousUserId)
+    if (anonymousExpenses.length === 0) {
+      return 0
+    }
+
+    const currentExpenses = await loadStoredExpenses(authStore.userId)
+    const existingIds = new Set(currentExpenses.map(expense => expense.id))
+    const transferredExpenses = anonymousExpenses.filter(expense => !existingIds.has(expense.id))
+    await saveStoredExpenses(authStore.userId, [...currentExpenses, ...transferredExpenses])
+    await loadExpenses()
+    await syncUnsyncedExpenses()
+    await saveStoredExpenses(anonymousUserId, [])
+    localStorage.removeItem('finfast-anonymous-profile')
+    return transferredExpenses.length
+  }
+
+  function initializeOnlineSync() {
+    const sync = () => {
+      if (navigator.onLine && authStore.isAuthenticated && !authStore.isAnonymous) {
+        void refreshExpenses().catch(error => console.error('Failed to sync expenses:', error))
+      }
+    }
+    window.addEventListener('online', sync)
+    sync()
+  }
+
+  initializeOnlineSync()
+
   return {
     expenses,
+    isSyncing,
+    syncError,
     loadExpenses,
     refreshExpenses,
     addExpense,
@@ -446,6 +509,7 @@ export const useExpenseStore = defineStore('expense', () => {
     deleteExpense,
     getExpenseById,
     getPendingExpensesCount,
+    transferAnonymousExpenses,
     syncUnsyncedExpenses
   }
 })
