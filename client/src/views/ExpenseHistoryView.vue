@@ -106,11 +106,10 @@ function editExpenseCategory(expense: Expense) {
 
           <v-btn
             prepend-icon="mdi-download"
-            color="primary"
             variant="tonal"
             size="small"
-            rounded
-            elevation="1"
+            rounded="lg"
+            class="export-button"
             @click="exportDialogOpen = true"
           >
             Экспорт
@@ -230,6 +229,18 @@ function editExpenseCategory(expense: Expense) {
 </template>
 
 <style scoped>
+.export-button {
+  color: #245b78;
+  background: #e5eef5;
+  box-shadow: none;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.export-button:hover {
+  color: #194766;
+  background: #d7e6f0;
+}
+
 .empty-state {
   text-align: center;
   padding: 60px 20px;
