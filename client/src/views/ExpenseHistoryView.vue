@@ -15,6 +15,7 @@ import {
   downloadExport,
   type ExportFormat
 } from '@/services/expenseExport'
+import ExportDialog from '@/components/ExportDialog.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -28,7 +29,6 @@ onMounted(() => {
 const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)
 const exportDialogOpen = ref(false)
-const exportFormat = ref<ExportFormat>('json')
 
 const activeExpenses = computed(() =>
   expenseStore.expenses.filter(expense => !expense.isDeleted)
@@ -95,17 +95,17 @@ function editExpenseCategory(expense: Expense) {
   })
 }
 
-async function exportExpenses() {
+async function exportExpenses(format: ExportFormat = 'json') {
   if (!authStore.userId) {
     return
   }
 
   const expenses = await loadStoredExpenses(authStore.userId)
-  const content = exportFormat.value === 'json'
+  const content = format === 'json'
     ? createJsonExport(expenses)
     : createCsvExport(expenses)
 
-  downloadExport(content, exportFormat.value)
+  downloadExport(content, format)
   exportDialogOpen.value = false
 }
 </script>
@@ -128,11 +128,14 @@ async function exportExpenses() {
 
           <v-btn
             prepend-icon="mdi-download"
-            variant="outlined"
+            color="primary"
+            variant="tonal"
             size="small"
+            rounded
+            elevation="1"
             @click="exportDialogOpen = true"
           >
-            Экспортировать данные
+            Экспорт
           </v-btn>
         </div>
       </div>
@@ -242,41 +245,7 @@ async function exportExpenses() {
         </v-card>
       </v-dialog>
 
-      <v-dialog v-model="exportDialogOpen" max-width="440">
-        <v-card rounded="xl">
-          <v-card-title class="text-h6 font-weight-bold pt-5 px-5">
-            Экспортировать данные
-          </v-card-title>
-
-          <v-card-text class="px-5">
-            <v-radio-group v-model="exportFormat" hide-details>
-              <v-radio value="json">
-                <template #label>
-                  <div>
-                    <div class="font-weight-medium">JSON</div>
-                    <div class="text-body-2 text-medium-emphasis">Для переноса данных и резервного копирования</div>
-                  </div>
-                </template>
-              </v-radio>
-
-              <v-radio value="csv">
-                <template #label>
-                  <div>
-                    <div class="font-weight-medium">Excel</div>
-                    <div class="text-body-2 text-medium-emphasis">Для просмотра и работы с данными в Excel</div>
-                  </div>
-                </template>
-              </v-radio>
-            </v-radio-group>
-          </v-card-text>
-
-          <v-card-actions class="px-5 pb-5">
-            <v-spacer />
-            <v-btn variant="text" @click="exportDialogOpen = false">Отмена</v-btn>
-            <v-btn color="primary" variant="flat" @click="exportExpenses">Экспортировать</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <ExportDialog v-model="exportDialogOpen" @export="(format) => exportExpenses(format)" />
 
     </v-container>
   </v-main>
