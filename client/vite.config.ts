@@ -7,10 +7,10 @@ import vuetify from 'vite-plugin-vuetify'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     vue(),
-    vueDevTools(),
+    ...(mode === 'development' ? [vueDevTools()] : []),
     vuetify({ autoImport: true }),
     VitePWA({
       registerType: 'autoUpdate',
@@ -55,4 +55,21 @@ export default defineConfig({
     },
   },
   base: '/FinFast/',
-})
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: false,
+        pure_funcs: [
+          'console.log',
+          'console.debug',
+          'console.info',
+          'console.warn'
+        ],
+        drop_debugger: true
+      }
+    },
+    sourcemap: false
+  }
+}))
+
