@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useDropZone } from '@vueuse/core'
 import { useAuthStore } from '@/stores/auth'
 import { useExpenseStore } from '@/stores/expense'
@@ -10,6 +10,13 @@ const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
+
+// Сбрасываем сообщения при открытии диалога
+watch(() => props.modelValue, (newValue) => {
+  if (newValue) {
+    resetMessages()
+  }
+})
 
 const authStore = useAuthStore()
 const expenseStore = useExpenseStore()
