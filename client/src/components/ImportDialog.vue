@@ -93,8 +93,9 @@ async function processFile(file: File) {
     // Сохраняем объединённые данные
     await saveExpenses(userId, merged)
 
-    // Обновляем store
-    await expenseStore.refreshExpenses()
+    // Обновляем store напрямую, чтобы сразу отобразить импортированные данные
+    // Используем forceReloadExpenses для обновления кэша и загрузки свежих данных
+    await expenseStore.forceReloadExpenses()
 
     // Показываем успешное сообщение
     if (added === 0 && updated === 0) {

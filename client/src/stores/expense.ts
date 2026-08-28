@@ -44,6 +44,19 @@ export const useExpenseStore = defineStore('expense', () => {
     expenses.value = storedExpenses
   }
 
+  async function forceReloadExpenses() {
+    const userId = authStore.userId
+    if (!userId) {
+      return
+    }
+
+    // Очищаем кэш для текущего пользователя
+    expensesByUser.delete(userId)
+
+    // Перезагружаем данные из IndexedDB
+    await loadExpenses()
+  }
+
   watch(() => authStore.userId, () => {
     void loadExpenses()
       .then(() => {
@@ -501,6 +514,7 @@ export const useExpenseStore = defineStore('expense', () => {
     isSyncing,
     syncError,
     loadExpenses,
+    forceReloadExpenses,
     refreshExpenses,
     addExpense,
     updateExpense,
