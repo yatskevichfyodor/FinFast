@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useDropZone } from '@vueuse/core'
 import { useAuthStore } from '@/stores/auth'
 import { useExpenseStore } from '@/stores/expense'
 import { loadExpenses as loadStoredExpenses, saveExpenses } from '@/services/expenseStorage'
@@ -16,7 +17,23 @@ const expenseStore = useExpenseStore()
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
+const dropZoneRef = ref<HTMLElement | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
+
+async function handleDrop(files: File[] | null) {
+  if (!files || files.length === 0) return
+  if (isLoading.value) return
+
+  const file = files[0]
+  if (!file) return
+
+  await processFile(file)
+}
+
+const { isOverDropZone } = useDropZone(dropZoneRef, {
+  onDrop: handleDrop,
+  dataTypes: ['application/json', '.json']
+})
 
 function cancel() {
   resetMessages()
@@ -39,6 +56,13 @@ async function handleFileSelected(event: Event) {
 
   if (!file) return
 
+  await processFile(file)
+
+  // Сбросим input, чтобы можно было выбрать тот же файл снова
+  target.value = ''
+}
+
+async function processFile(file: File) {
   // Проверка расширения файла
   if (!file.name.endsWith('.json')) {
     errorMessage.value = 'Можно импортировать только JSON-файлы.'
@@ -92,8 +116,6 @@ async function handleFileSelected(event: Event) {
     errorMessage.value = `Ошибка: ${errorMsg}`
   } finally {
     isLoading.value = false
-    // Сбросим input, чтобы можно было выбрать тот же файл снова
-    target.value = ''
   }
 }
 
@@ -152,15 +174,29 @@ function pluralExpense(count: number): string {
         <!-- Содержимое при отсутствии ошибок -->
         <div v-if="!successMessage && !errorMessage" class="text-center">
           <div class="text-body-2 text-medium-emphasis mb-4 import-description">
-            Выберите файл для загрузки расходов
+            Импортируйте данные из JSON-файла
           </div>
 
-          <div class="py-4">
-            <v-icon icon="mdi-cloud-upload" size="64" color="medium-emphasis" class="mb-3" />
+          <div
+            ref="dropZoneRef"
+            class="drop-zone py-8"
+            :class="{ 'drop-zone-active': isOverDropZone && !isLoading, 'drop-zone-loading': isLoading }"
+            @click="triggerFileSelect"
+          >
+            <v-icon
+              :icon="isLoading ? 'mdi-loading' : isOverDropZone ? 'mdi-cloud-download' : 'mdi-cloud-upload'"
+              size="64"
+              :color="isLoading ? 'primary' : isOverDropZone ? 'primary' : 'medium-emphasis'"
+              class="mb-3"
+              :class="{ 'spin-animation': isLoading }"
+            />
+            <p class="text-body-2" :class="isOverDropZone ? 'text-primary' : 'text-medium-emphasis'">
+              {{ isLoading ? 'Загрузка...' : isOverDropZone ? 'Отпустите файл для загрузки' : 'Перетащите файл или нажмите здесь для выбора' }}
+            </p>
           </div>
 
-          <p class="text-caption text-medium-emphasis">
-            Поддерживаются файлы, экспортированные из приложения в JSON формате
+          <p class="text-caption text-medium-emphasis mt-3">
+            Поддерживаются JSON-файлы, экспортированные через меню «Экспорт»
           </p>
         </div>
       </v-card-text>
@@ -169,17 +205,6 @@ function pluralExpense(count: number): string {
         <v-spacer />
         <v-btn variant="text" :disabled="isLoading" @click="cancel">
           {{ successMessage ? 'Закрыть' : 'Отмена' }}
-        </v-btn>
-        <v-btn
-          class="import-submit-button"
-          variant="flat"
-          rounded="lg"
-          prepend-icon="mdi-upload"
-          :disabled="isLoading || !!successMessage"
-          :loading="isLoading"
-          @click="triggerFileSelect"
-        >
-          {{ isLoading ? 'Загрузка...' : 'Выбрать файл' }}
         </v-btn>
       </v-card-actions>
 
@@ -237,15 +262,37 @@ function pluralExpense(count: number): string {
   padding-left: 24px;
 }
 
-.import-submit-button {
-  color: #ffffff;
-  background: linear-gradient(135deg, #4a7ba7 0%, #5fa9b8 100%);
-  box-shadow: none;
-  transition: filter 0.2s ease;
+.drop-zone {
+  border: 2px dashed rgba(165, 214, 167, 0.4);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
 }
 
-.import-submit-button:hover {
-  filter: brightness(0.92);
+.drop-zone-active {
+  border-color: #4a7ba7;
+  background: rgba(74, 123, 167, 0.08);
+  transform: scale(1.02);
+}
+
+.drop-zone-loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.spin-animation {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
 
