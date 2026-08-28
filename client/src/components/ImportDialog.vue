@@ -203,7 +203,13 @@ function pluralExpense(count: number): string {
 
       <v-card-actions class="px-5 pb-5">
         <v-spacer />
-        <v-btn variant="text" :disabled="isLoading" @click="cancel">
+        <v-btn
+          class="cancel-button"
+          variant="flat"
+          rounded="lg"
+          :disabled="isLoading"
+          @click="cancel"
+        >
           {{ successMessage ? 'Закрыть' : 'Отмена' }}
         </v-btn>
       </v-card-actions>
@@ -293,6 +299,23 @@ function pluralExpense(count: number): string {
   to {
     transform: rotate(360deg);
   }
+}
+
+.cancel-button {
+  color: #4a7ba7;
+  background: rgba(74, 123, 167, 0.08);
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background: rgba(74, 123, 167, 0.15);
+  transform: translateY(-1px);
+}
+
+.cancel-button:disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 </style>
 
