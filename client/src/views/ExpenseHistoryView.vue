@@ -2,14 +2,23 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import { loadExpenses as loadStoredExpenses } from '@/services/expenseStorage'
 import {
   useExpenseStore,
   type Expense
 } from '@/stores/expense'
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { formatDate, formatTime } from '@/utils/dateHelpers'
+import {
+  createCsvExport,
+  createJsonExport,
+  downloadExport,
+  type ExportFormat
+} from '@/services/expenseExport'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const expenseStore = useExpenseStore()
 
 onMounted(() => {
@@ -18,6 +27,8 @@ onMounted(() => {
 
 const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)
+const exportDialogOpen = ref(false)
+const exportFormat = ref<ExportFormat>('json')
 
 const activeExpenses = computed(() =>
   expenseStore.expenses.filter(expense => !expense.isDeleted)
@@ -83,6 +94,20 @@ function editExpenseCategory(expense: Expense) {
     state: { expenseId: expense.id, isEditing: true }
   })
 }
+
+async function exportExpenses() {
+  if (!authStore.userId) {
+    return
+  }
+
+  const expenses = await loadStoredExpenses(authStore.userId)
+  const content = exportFormat.value === 'json'
+    ? createJsonExport(expenses)
+    : createCsvExport(expenses)
+
+  downloadExport(content, exportFormat.value)
+  exportDialogOpen.value = false
+}
 </script>
 
 <template>
@@ -100,6 +125,15 @@ function editExpenseCategory(expense: Expense) {
               Сначала новые
             </div>
           </div>
+
+          <v-btn
+            prepend-icon="mdi-download"
+            variant="outlined"
+            size="small"
+            @click="exportDialogOpen = true"
+          >
+            Экспортировать данные
+          </v-btn>
         </div>
       </div>
 
@@ -204,6 +238,42 @@ function editExpenseCategory(expense: Expense) {
             <v-btn color="error" variant="flat" @click="confirmDelete">
               Удалить
             </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <v-dialog v-model="exportDialogOpen" max-width="440">
+        <v-card rounded="xl">
+          <v-card-title class="text-h6 font-weight-bold pt-5 px-5">
+            Экспортировать данные
+          </v-card-title>
+
+          <v-card-text class="px-5">
+            <v-radio-group v-model="exportFormat" hide-details>
+              <v-radio value="json">
+                <template #label>
+                  <div>
+                    <div class="font-weight-medium">JSON</div>
+                    <div class="text-body-2 text-medium-emphasis">Для переноса данных и резервного копирования</div>
+                  </div>
+                </template>
+              </v-radio>
+
+              <v-radio value="csv">
+                <template #label>
+                  <div>
+                    <div class="font-weight-medium">Excel</div>
+                    <div class="text-body-2 text-medium-emphasis">Для просмотра и работы с данными в Excel</div>
+                  </div>
+                </template>
+              </v-radio>
+            </v-radio-group>
+          </v-card-text>
+
+          <v-card-actions class="px-5 pb-5">
+            <v-spacer />
+            <v-btn variant="text" @click="exportDialogOpen = false">Отмена</v-btn>
+            <v-btn color="primary" variant="flat" @click="exportExpenses">Экспортировать</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
