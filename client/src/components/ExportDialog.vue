@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { ExportFormat } from '@/services/expenseExport'
+
+import { createCsvExport, createJsonExport, downloadExport, type ExportFormat } from '@/services/expenseExport'
+import { loadExpenses } from '@/services/expenseStorage'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'export', format: ExportFormat): void
 }>()
 
+const authStore = useAuthStore()
 const localOpen = ref(props.modelValue)
+const isExporting = ref(false)
+const exportError = ref(false)
 watch(() => props.modelValue, v => (localOpen.value = v))
 watch(localOpen, v => emit('update:modelValue', v))
 
@@ -18,9 +23,27 @@ function cancel() {
   localOpen.value = false
 }
 
-function doExport() {
-  emit('export', selectedFormat.value)
-  localOpen.value = false
+async function doExport() {
+  if (!authStore.userId || isExporting.value) {
+    return
+  }
+
+  isExporting.value = true
+  exportError.value = false
+
+  try {
+    const expenses = await loadExpenses(authStore.userId)
+    const content = selectedFormat.value === 'json'
+      ? createJsonExport(expenses)
+      : createCsvExport(expenses)
+
+    downloadExport(content, selectedFormat.value)
+    localOpen.value = false
+  } catch {
+    exportError.value = true
+  } finally {
+    isExporting.value = false
+  }
 }
 </script>
 
@@ -56,12 +79,18 @@ function doExport() {
             </template>
           </v-radio>
         </v-radio-group>
+
+        <div v-if="exportError" class="text-body-2 text-error mt-3">
+          Не удалось экспортировать расходы. Попробуйте ещё раз.
+        </div>
       </v-card-text>
 
       <v-card-actions class="px-5 pb-5">
         <v-spacer />
-        <v-btn variant="text" @click="cancel">Отмена</v-btn>
-        <v-btn color="primary" variant="flat" @click="doExport">Скачать</v-btn>
+        <v-btn variant="text" :disabled="isExporting" @click="cancel">Отмена</v-btn>
+        <v-btn color="primary" variant="flat" :loading="isExporting" :disabled="isExporting" @click="doExport">
+          Скачать
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

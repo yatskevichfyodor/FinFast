@@ -2,24 +2,15 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { loadExpenses as loadStoredExpenses } from '@/services/expenseStorage'
 import {
   useExpenseStore,
   type Expense
 } from '@/stores/expense'
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { formatDate, formatTime } from '@/utils/dateHelpers'
-import {
-  createCsvExport,
-  createJsonExport,
-  downloadExport,
-  type ExportFormat
-} from '@/services/expenseExport'
 import ExportDialog from '@/components/ExportDialog.vue'
-import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const authStore = useAuthStore()
 const expenseStore = useExpenseStore()
 
 onMounted(() => {
@@ -95,19 +86,6 @@ function editExpenseCategory(expense: Expense) {
   })
 }
 
-async function exportExpenses(format: ExportFormat = 'json') {
-  if (!authStore.userId) {
-    return
-  }
-
-  const expenses = await loadStoredExpenses(authStore.userId)
-  const content = format === 'json'
-    ? createJsonExport(expenses)
-    : createCsvExport(expenses)
-
-  downloadExport(content, format)
-  exportDialogOpen.value = false
-}
 </script>
 
 <template>
@@ -245,7 +223,7 @@ async function exportExpenses(format: ExportFormat = 'json') {
         </v-card>
       </v-dialog>
 
-      <ExportDialog v-model="exportDialogOpen" @export="(format) => exportExpenses(format)" />
+      <ExportDialog v-model="exportDialogOpen" />
 
     </v-container>
   </v-main>
