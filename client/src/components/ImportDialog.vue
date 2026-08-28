@@ -19,6 +19,7 @@ const errorMessage = ref<string | null>(null)
 const successMessage = ref<string | null>(null)
 const dropZoneRef = ref<HTMLElement | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
+const isDragging = ref(false)
 
 async function handleDrop(files: File[] | null) {
   if (!files || files.length === 0) return
@@ -27,13 +28,45 @@ async function handleDrop(files: File[] | null) {
   const file = files[0]
   if (!file) return
 
+  // Сбрасываем сообщения перед обработкой
+  resetMessages()
+
   await processFile(file)
 }
 
 const { isOverDropZone } = useDropZone(dropZoneRef, {
-  onDrop: handleDrop,
-  dataTypes: ['application/json', '.json']
+  onDrop: handleDrop
 })
+
+function handleDragOver(event: DragEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  isDragging.value = true
+}
+
+function handleDragLeave(event: DragEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  isDragging.value = false
+}
+
+function handleDragEnter(event: DragEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  isDragging.value = true
+}
+
+function handleNativeDrop(event: DragEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+  isDragging.value = false
+
+  const files = event.dataTransfer?.files
+  if (files && files.length > 0) {
+    const fileArray = Array.from(files)
+    handleDrop(fileArray)
+  }
+}
 
 function cancel() {
   resetMessages()
@@ -65,7 +98,11 @@ async function handleFileSelected(event: Event) {
 async function processFile(file: File) {
   // Проверка расширения файла
   if (!file.name.endsWith('.json')) {
-    errorMessage.value = 'Можно импортировать только JSON-файлы.'
+    if (file.name.endsWith('.csv')) {
+      errorMessage.value = 'CSV-файлы предназначены только для просмотра в Excel. Для импорта используйте JSON-файл, экспортированный через меню «Экспорт».'
+    } else {
+      errorMessage.value = 'Можно импортировать только JSON-файлы, экспортированные через меню «Экспорт».'
+    }
     return
   }
 
@@ -149,7 +186,7 @@ function pluralExpense(count: number): string {
 
 <template>
   <v-dialog :model-value="modelValue" max-width="480" @update:model-value="(v) => emit('update:modelValue', v)">
-    <v-card rounded="xl" class="import-card">
+    <v-card rounded="xl" class="import-card" @dragover.prevent @dragenter.prevent @dragleave.prevent @drop.prevent>
       <div class="import-header">
         <div class="import-icon">
           <v-icon icon="mdi-file-upload-outline" size="25" />
@@ -168,7 +205,7 @@ function pluralExpense(count: number): string {
         </v-alert>
 
         <!-- Сообщение об ошибке -->
-        <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-4" closable>
+        <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-4" closable @click:close="resetMessages">
           {{ errorMessage }}
         </v-alert>
 
@@ -181,8 +218,12 @@ function pluralExpense(count: number): string {
           <div
             ref="dropZoneRef"
             class="drop-zone py-8"
-            :class="{ 'drop-zone-active': isOverDropZone && !isLoading, 'drop-zone-loading': isLoading }"
+            :class="{ 'drop-zone-active': (isOverDropZone || isDragging) && !isLoading, 'drop-zone-loading': isLoading }"
             @click="triggerFileSelect"
+            @dragover="handleDragOver"
+            @dragenter="handleDragEnter"
+            @dragleave="handleDragLeave"
+            @drop="handleNativeDrop"
           >
             <v-icon
               :icon="isLoading ? 'mdi-loading' : isOverDropZone ? 'mdi-cloud-download' : 'mdi-cloud-upload'"
