@@ -48,6 +48,11 @@ async function completeLogout() {
   await authStore.logout()
   await router.push({ name: 'login' })
 }
+
+async function goToLogin() {
+  await authStore.logout()
+  await router.push({ name: 'login' })
+}
 </script>
 
 <template>
@@ -58,11 +63,11 @@ async function completeLogout() {
       <div class="user-actions">
         <span class="username">{{ authStore.username || 'Пользователь' }}</span>
         <v-btn
-          icon="mdi-logout"
+          :icon="authStore.isAnonymous ? 'mdi-login' : 'mdi-logout'"
           size="small"
-          title="Выйти"
-          aria-label="Выйти"
-          @click="logout"
+          :title="authStore.isAnonymous ? 'Войти' : 'Выйти'"
+          :aria-label="authStore.isAnonymous ? 'Войти' : 'Выйти'"
+          @click="authStore.isAnonymous ? goToLogin() : logout()"
         />
       </div>
     </template>

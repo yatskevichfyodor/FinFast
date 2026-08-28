@@ -132,7 +132,7 @@ onMounted(() => {
             <div class="offline-status">Оффлайн-режим</div>
           </div>
 
-          <v-card-title class="offline-title">Сервис временно недоступен</v-card-title>
+          <v-card-title class="offline-title">Сервис авторизации временно недоступен</v-card-title>
           <p class="offline-description">
             Вы можете продолжить работу с расходами на этом устройстве.
           </p>
