@@ -115,7 +115,7 @@ async function doExport() {
   gap: 14px;
   padding: 24px 20px;
   color: #ffffff;
-  background: linear-gradient(135deg, #245b78 0%, #347f8a 100%);
+  background: linear-gradient(135deg, #4a7ba7 0%, #5fa9b8 100%);
 }
 
 .export-icon {
@@ -146,7 +146,7 @@ async function doExport() {
 
 .export-submit-button {
   color: #ffffff;
-  background: linear-gradient(135deg, #245b78 0%, #347f8a 100%);
+  background: linear-gradient(135deg, #4a7ba7 0%, #5fa9b8 100%);
   box-shadow: none;
   transition: filter 0.2s ease;
 }
@@ -179,13 +179,13 @@ async function doExport() {
 }
 
 :deep(.format-option.v-selection-control--dirty) {
-  border-color: #218c8d;
-  background: #edf8f6;
+  border-color: #5fa9b8;
+  background: #f0f7fa;
 }
 
 :deep(.format-option-json.v-selection-control--dirty) {
-  border-color: #176b87;
-  background: #eef7fa;
+  border-color: #4a7ba7;
+  background: #f2f8fc;
 }
 
 .format-content {
@@ -199,4 +199,7 @@ async function doExport() {
 }
 
 </style>
+
+
+
 

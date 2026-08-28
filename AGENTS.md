@@ -381,6 +381,20 @@ FinFast supports exporting data for three purposes:
 2. transferring unsynchronized/local data to another device;
 3. viewing and working with data in Excel.
 
+The export and import dialogs are implemented as Vue components:
+
+* `client/src/components/ExportDialog.vue` — export dialog with format selection;
+* `client/src/components/ImportDialog.vue` — import dialog with file selection and validation;
+
+Both components are located in the expense history view.
+
+Export/import logic is implemented in service modules:
+
+* `client/src/services/expenseExport.ts` — export to JSON/CSV formats;
+* `client/src/services/expenseImport.ts` — import from JSON with validation and duplicate detection.
+
+## Export formats
+
 The export dialog provides two formats:
 
 ### JSON
@@ -395,7 +409,7 @@ JSON must contain:
 
 * `expenseId`
 * `amount`
-* `categoryId`
+* `categoryId` (optional)
 * `createdAt`
 
 JSON must NOT contain:
@@ -412,7 +426,7 @@ Example:
   "version": 1,
   "expenses": [
     {
-      "expenseId": "example-id",
+      "expenseId": "550e8400-e29b-41d4-a716-446655440000",
       "amount": 100.50,
       "categoryId": "food",
       "createdAt": "2026-08-28T10:30:00Z"
@@ -423,13 +437,7 @@ Example:
 
 `version` must be included so that future versions of the application can support older export files.
 
-When importing JSON:
-
-* determine the target `userId` from the currently authenticated account;
-* never import the exported `userId`, because it is not present;
-* preserve `expenseId`;
-* treat imported records as local data that may require synchronization;
-* avoid duplicate records when the same `expenseId + userId` already exists.
+Current supported version is `1`.
 
 ### Excel
 
@@ -455,6 +463,46 @@ Do NOT include:
 * other internal fields.
 
 CSV is an export/viewing format and is not the canonical FinFast backup format.
+
+## Import process
+
+When importing JSON:
+
+1. User clicks "Импорт" button
+2. File selection dialog opens (filter: `.json` files only)
+3. File is read and parsed
+4. Full validation occurs:
+   - JSON syntax check
+   - Format check (`format: "finfast"`)
+   - Version check (must be `1`)
+   - Structure validation (expenses array with required fields)
+   - Individual expense validation:
+     - `expenseId`: must be valid UUID
+     - `amount`: must be positive number
+     - `categoryId`: optional string
+     - `createdAt`: must be valid ISO date
+
+5. Duplicate detection:
+   - Load existing expenses for current user
+   - Merge logic: identify by `expenseId + userId` pair
+   - If exists: update the existing record and mark as requiring sync
+   - If new: add as new record and mark as pending sync
+
+6. Save merged expenses to IndexedDB
+7. Refresh expense store
+8. Show result message with count of added/updated expenses
+
+**Important:** If validation fails at any step, NO data is imported (all-or-nothing approach).
+
+## Import validation
+
+The import service (`expenseImport.ts`) provides:
+
+* `validateJson(content: string)` — full JSON structure and content validation;
+* `mergeExpenses(existing, imported)` — intelligent merge with duplicate detection;
+* `convertImportedExpenseToExpense()` — convert import format to internal Expense type.
+
+All validation errors are descriptive and shown to the user in Russian.
 
 ---
 
@@ -571,3 +619,27 @@ When working on expenses, always consider:
 * `expenseId + userId` identity;
 * duplicate prevention;
 * logout/privacy behavior.
+
+---
+
+# Documentation
+
+Do NOT create separate documentation files (`.md` files in the project root or folders).
+
+If documentation or user instructions are needed:
+
+1. Add them to this `AGENTS.md` file in a new section
+2. Or embed comments/help text in the relevant Vue component or service
+3. Do NOT create:
+   - `IMPORT_EXPORT.md`
+   - `README.md` for features
+   - `IMPLEMENTATION_SUMMARY.md`
+   - Other standalone `.md` files for documentation
+
+Rationale:
+
+* Centralized knowledge in one place (`AGENTS.md`)
+* Easier to maintain consistency
+* No scattered documentation files
+* Single source of truth for development practices
+

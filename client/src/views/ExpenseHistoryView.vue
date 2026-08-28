@@ -9,6 +9,7 @@ import {
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { formatDate, formatTime } from '@/utils/dateHelpers'
 import ExportDialog from '@/components/ExportDialog.vue'
+import ImportDialog from '@/components/ImportDialog.vue'
 
 const router = useRouter()
 const expenseStore = useExpenseStore()
@@ -20,6 +21,7 @@ onMounted(() => {
 const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)
 const exportDialogOpen = ref(false)
+const importDialogOpen = ref(false)
 
 const activeExpenses = computed(() =>
   expenseStore.expenses.filter(expense => !expense.isDeleted)
@@ -104,16 +106,29 @@ function editExpenseCategory(expense: Expense) {
             </div>
           </div>
 
-          <v-btn
-            prepend-icon="mdi-download"
-            variant="tonal"
-            size="small"
-            rounded="lg"
-            class="export-button"
-            @click="exportDialogOpen = true"
-          >
-            Экспорт
-          </v-btn>
+           <div class="header-actions d-flex align-center">
+             <v-btn
+               prepend-icon="mdi-upload"
+               variant="tonal"
+               size="small"
+               rounded="lg"
+               class="operation-button"
+               @click="importDialogOpen = true"
+             >
+               Импорт
+             </v-btn>
+
+             <v-btn
+               prepend-icon="mdi-download"
+               variant="tonal"
+               size="small"
+               rounded="lg"
+               class="operation-button"
+               @click="exportDialogOpen = true"
+             >
+               Экспорт
+             </v-btn>
+           </div>
         </div>
       </div>
 
@@ -224,21 +239,28 @@ function editExpenseCategory(expense: Expense) {
 
       <ExportDialog v-model="exportDialogOpen" />
 
-    </v-container>
+       <ImportDialog v-model="importDialogOpen" />
+
+     </v-container>
   </v-main>
 </template>
 
 <style scoped>
-.export-button {
-  color: #245b78;
-  background: #e5eef5;
+.operation-button {
+  color: #16436f !important;
+  background: #dce9f5 !important;
   box-shadow: none;
   transition: color 0.2s ease, background-color 0.2s ease;
 }
 
-.export-button:hover {
-  color: #194766;
-  background: #d7e6f0;
+.header-actions {
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.operation-button:hover {
+  color: #12395f !important;
+  background: #cfe0f0 !important;
 }
 
 .empty-state {
@@ -324,6 +346,14 @@ function editExpenseCategory(expense: Expense) {
 
 .expense-menu-btn {
   flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+  .header-actions {
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
 }
 
 </style>

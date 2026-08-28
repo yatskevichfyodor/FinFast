@@ -42,12 +42,13 @@ export function createJsonExport(expenses: Expense[]): string {
   const payload: JsonExport = {
     format: 'finfast',
     version: 1,
-    expenses: rows.map(({ expenseId, amount, categoryId, createdAt }) => ({
-      expenseId,
-      amount,
-      categoryId,
-      createdAt
-    }))
+    expenses: rows.map(({ expenseId, amount, categoryId, createdAt }) => {
+      const expense = { expenseId, amount, createdAt }
+
+      return typeof categoryId !== 'string'
+        ? expense
+        : { ...expense, categoryId }
+    })
   }
 
   return JSON.stringify(payload, null, 2)
