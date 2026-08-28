@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
+    "build": "run-s type-check build-only copy-404",
+    "deploy": "npm run build && gh-pages -d dist --no-history",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "deploy": "npm run build && gh-pages -d dist --no-history"
+    "copy-404": "node scripts/copy-404.mjs"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
