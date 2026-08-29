@@ -22,3 +22,4 @@ finfast:
     key-id: finfast-rs256-1
     private-key-b64: ${FINFAST_JWT_PRIVATE_KEY_B64:}
     public-key-b64: ${FINFAST_JWT_PUBLIC_KEY_B64:}
+  clientUrl: ${CLIENT_URL:http://localhost:5173}
