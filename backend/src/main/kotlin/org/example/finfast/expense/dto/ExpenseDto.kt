@@ -1,6 +1,6 @@
 package org.example.finfast.expense.dto
 
-import org.example.finfast.entity.Expense
+import org.example.finfast.expense.Expense
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID

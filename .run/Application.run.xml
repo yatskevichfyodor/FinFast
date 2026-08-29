@@ -2,7 +2,7 @@
   <configuration default="false" name="Application" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
     <option name="ACTIVE_PROFILES" value="dev" />
     <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UnknownPolicyInFreeMode" />
-    <module name="com.example.FinFast.main" />
+    <module name="backend.FinFast.main" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="org.example.finfast.Application" />
     <option name="WORKING_DIRECTORY" value="file://./backend" />
     <extension name="coverage">

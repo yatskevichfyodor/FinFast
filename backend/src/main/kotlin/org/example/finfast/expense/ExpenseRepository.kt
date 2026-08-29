@@ -1,7 +1,5 @@
-package org.example.finfast.repository
+package org.example.finfast.expense
 
-import org.example.finfast.entity.Expense
-import org.example.finfast.entity.ExpenseId
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
