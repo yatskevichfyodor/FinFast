@@ -1,16 +1,6 @@
-server:
-  port: ${PORT:8081}
-
 spring:
-  # Временные настройки встроенной БД для первого запуска без Docker
   datasource:
-    url: jdbc:h2:file:./data/finfast
-    username: sa
-    password: sa
-    driver-class-name: org.h2.Driver
-  h2:
-    console:
-      enabled: true
+    driver-class-name: org.postgresql.Driver
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
@@ -20,6 +10,3 @@ finfast:
   jwt:
     issuer: finfast-api
     key-id: finfast-rs256-1
-    private-key-b64: ${FINFAST_JWT_PRIVATE_KEY_B64:}
-    public-key-b64: ${FINFAST_JWT_PUBLIC_KEY_B64:}
-  clientUrl: ${CLIENT_URL:http://localhost:5173}

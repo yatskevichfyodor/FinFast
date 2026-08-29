@@ -39,7 +39,6 @@ class SecurityConfig(
                     "/auth/login",
                     "/auth/refresh",
                     "/auth/logout",
-                    "/h2-console/**"
                 ).permitAll()
                     .anyRequest().authenticated()
             }

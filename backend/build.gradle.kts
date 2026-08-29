@@ -28,9 +28,7 @@ dependencies {
     implementation("org.springframework.security:spring-security-oauth2-jose")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
-    implementation("org.springframework.boot:spring-boot-h2console")
-    runtimeOnly("com.h2database:h2")
-//    runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-security-test")
@@ -53,10 +51,4 @@ allOpen {
 
 tasks.withType<Test> {
     useJUnitPlatform()
-}
-
-tasks.register<JavaExec>("h2Console") {
-    classpath = configurations.runtimeClasspath.get()
-    mainClass.set("org.h2.tools.Console")
-    args("-web", "-browser")
 }

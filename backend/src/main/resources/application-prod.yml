@@ -1,0 +1,15 @@
+server:
+  port: ${PORT}
+
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+
+
+finfast:
+  jwt:
+    private-key-b64: ${FINFAST_JWT_PRIVATE_KEY_B64}
+    public-key-b64: ${FINFAST_JWT_PUBLIC_KEY_B64}
+  clientUrl: ${CLIENT_URL}

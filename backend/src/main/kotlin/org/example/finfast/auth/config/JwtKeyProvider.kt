@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.security.KeyFactory
 import java.security.KeyPair
-import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
@@ -19,10 +18,6 @@ class JwtKeyProvider(
     val keyPair: KeyPair = loadKeyPair()
 
     private fun loadKeyPair(): KeyPair {
-        if (privateKeyB64.isBlank() || publicKeyB64.isBlank()) {
-            return KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
-        }
-
         val factory = KeyFactory.getInstance("RSA")
         val privateKey = factory.generatePrivate(
             PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyB64))
