@@ -21,6 +21,9 @@ const isCheckingService = ref(false)
 const isServiceAvailable = ref(true)
 const anonymousExpensesCount = ref(0)
 const showTransferDialog = ref(false)
+const isSlowResponse = ref(false)
+const loginAbortController = ref<AbortController | null>(null)
+const showRetryButton = ref(false)
 
 const isRegistration = computed(() => route.name === 'register')
 const title = computed(() => isRegistration.value ? 'Регистрация' : 'Вход')
@@ -38,11 +41,31 @@ async function checkAuthService() {
   isCheckingService.value = false
 }
 
-function getErrorMessage(error: unknown) {
+function getErrorMessage(error: unknown): string {
   if (isAxiosError(error)) {
+    if (error.code === 'ERR_CANCELED') {
+      return ''
+    }
+
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      return 'Сервер не отвечает. Возможно, сервер ещё запускается.'
+    }
+
+    if (!error.response) {
+      return 'Сервер недоступен. Проверьте подключение к интернету.'
+    }
+
     const responseMessage = error.response?.data?.message
     if (typeof responseMessage === 'string' && responseMessage.length > 0) {
       return responseMessage
+    }
+
+    if (error.response.status >= 500) {
+      return 'Сервер временно недоступен. Попробуйте позже.'
+    }
+
+    if (error.response.status === 401) {
+      return 'Неверный логин или пароль'
     }
   }
 
@@ -53,6 +76,8 @@ function getErrorMessage(error: unknown) {
 
 async function submit() {
   errorMessage.value = ''
+  isSlowResponse.value = false
+  showRetryButton.value = false
 
   if (!username.value.trim() || !password.value) {
     errorMessage.value = 'Заполните логин и пароль'
@@ -65,13 +90,24 @@ async function submit() {
   }
 
   isSubmitting.value = true
+  loginAbortController.value = new AbortController()
+
+  let slowResponseTimer: number | null = null
+
+  if (!isRegistration.value) {
+    slowResponseTimer = window.setTimeout(() => {
+      if (isSubmitting.value) {
+        isSlowResponse.value = true
+      }
+    }, 5000)
+  }
 
   try {
     if (isRegistration.value) {
       await authStore.register(username.value, password.value)
       await router.push({ name: 'login', query: { registered: 'true' } })
     } else {
-      await authStore.login(username.value, password.value)
+      await authStore.login(username.value, password.value, loginAbortController.value.signal)
       const profileId = localStorage.getItem('finfast-anonymous-profile')
       if (profileId) {
         anonymousExpensesCount.value = (await loadStoredExpenses(`anonymous:${profileId}`)).length
@@ -84,9 +120,18 @@ async function submit() {
       }
     }
   } catch (error) {
-    errorMessage.value = getErrorMessage(error)
+    const errorMsg = getErrorMessage(error)
+    if (errorMsg) {
+      errorMessage.value = errorMsg
+      showRetryButton.value = errorMsg.includes('Сервер не отвечает') || errorMsg.includes('Сервер недоступен')
+    }
   } finally {
+    if (slowResponseTimer !== null) {
+      clearTimeout(slowResponseTimer)
+    }
     isSubmitting.value = false
+    isSlowResponse.value = false
+    loginAbortController.value = null
   }
 }
 
@@ -109,6 +154,12 @@ async function transferAnonymousExpenses() {
 async function skipTransfer() {
   showTransferDialog.value = false
   await router.push({ name: 'home' })
+}
+
+function cancelLogin() {
+  if (loginAbortController.value) {
+    loginAbortController.value.abort()
+  }
 }
 
 onMounted(() => {
@@ -178,6 +229,15 @@ onMounted(() => {
         </v-alert>
 
         <v-alert
+          v-if="isSlowResponse"
+          class="mt-4"
+          type="info"
+          variant="tonal"
+        >
+          Сервер запускается. Первый запуск может занять до минуты.
+        </v-alert>
+
+        <v-alert
           v-if="!isRegistration && !isCheckingService && !isServiceAvailable"
           class="mt-4"
           type="warning"
@@ -219,9 +279,31 @@ onMounted(() => {
             color="primary"
             block
             type="submit"
-            :loading="isSubmitting"
+            :loading="isSubmitting && !isSlowResponse"
+            :disabled="isSubmitting && !isSlowResponse"
           >
-            {{ title }}
+            {{ isSubmitting ? 'Входим...' : title }}
+          </v-btn>
+
+          <v-btn
+            v-if="isSlowResponse"
+            class="mt-2"
+            block
+            variant="outlined"
+            color="grey"
+            @click="cancelLogin"
+          >
+            Отменить
+          </v-btn>
+
+          <v-btn
+            v-if="showRetryButton && !isSubmitting"
+            class="mt-2"
+            block
+            color="primary"
+            @click="submit"
+          >
+            Повторить
           </v-btn>
           <v-btn
             v-if="!isRegistration"

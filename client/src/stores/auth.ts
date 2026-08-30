@@ -97,8 +97,8 @@ export const useAuthStore = defineStore('auth', () => {
     return authApi.register({ username, password })
   }
 
-  async function login(loginUsername: string, password: string) {
-    const tokens = await authApi.login({ username: loginUsername, password })
+  async function login(loginUsername: string, password: string, signal?: AbortSignal) {
+    const tokens = await authApi.login({ username: loginUsername, password }, signal)
     saveTokens(tokens)
     await loadCurrentUser()
   }

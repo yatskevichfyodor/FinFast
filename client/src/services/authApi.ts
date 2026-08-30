@@ -28,8 +28,11 @@ export async function register(request: RegisterRequest): Promise<UserResponse> 
   return data
 }
 
-export async function login(request: LoginRequest): Promise<TokenResponse> {
-  const { data } = await api.post<TokenResponse>('/auth/login', request)
+export async function login(request: LoginRequest, signal?: AbortSignal): Promise<TokenResponse> {
+  const { data } = await api.post<TokenResponse>('/auth/login', request, {
+    signal,
+    timeout: 65000
+  })
   return data
 }
 
