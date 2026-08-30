@@ -23,7 +23,7 @@ Main technologies:
 * Spring Security
 * JWT authentication
 * Flyway
-* H2
+* PostgreSQL
 
 ### Frontend
 
@@ -60,12 +60,6 @@ Default port:
 
 ```text
 http://localhost:8081
-```
-
-H2 console:
-
-```powershell
-.\gradlew.bat h2Console
 ```
 
 ### Frontend
@@ -190,14 +184,8 @@ The backend uses Flyway for schema management.
 Database:
 
 ```text
-H2 file database
-jdbc:h2:file:./data/finfast
-```
-
-Local database file:
-
-```text
-backend/data/finfast.mv.db
+PostgreSQL
+jdbc:postgresql://localhost:5432/finfast
 ```
 
 When changing the database schema:
