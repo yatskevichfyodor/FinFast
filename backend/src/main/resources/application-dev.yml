@@ -3,7 +3,8 @@ server:
 
 spring:
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/finfast}
+    # DATABASE_HOST will be postgres for local launch in docker container
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:5432/finfast
     username: postgres
     password: postgres
 
