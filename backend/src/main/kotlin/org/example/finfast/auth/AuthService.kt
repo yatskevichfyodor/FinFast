@@ -8,6 +8,7 @@ import org.example.finfast.auth.dto.TokenResponse
 import org.example.finfast.auth.dto.UserResponse
 import org.example.finfast.auth.entity.RefreshToken
 import org.example.finfast.auth.entity.User
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -42,8 +43,8 @@ class AuthService(
     @Transactional
     fun login(request: LoginRequest): TokenResponse {
         val user = userRepository.findByUsername(request.username.trim())
-        require(user != null && passwordEncoder.matches(request.password, user.passwordHash)) {
-            "Invalid credentials"
+        if (user == null || !passwordEncoder.matches(request.password, user.passwordHash)) {
+            throw BadCredentialsException("Invalid credentials")
         }
         return issueTokens(user)
     }
