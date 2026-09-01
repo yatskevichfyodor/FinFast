@@ -1,0 +1,34 @@
+FROM ghcr.io/graalvm/graalvm-community:25 as build
+
+WORKDIR /app
+
+# Gradle wrapper и конфигурация проекта
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle.kts .
+COPY settings.gradle.kts .
+
+# Сначала скачиваем зависимости.
+# Gradle cache сохраняется между Docker builds.
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew dependencies --no-daemon
+
+# Исходный код копируем после зависимостей
+COPY src src
+
+# Собираем Linux Native Image
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew nativeCompile --no-daemon
+
+
+FROM debian:bookworm-slim
+
+WORKDIR /app
+
+COPY --from=build /app/build/native/nativeCompile/FinFast .
+
+RUN chmod +x FinFast
+
+EXPOSE 10000
+
+ENTRYPOINT ["./FinFast"]
