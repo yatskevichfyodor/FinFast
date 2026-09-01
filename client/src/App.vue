@@ -26,12 +26,12 @@ async function logout() {
 async function completeLogout() {
   showLogoutDialog.value = false
   await authStore.logout()
-  await router.push({ name: 'login' })
+  await router.replace({ name: 'login' })
 }
 
 async function goToLogin() {
   await authStore.logout()
-  await router.push({ name: 'login' })
+  await router.replace({ name: 'login' })
 }
 </script>
 

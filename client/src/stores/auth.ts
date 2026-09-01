@@ -140,7 +140,10 @@ export const useAuthStore = defineStore('auth', () => {
     username.value = null
     localStorage.removeItem(ACCESS_TOKEN_KEY)
     localStorage.removeItem(REFRESH_TOKEN_KEY)
+    localStorage.removeItem(USER_ID_KEY)
+    localStorage.removeItem(USERNAME_KEY)
     localStorage.removeItem(OFFLINE_MODE_KEY)
+    localStorage.removeItem(ANONYMOUS_PROFILE_KEY)
 
     if (currentRefreshToken) {
       try {
