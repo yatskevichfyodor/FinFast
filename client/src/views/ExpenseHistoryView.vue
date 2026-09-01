@@ -74,17 +74,10 @@ function confirmDelete() {
   closeDeleteDialog()
 }
 
-function editExpenseAmount(expense: Expense) {
+function editExpense(expense: Expense) {
   router.push({
     name: 'ExpenseAmountInputView',
     query: { id: expense.id, amount: expense.amount.toString(), categoryId: expense.categoryId }
-  })
-}
-
-function editExpenseCategory(expense: Expense) {
-  router.push({
-    name: 'ExpenseCategorySelectionView',
-    state: { expenseId: expense.id, isEditing: true }
   })
 }
 
@@ -176,6 +169,10 @@ function editExpenseCategory(expense: Expense) {
                     {{ getCategoryDisplay(expense.categoryId).name }}
                   </div>
 
+                  <div v-if="expense.description" class="expense-description">
+                    {{ expense.description }}
+                  </div>
+
                   <div class="expense-time">
                     {{ formatTime(expense.createdAt) }}
                   </div>
@@ -193,11 +190,8 @@ function editExpenseCategory(expense: Expense) {
                   </template>
 
                   <v-list density="compact" rounded="lg">
-                    <v-list-item prepend-icon="mdi-currency-usd" title="Редактировать сумму"
-                      @click="editExpenseAmount(expense)" />
-
-                    <v-list-item prepend-icon="mdi-tag-outline" title="Редактировать категорию"
-                      @click="editExpenseCategory(expense)" />
+                    <v-list-item prepend-icon="mdi-pencil-outline" title="Редактировать"
+                      @click="editExpense(expense)" />
 
                     <v-list-item prepend-icon="mdi-delete-outline" title="Удалить" base-color="error"
                       @click="openDeleteDialog(expense)" />
@@ -334,6 +328,12 @@ function editExpenseCategory(expense: Expense) {
 .expense-time {
   font-size: 12px;
   color: #78909c;
+  margin-top: 2px;
+}
+
+.expense-description {
+  font-size: 13px;
+  color: #546e7a;
   margin-top: 2px;
 }
 

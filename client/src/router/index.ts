@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import ExpenseAmountInputView from '@/views/ExpenseAmountInputView.vue'
 import ExpenseHistoryView from '@/views/ExpenseHistoryView.vue'
 import StatisticsView from '@/views/StatisticsView.vue'
-import ExpenseCategorySelectionView from '@/views/ExpenseCategorySelectionView.vue'
 import AuthView from '@/views/AuthView.vue'
 
 const router = createRouter({
@@ -24,12 +23,6 @@ const router = createRouter({
       name: 'ExpenseAmountInputView',
       path: '/edit',
       component: ExpenseAmountInputView,
-      meta: { requiresAuth: true }
-    },
-    {
-      name: 'ExpenseCategorySelectionView',
-      path: '/category-selection',
-      component: ExpenseCategorySelectionView,
       meta: { requiresAuth: true }
     },
     {

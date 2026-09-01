@@ -538,6 +538,8 @@ export const useExpenseStore = defineStore('expense', () => {
     getExpenseById,
     getPendingExpensesCount,
     transferAnonymousExpenses,
-    syncUnsyncedExpenses
+    syncUnsyncedExpenses,
+    persistExpenses,
+    updateExpenseDirectly
   }
 })
