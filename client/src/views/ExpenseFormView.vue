@@ -172,29 +172,19 @@ loadExistingExpense()
               </div>
 
               <div class="field-group">
-                <v-text-field
+                <v-date-input
                   v-model="paymentDate"
                   label="Дата платежа"
-                  type="datetime-local"
                   variant="outlined"
                   density="comfortable"
                   clearable
-                  hint="Оставьте пустым для текущей даты"
+                  hide-actions
                   persistent-hint
                   class="custom-text-field"
                   color="primary"
-                  prepend-inner-icon="mdi-calendar"
-                >
-                  <template #append-inner>
-                    <v-icon 
-                      v-if="!paymentDate" 
-                      color="grey-lighten-1" 
-                      size="20"
-                    >
-                      mdi-clock-outline
-                    </v-icon>
-                  </template>
-                </v-text-field>
+                  prepend-icon="mdi-calendar"
+                  :display-format="'DD.MM.YYYY'"
+                />
               </div>
             </v-card-text>
           </v-card>
