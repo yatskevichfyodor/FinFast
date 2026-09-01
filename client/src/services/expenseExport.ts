@@ -8,6 +8,8 @@ interface ExportRow {
   amount: number
   categoryId?: string
   createdAt: string
+  description?: string
+  paymentDate?: string
   date: string
   category: string
 }
@@ -15,7 +17,7 @@ interface ExportRow {
 interface JsonExport {
   format: 'finfast'
   version: 1
-  expenses: Array<Pick<ExportRow, 'expenseId' | 'amount' | 'categoryId' | 'createdAt'>>
+  expenses: Array<Pick<ExportRow, 'expenseId' | 'amount' | 'categoryId' | 'createdAt' | 'description' | 'paymentDate'>>
 }
 
 function toExportRows(expenses: Expense[]): ExportRow[] {
@@ -26,6 +28,8 @@ function toExportRows(expenses: Expense[]): ExportRow[] {
       amount: expense.amount,
       categoryId: expense.categoryId,
       createdAt: expense.createdAt,
+      description: expense.description,
+      paymentDate: expense.paymentDate,
       date: new Intl.DateTimeFormat('ru-RU', {
         day: '2-digit',
         month: '2-digit',
@@ -42,8 +46,8 @@ export function createJsonExport(expenses: Expense[]): string {
   const payload: JsonExport = {
     format: 'finfast',
     version: 1,
-    expenses: rows.map(({ expenseId, amount, categoryId, createdAt }) => {
-      const expense = { expenseId, amount, createdAt }
+    expenses: rows.map(({ expenseId, amount, categoryId, createdAt, description, paymentDate }) => {
+      const expense = { expenseId, amount, createdAt, description, paymentDate }
 
       return typeof categoryId !== 'string'
         ? expense
@@ -63,10 +67,10 @@ function escapeCsvCell(value: string | number): string {
 
 export function createCsvExport(expenses: Expense[]): string {
   const rows = toExportRows(expenses)
-  const header = ['Дата', 'Сумма', 'Категория']
+  const header = ['Дата', 'Сумма', 'Категория', 'Описание']
   const lines = [
     header,
-    ...rows.map(row => [row.date, row.amount.toFixed(2), row.category])
+    ...rows.map(row => [row.date, row.amount.toFixed(2), row.category, row.description || ''])
   ].map(row => row.map(escapeCsvCell).join(','))
 
   return `\ufeff${lines.join('\r\n')}`

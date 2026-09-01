@@ -27,7 +27,13 @@ class Expense(
     var categoryId: String? = null,
 
     @Column(nullable = false, updatable = false)
-    val createdAt: Instant
+    val createdAt: Instant,
+
+    @Column
+    var description: String? = null,
+
+    @Column(name = "payment_date")
+    var paymentDate: Instant? = null
 ) {
     val id: UUID
         get() = expenseId.expenseId

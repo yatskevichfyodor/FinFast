@@ -111,6 +111,8 @@ export const useExpenseStore = defineStore('expense', () => {
           amount: expense.amount ?? 0,
           categoryId: expense.categoryId,
           createdAt: expense.createdAt,
+          description: expense.description,
+          paymentDate: expense.paymentDate,
           isSynced: true,
           isDeleted: false,
           isCreatedLocally: false
@@ -157,7 +159,9 @@ export const useExpenseStore = defineStore('expense', () => {
           id: expense.id,
           amount: expense.amount,
           categoryId: expense.categoryId,
-          createdAt: expense.createdAt
+          createdAt: expense.createdAt,
+          description: expense.description,
+          paymentDate: expense.paymentDate
         }))
       }
 
@@ -165,7 +169,9 @@ export const useExpenseStore = defineStore('expense', () => {
         syncRequest.update = toUpdate.map(expense => ({
           id: expense.id,
           amount: expense.amount,
-          categoryId: expense.categoryId
+          categoryId: expense.categoryId,
+          description: expense.description,
+          paymentDate: expense.paymentDate
         }))
       }
 
@@ -264,7 +270,9 @@ export const useExpenseStore = defineStore('expense', () => {
         id: expense.id,
         amount: expense.amount,
         categoryId: expense.categoryId,
-        createdAt: expense.createdAt
+        createdAt: expense.createdAt,
+        description: expense.description,
+        paymentDate: expense.paymentDate
       })
       expense.isSynced = true
       expense.isCreatedLocally = false
@@ -281,13 +289,17 @@ export const useExpenseStore = defineStore('expense', () => {
           id: expense.id,
           amount: expense.amount,
           categoryId: expense.categoryId,
-          createdAt: expense.createdAt
+          createdAt: expense.createdAt,
+          description: expense.description,
+          paymentDate: expense.paymentDate
         })
         expense.isCreatedLocally = false
       } else {
         await expenseApi.updateExpense(expense.id, {
           amount: expense.amount,
-          categoryId: expense.categoryId
+          categoryId: expense.categoryId,
+          description: expense.description,
+          paymentDate: expense.paymentDate
         })
       }
       expense.isSynced = true
@@ -327,7 +339,9 @@ export const useExpenseStore = defineStore('expense', () => {
       id: newExpenseId,
       amount: payload.amount,
       categoryId: payload.categoryId,
-      createdAt: new Date().toISOString(),
+      createdAt: payload.paymentDate || new Date().toISOString(),
+      description: payload.description,
+      paymentDate: payload.paymentDate,
       isSynced: false,
       isDeleted: false,
       isCreatedLocally: true

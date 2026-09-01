@@ -7,6 +7,8 @@ export interface ImportedExpense {
   amount: number
   categoryId?: string
   createdAt: string
+  description?: string
+  paymentDate?: string
 }
 
 export interface ImportFileData {
@@ -129,6 +131,23 @@ function validateExpense(expense: unknown, index: number): string | null {
     return `Расход #${index + 1}: "categoryId" должен быть строкой или отсутствовать`
   }
 
+  // Проверка description (опциональное поле)
+  if (exp.description !== undefined && exp.description !== null && typeof exp.description !== 'string') {
+    return `Расход #${index + 1}: "description" должен быть строкой или отсутствовать`
+  }
+
+  // Проверка paymentDate (опциональное поле)
+  if (exp.paymentDate !== undefined && exp.paymentDate !== null) {
+    if (typeof exp.paymentDate !== 'string' || !exp.paymentDate.trim()) {
+      return `Расход #${index + 1}: "paymentDate" должен быть непустой строкой или отсутствовать`
+    }
+    // Проверка валидности ISO даты
+    const paymentDate = new Date(exp.paymentDate as string)
+    if (isNaN(paymentDate.getTime())) {
+      return `Расход #${index + 1}: "paymentDate" не является валидной ISO датой`
+    }
+  }
+
   // Проверка createdAt
   if (typeof exp.createdAt !== 'string' || !exp.createdAt.trim()) {
     return `Расход #${index + 1}: "createdAt" должен быть непустой строкой`
@@ -152,6 +171,8 @@ export function convertImportedExpenseToExpense(
     amount: imported.amount,
     categoryId: imported.categoryId,
     createdAt: imported.createdAt,
+    description: imported.description,
+    paymentDate: imported.paymentDate,
     isSynced,
     isDeleted: false,
     isCreatedLocally: !isSynced
@@ -182,6 +203,8 @@ export function mergeExpenses(
         amount: imported_expense.amount,
         categoryId: imported_expense.categoryId,
         createdAt: imported_expense.createdAt,
+        description: imported_expense.description,
+        paymentDate: imported_expense.paymentDate,
         isSynced: false, // Отмечаем как требующую синхронизации
         isCreatedLocally: false
       }

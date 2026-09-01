@@ -6,6 +6,8 @@ export interface ExpenseApiBody {
   amount?: number
   categoryId?: string
   createdAt: string
+  description?: string
+  paymentDate?: string
 }
 
 export interface CreateExpensePayload {
@@ -13,11 +15,15 @@ export interface CreateExpensePayload {
   amount: number
   categoryId?: string,
   createdAt: string,
+  description?: string
+  paymentDate?: string
 }
 
 export interface UpdateExpenseRequest {
   amount?: number
   categoryId?: string
+  description?: string
+  paymentDate?: string
 }
 
 export interface BatchUpdateExpenseRequest extends UpdateExpenseRequest {

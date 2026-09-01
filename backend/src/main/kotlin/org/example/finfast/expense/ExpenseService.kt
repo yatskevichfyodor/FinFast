@@ -44,7 +44,9 @@ class ExpenseService(
             expenseId = ExpenseId(userId, dto.id),
             amount = dto.amount,
             categoryId = dto.categoryId,
-            createdAt = dto.createdAt
+            createdAt = dto.createdAt,
+            description = dto.description,
+            paymentDate = dto.paymentDate
         )
 
         expenseRepository.save(expense)
@@ -58,7 +60,9 @@ class ExpenseService(
                 expenseId = ExpenseId(userId, dto.id),
                 amount = dto.amount,
                 categoryId = dto.categoryId,
-                createdAt = dto.createdAt
+                createdAt = dto.createdAt,
+                description = dto.description,
+                paymentDate = dto.paymentDate
             )
         }
 
@@ -127,6 +131,14 @@ class ExpenseService(
 
         dto.categoryId?.let {
             expense.categoryId = it
+        }
+
+        dto.description?.let {
+            expense.description = it
+        }
+
+        dto.paymentDate?.let {
+            expense.paymentDate = it
         }
     }
 

@@ -24,6 +24,9 @@ const selectedCategoryId = ref<string | null>(
   props.expenseCategory?.id ?? null
 )
 
+const description = ref('')
+const paymentDate = ref<string | null>(null)
+
 const isEditing = computed(() => history.state.isEditing === true)
 
 function navigateToHistory() {
@@ -36,6 +39,14 @@ function handleCategoryChange(categoryId: string | null) {
     categoryId ?? undefined
   )
 
+  // Update description and payment date
+  const expense = expenseStore.getExpenseById(exprenseId)
+  if (expense) {
+    expense.description = description.value || undefined
+    expense.paymentDate = paymentDate.value || undefined
+    expenseStore.persistExpenses()
+  }
+
   emit('done')
   navigateToHistory()
 }
@@ -45,6 +56,14 @@ function skipCategory() {
     exprenseId,
     undefined
   )
+
+  // Update description and payment date even when skipping category
+  const expense = expenseStore.getExpenseById(exprenseId)
+  if (expense) {
+    expense.description = description.value || undefined
+    expense.paymentDate = paymentDate.value || undefined
+    expenseStore.persistExpenses()
+  }
 
   emit('done')
   navigateToHistory()
@@ -87,6 +106,34 @@ watch(selectedCategoryId, (newCategoryId) => {
       <CategoryPicker
         v-model:selectedCategoryId="selectedCategoryId"
       />
+
+      <v-card
+        rounded="xl"
+        elevation="0"
+        class="mt-5"
+      >
+        <v-card-text>
+          <v-text-field
+            v-model="description"
+            label="Описание (что куплено)"
+            placeholder="Например: продукты, обед, бензин"
+            variant="outlined"
+            density="comfortable"
+            clearable
+          />
+
+          <v-text-field
+            v-model="paymentDate"
+            label="Дата платежа"
+            type="datetime-local"
+            variant="outlined"
+            density="comfortable"
+            clearable
+            hint="Оставьте пустым для текущей даты"
+            persistent-hint
+          />
+        </v-card-text>
+      </v-card>
 
     </v-container>
   </v-main>

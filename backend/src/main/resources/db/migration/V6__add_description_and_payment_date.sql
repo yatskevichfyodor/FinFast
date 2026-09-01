@@ -1,0 +1,5 @@
+ALTER TABLE expenses
+ADD COLUMN description TEXT;
+
+ALTER TABLE expenses
+ADD COLUMN payment_date TIMESTAMP WITH TIME ZONE;

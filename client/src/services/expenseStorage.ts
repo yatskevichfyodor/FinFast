@@ -2,7 +2,7 @@ import { toRaw } from 'vue'
 import type { Expense } from '@/types/expense'
 
 const DATABASE_NAME = 'finfast'
-const DATABASE_VERSION = 2
+const DATABASE_VERSION = 3
 const STORE_NAME = 'expenses'
 
 interface ExpenseRecord {
@@ -15,7 +15,7 @@ function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION)
 
-    request.onupgradeneeded = () => {
+    request.onupgradeneeded = (event) => {
       const database = request.result
 
       if (!database.objectStoreNames.contains(STORE_NAME)) {
