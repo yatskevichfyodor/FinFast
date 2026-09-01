@@ -179,11 +179,11 @@ loadExistingExpense()
                   density="comfortable"
                   clearable
                   hide-actions
+                  input-format="yyyy.mm.dd"
                   persistent-hint
                   class="custom-text-field"
                   color="primary"
                   prepend-icon="mdi-calendar"
-                  :display-format="'DD.MM.YYYY'"
                 />
               </div>
             </v-card-text>
