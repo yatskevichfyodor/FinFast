@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Application" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UnknownPolicyInFreeMode" />
+    <module name="com.example.FinFast.main" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="org.example.finfast.Application" />
+    <option name="WORKING_DIRECTORY" value="file://./backend" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="org.example.finfast.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

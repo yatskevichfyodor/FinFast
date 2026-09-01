@@ -1,0 +1,1 @@
+{"name":"FinFast","short_name":"FinFast","description":"Персональный трекер расходов","start_url":"/FinFast/","display":"standalone","background_color":"#ffffff","theme_color":"#4a7ba7","lang":"en","scope":"/FinFast/","icons":[{"src":"favicon.png","sizes":"192x192","type":"image/png"},{"src":"favicon.png","sizes":"512x512","type":"image/png"}]}
