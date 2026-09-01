@@ -9,6 +9,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   submit: [amount: number]
   cancel: []
+  'amount-change': [amount: number, valid: boolean]
 }>()
 
 const amount = ref('')
@@ -75,8 +76,16 @@ watch(
   () => props.amount,
   (value) => {
     loadAmount(value)
+    emit('amount-change', Number(value ?? 0), Number(value ?? 0) > 0)
   },
   { immediate: true }
+)
+
+watch(
+  () => amount.value,
+  (value) => {
+    emit('amount-change', Number(value || 0), Number(value || 0) > 0)
+  }
 )
 </script>
 
@@ -199,23 +208,10 @@ watch(
       </v-card-text>
     </v-card>
 
-    <v-btn
-      block
-      size="x-large"
-      rounded="xl"
-      color="primary"
-      elevation="2"
-      :disabled="!canConfirmAmount"
-      prepend-icon="mdi-check"
-      @click="submit"
-    >
-      {{ isEditing ? 'Сохранить изменения' : 'Подтвердить сумму' }}
-    </v-btn>
   </div>
 </template>
 
 <style scoped>
-
 .amount-card {
   background: linear-gradient(
     135deg,

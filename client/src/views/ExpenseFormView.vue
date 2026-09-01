@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import CategoryPicker from '@/components/CategoryPicker.vue'
+import ExpenseAmountInput from '@/components/ExpenseAmountInput.vue'
 import {
   useExpenseStore,
   type ExpensePayload
@@ -19,60 +20,51 @@ const emit = defineEmits<{
 const expenseStore = useExpenseStore()
 
 const isEditing = computed(() => route.query.id !== undefined)
+const editingExpenseId = computed(() => {
+  const expenseId = route.query.id
+  return typeof expenseId === 'string' ? expenseId : undefined
+})
 
-const amount = ref('')
 const description = ref('')
 const selectedCategoryId = ref<string | null>(null)
 const paymentDate = ref<string | null>(null)
+const currentAmount = ref<number | null>(null)
+const canSubmitAmount = ref(false)
 
 const initialDescription = ref<string>('')
 const initialPaymentDate = ref<string>('')
 
-const formattedAmount = computed(() => {
-  if (!amount.value) {
-    return '0.00'
-  }
-  return Number(amount.value).toFixed(2)
+const initialAmount = computed(() => {
+  const value = route.query.amount
+  return value !== undefined ? Number(value) : undefined
 })
 
-const canConfirmAmount = computed(() => {
-  return Number(amount.value) > 0
-})
-
-function addDigit(digit: string) {
-  if (digit === '.' && amount.value.includes('.')) {
-    return
-  }
-
-  if (amount.value === '0' && digit !== '.') {
-    amount.value = digit
-    return
-  }
-
-  const decimalPart = amount.value.split('.')[1]
-
-  if (decimalPart && decimalPart.length >= 2) {
-    return
-  }
-
-  amount.value += digit
+function handleAmountChange(amountValue: number, valid: boolean) {
+  currentAmount.value = amountValue
+  canSubmitAmount.value = valid
 }
 
-function removeLastDigit() {
-  amount.value = amount.value.slice(0, -1)
-}
-
-function handleSubmit() {
-  if (!canConfirmAmount.value) {
+function submitCurrentAmount() {
+  if (!canSubmitAmount.value || currentAmount.value === null) {
     return
   }
 
-  const amountValue = Number(amount.value)
+  handleSubmit(currentAmount.value)
+}
+
+function handleSubmit(amountValue: number) {
+  if (amountValue <= 0) {
+    return
+  }
 
   if (isEditing.value) {
-    const expenseId = route.query.id as string
+    const expenseId = editingExpenseId.value
+    if (!expenseId) {
+      return
+    }
+
     const expense = expenseStore.getExpenseById(expenseId)
-    
+
     if (expense) {
       const updatePayload: ExpensePayload = {
         id: expenseId,
@@ -85,7 +77,7 @@ function handleSubmit() {
     }
 
     router.push({
-      name: "expense-history"
+      name: 'expense-history'
     })
   } else {
     const payload: ExpensePayload = {
@@ -96,26 +88,13 @@ function handleSubmit() {
     }
     expenseStore.addExpense(payload)
     router.push({
-      name: "expense-history"
+      name: 'expense-history'
     })
   }
 }
 
 function handleCancel() {
   emit('cancel')
-}
-
-function reset() {
-  amount.value = ''
-  description.value = ''
-  selectedCategoryId.value = null
-  paymentDate.value = null
-}
-
-const watchAmount = () => {
-  if (route.query.amount !== undefined) {
-    amount.value = String(route.query.amount)
-  }
 }
 
 const watchCategoryId = () => {
@@ -125,8 +104,9 @@ const watchCategoryId = () => {
 }
 
 const loadExistingExpense = () => {
-  if (isEditing.value && route.query.id) {
-    const expense = expenseStore.getExpenseById(route.query.id as string)
+  const expenseId = editingExpenseId.value
+  if (isEditing.value && expenseId) {
+    const expense = expenseStore.getExpenseById(expenseId)
     if (expense) {
       initialDescription.value = expense.description || ''
       initialPaymentDate.value = expense.paymentDate || ''
@@ -136,7 +116,6 @@ const loadExistingExpense = () => {
   }
 }
 
-watchAmount()
 watchCategoryId()
 loadExistingExpense()
 </script>
@@ -146,122 +125,13 @@ loadExistingExpense()
     <div class="expense-container">
       <div class="scrollable-content">
         <v-container class="expense-page" max-width="600">
-          <div class="mb-6">
-            <div class="d-flex align-center justify-space-between">
-              <div>
-                <div class="text-h5 font-weight-bold">
-                  {{ isEditing ? 'Редактирование расхода' : 'Новый расход' }}
-                </div>
-
-                <div class="text-body-2 text-medium-emphasis mt-1">
-                  Сколько вы потратили?
-                </div>
-              </div>
-
-              <v-btn
-                v-if="isEditing"
-                icon="mdi-close"
-                variant="tonal"
-                aria-label="Отменить редактирование"
-                @click="handleCancel"
-              />
-            </div>
-          </div>
-
-          <v-card
-            rounded="xl"
-            elevation="0"
-            class="amount-card mb-5"
-          >
-            <v-card-text class="py-8">
-              <div class="amount-display">
-                <span class="amount">
-                  {{ formattedAmount }}
-                </span>
-
-                <span class="currency">
-                  <img
-                    src="/byn-symbol.webp"
-                    alt="BYN"
-                    class="currency-symbol"
-                  />
-                </span>
-              </div>
-
-              <div class="text-center mt-2 summary-label">
-                Введите сумму расхода
-              </div>
-            </v-card-text>
-          </v-card>
-
-          <v-card
-            rounded="xl"
-            elevation="0"
-            class="keypad-card mb-5"
-          >
-            <v-card-text class="pa-3">
-              <v-row dense>
-                <v-col
-                  v-for="digit in [
-                    '1', '2', '3',
-                    '4', '5', '6',
-                    '7', '8', '9'
-                  ]"
-                  :key="digit"
-                  cols="4"
-                >
-                  <v-btn
-                    block
-                    height="64"
-                    variant="text"
-                    class="key-button"
-                    @click="addDigit(digit)"
-                  >
-                    {{ digit }}
-                  </v-btn>
-                </v-col>
-
-                <v-col cols="4">
-                  <v-btn
-                    block
-                    height="64"
-                    variant="text"
-                    class="key-button"
-                    @click="addDigit('.')"
-                  >
-                    .
-                  </v-btn>
-                </v-col>
-
-                <v-col cols="4">
-                  <v-btn
-                    block
-                    height="64"
-                    variant="text"
-                    class="key-button"
-                    @click="addDigit('0')"
-                  >
-                    0
-                  </v-btn>
-                </v-col>
-
-                <v-col cols="4">
-                  <v-btn
-                    block
-                    height="64"
-                    variant="text"
-                    class="key-button"
-                    @click="removeLastDigit"
-                  >
-                    <v-icon
-                      icon="mdi-backspace-outline"
-                      size="25"
-                    />
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-card-text>
-          </v-card>
+          <ExpenseAmountInput
+            :expense-id="editingExpenseId"
+            :amount="initialAmount"
+            @submit="handleSubmit"
+            @cancel="handleCancel"
+            @amount-change="handleAmountChange"
+          />
 
           <v-card
             rounded="xl"
@@ -340,10 +210,10 @@ loadExistingExpense()
               rounded="xl"
               color="primary"
               elevation="2"
-              :disabled="!canConfirmAmount"
+              :disabled="!canSubmitAmount"
               prepend-icon="mdi-check"
               class="submit-button"
-              @click="handleSubmit"
+              @click="submitCurrentAmount"
             >
               {{ isEditing ? 'Сохранить изменения' : 'Готово' }}
             </v-btn>
@@ -376,13 +246,14 @@ loadExistingExpense()
 }
 
 .fixed-bottom-panel {
+  position: sticky;
+  bottom: 0;
   flex-shrink: 0;
   background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
   backdrop-filter: blur(10px);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   padding: 16px 0;
   padding-bottom: max(16px, env(safe-area-inset-bottom));
-  position: relative;
   z-index: 10;
 }
 
