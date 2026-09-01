@@ -13,26 +13,6 @@ const expenseStore = useExpenseStore()
 const showNavigation = computed(() => route.meta.requiresAuth === true)
 const showLogoutDialog = ref(false)
 const pendingExpensesCount = computed(() => expenseStore.getPendingExpensesCount())
-const syncStatusMessage = computed(() => {
-  if (expenseStore.syncError) {
-    return expenseStore.syncError
-  }
-
-  const count = pendingExpensesCount.value
-  const lastDigit = count % 10
-  const lastTwoDigits = count % 100
-  const word = lastTwoDigits >= 11 && lastTwoDigits <= 14
-    ? 'расходов'
-    : lastDigit === 1
-      ? 'расход'
-      : lastDigit >= 2 && lastDigit <= 4
-        ? 'расхода'
-        : 'расходов'
-
-  return expenseStore.isSyncing
-    ? 'Синхронизация расходов...'
-    : `${count} ${word} ожидают синхронизации`
-})
 
 async function logout() {
   if (pendingExpensesCount.value > 0) {
@@ -71,16 +51,6 @@ async function goToLogin() {
         />
       </div>
     </template>
-
-    <v-alert
-      v-if="expenseStore.syncError || pendingExpensesCount > 0 || expenseStore.isSyncing"
-      class="sync-status"
-      :type="expenseStore.syncError ? 'error' : 'info'"
-      density="compact"
-      variant="tonal"
-    >
-      {{ syncStatusMessage }}
-    </v-alert>
 
     <LogoutConfirmationDialog
       v-model="showLogoutDialog"
