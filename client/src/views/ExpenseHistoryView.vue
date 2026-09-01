@@ -76,7 +76,7 @@ function confirmDelete() {
 
 function editExpense(expense: Expense) {
   router.push({
-    name: 'ExpenseAmountInputView',
+    name: 'expense-payment-form',
     query: { id: expense.id, amount: expense.amount.toString(), categoryId: expense.categoryId }
   })
 }

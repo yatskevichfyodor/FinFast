@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import ExpenseAmountInputView from '@/views/ExpenseAmountInputView.vue'
+import ExpenseFormView from '@/views/ExpenseFormView.vue'
 import ExpenseHistoryView from '@/views/ExpenseHistoryView.vue'
 import StatisticsView from '@/views/StatisticsView.vue'
 import AuthView from '@/views/AuthView.vue'
@@ -10,19 +10,19 @@ const router = createRouter({
     {
       name: 'home',
       path: '/',
-      component: ExpenseAmountInputView,
+      component: ExpenseFormView,
       meta: { requiresAuth: true }
     },
     {
       name: 'add',
       path: '/add',
-      component: ExpenseAmountInputView,
+      component: ExpenseFormView,
       meta: { requiresAuth: true }
     },
     {
-      name: 'ExpenseAmountInputView',
+      name: 'expense-payment-form',
       path: '/edit',
-      component: ExpenseAmountInputView,
+      component: ExpenseFormView,
       meta: { requiresAuth: true }
     },
     {
