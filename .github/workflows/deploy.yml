@@ -31,7 +31,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile.native
+          file: ./backend/Dockerfile.native
           platforms: linux/amd64
           push: true
           tags: |
