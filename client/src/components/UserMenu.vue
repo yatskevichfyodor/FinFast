@@ -85,12 +85,6 @@ function handleBackdropClick(event: MouseEvent) {
           <div v-if="localOpen" class="user-menu">
             <div class="menu-header">
               <span class="menu-username">{{ authStore.username || 'Пользователь' }}</span>
-              <v-btn
-                icon="mdi-close"
-                size="small"
-                variant="text"
-                @click="closeMenu"
-              />
             </div>
 
             <div class="menu-content">
@@ -146,7 +140,7 @@ function handleBackdropClick(event: MouseEvent) {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  z-index: 2000;
   display: flex;
   justify-content: flex-end;
 }
@@ -167,8 +161,8 @@ function handleBackdropClick(event: MouseEvent) {
   justify-content: space-between;
   padding: 20px;
   border-bottom: 1px solid #e0e0e0;
-  background: linear-gradient(135deg, #4a7ba7 0%, #5fa9b8 100%);
-  color: white;
+  background: white;
+  color: #263238;
 }
 
 .menu-username {
