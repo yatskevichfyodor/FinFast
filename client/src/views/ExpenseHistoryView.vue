@@ -32,6 +32,13 @@ const groupedExpenses = computed(() => {
 
   activeExpenses.value.forEach((expense: Expense) => {
     const dateForGrouping = expense.paymentDate || expense.createdAt
+    const date = new Date(dateForGrouping)
+    
+    // Skip invalid dates
+    if (isNaN(date.getTime())) {
+      return
+    }
+    
     const dateKey = formatDate(dateForGrouping)
 
     if (!groups[dateKey]) {
@@ -85,8 +92,7 @@ function editExpense(expense: Expense) {
     query: { 
       id: expense.id, 
       amount: expense.amount.toString(), 
-      categoryId: expense.categoryId,
-      paymentDate: expense.paymentDate 
+      categoryId: expense.categoryId
     }
   })
 }
@@ -184,7 +190,7 @@ function editExpense(expense: Expense) {
                   </div>
 
                   <div class="expense-time">
-                    {{ formatTime(expense.paymentDate || expense.createdAt) }}
+                    {{ formatTime(expense.paymentDate && !isNaN(new Date(expense.paymentDate).getTime()) ? expense.paymentDate : expense.createdAt) }}
                   </div>
                 </div>
 

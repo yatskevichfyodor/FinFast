@@ -57,9 +57,18 @@ function handleSubmit(amountValue: number) {
     return
   }
 
-  // Convert YYYY-MM-DD to ISO format if payment date is provided
-  // Use noon time to avoid timezone issues
-  const paymentDateIso = paymentDate.value ? `${paymentDate.value}T12:00:00.000Z` : undefined
+  // Convert YYYY.MM.DD to ISO format if payment date is provided
+  let paymentDateIso: string | undefined
+  if (paymentDate.value) {
+    const parts = paymentDate.value.split('.')
+    if (parts.length === 3) {
+      const [year, month, day] = parts
+      const date = new Date(`${year}-${month}-${day}T12:00:00.000Z`)
+      if (!isNaN(date.getTime())) {
+        paymentDateIso = date.toISOString()
+      }
+    }
+  }
 
   if (isEditing.value) {
     const expenseId = editingExpenseId.value
@@ -113,17 +122,38 @@ const loadExistingExpense = () => {
     const expense = expenseStore.getExpenseById(expenseId)
     if (expense) {
       initialDescription.value = expense.description || ''
-      // Convert ISO date to YYYY-MM-DD format for v-date-input
-      initialPaymentDate.value = expense.paymentDate ? (expense.paymentDate.split('T')[0] || null) : null
+      // Convert ISO date to YYYY.MM.DD format for v-date-input
+      if (expense.paymentDate) {
+        const date = new Date(expense.paymentDate)
+        if (!isNaN(date.getTime())) {
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const day = String(date.getDate()).padStart(2, '0')
+          initialPaymentDate.value = `${year}.${month}.${day}`
+        } else {
+          initialPaymentDate.value = null
+        }
+      } else {
+        initialPaymentDate.value = null
+      }
       description.value = initialDescription.value
       paymentDate.value = initialPaymentDate.value
     }
   } else if (route.query.paymentDate !== undefined) {
-    // Load payment date from query parameter and convert to YYYY-MM-DD format
+    // Load payment date from query parameter and convert to YYYY.MM.DD format
     const queryDate = route.query.paymentDate as string
-    const convertedDate = queryDate.split('T')[0] || null
-    paymentDate.value = convertedDate
-    initialPaymentDate.value = convertedDate
+    const date = new Date(queryDate)
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const convertedDate = `${year}.${month}.${day}`
+      paymentDate.value = convertedDate
+      initialPaymentDate.value = convertedDate
+    } else {
+      paymentDate.value = null
+      initialPaymentDate.value = null
+    }
   }
 }
 
