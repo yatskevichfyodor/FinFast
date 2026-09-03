@@ -32,7 +32,7 @@ const currentAmount = ref<number | null>(null)
 const canSubmitAmount = ref(false)
 
 const initialDescription = ref<string>('')
-const initialPaymentDate = ref<string>('')
+const initialPaymentDate = ref<string | null>(null)
 
 const initialAmount = computed(() => {
   const value = route.query.amount
@@ -57,6 +57,10 @@ function handleSubmit(amountValue: number) {
     return
   }
 
+  // Convert YYYY-MM-DD to ISO format if payment date is provided
+  // Use noon time to avoid timezone issues
+  const paymentDateIso = paymentDate.value ? `${paymentDate.value}T12:00:00.000Z` : undefined
+
   if (isEditing.value) {
     const expenseId = editingExpenseId.value
     if (!expenseId) {
@@ -71,7 +75,7 @@ function handleSubmit(amountValue: number) {
         amount: amountValue,
         categoryId: selectedCategoryId.value !== null ? selectedCategoryId.value : expense.categoryId,
         description: description.value || undefined,
-        paymentDate: paymentDate.value || undefined
+        paymentDate: paymentDateIso
       }
       expenseStore.updateExpense(updatePayload)
     }
@@ -84,7 +88,7 @@ function handleSubmit(amountValue: number) {
       amount: amountValue,
       categoryId: selectedCategoryId.value || undefined,
       description: description.value || undefined,
-      paymentDate: paymentDate.value || undefined
+      paymentDate: paymentDateIso
     }
     expenseStore.addExpense(payload)
     router.push({
@@ -109,10 +113,17 @@ const loadExistingExpense = () => {
     const expense = expenseStore.getExpenseById(expenseId)
     if (expense) {
       initialDescription.value = expense.description || ''
-      initialPaymentDate.value = expense.paymentDate || ''
+      // Convert ISO date to YYYY-MM-DD format for v-date-input
+      initialPaymentDate.value = expense.paymentDate ? (expense.paymentDate.split('T')[0] || null) : null
       description.value = initialDescription.value
       paymentDate.value = initialPaymentDate.value
     }
+  } else if (route.query.paymentDate !== undefined) {
+    // Load payment date from query parameter and convert to YYYY-MM-DD format
+    const queryDate = route.query.paymentDate as string
+    const convertedDate = queryDate.split('T')[0] || null
+    paymentDate.value = convertedDate
+    initialPaymentDate.value = convertedDate
   }
 }
 

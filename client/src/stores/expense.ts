@@ -383,6 +383,8 @@ export const useExpenseStore = defineStore('expense', () => {
       ...expenses.value[index]!,
       amount: payload.amount,
       categoryId: payload.categoryId,
+      description: payload.description,
+      paymentDate: payload.paymentDate,
       isSynced: false
     }
 

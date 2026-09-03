@@ -31,7 +31,8 @@ const groupedExpenses = computed(() => {
   const groups: Record<string, Expense[]> = {}
 
   activeExpenses.value.forEach((expense: Expense) => {
-    const dateKey = formatDate(expense.createdAt)
+    const dateForGrouping = expense.paymentDate || expense.createdAt
+    const dateKey = formatDate(dateForGrouping)
 
     if (!groups[dateKey]) {
       groups[dateKey] = []
@@ -43,14 +44,18 @@ const groupedExpenses = computed(() => {
   return Object.entries(groups)
     .map(([date, dayExpenses]) => {
       const sortedDayExpenses = [...dayExpenses].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) => {
+          const dateA = new Date(a.paymentDate || a.createdAt)
+          const dateB = new Date(b.paymentDate || b.createdAt)
+          return dateB.getTime() - dateA.getTime()
+        }
       )
 
       return [date, sortedDayExpenses] as const
     })
     .sort((a, b) => {
-      const dateA = new Date(a[1][0]?.createdAt || '')
-      const dateB = new Date(b[1][0]?.createdAt || '')
+      const dateA = new Date(a[1][0]?.paymentDate || a[1][0]?.createdAt || '')
+      const dateB = new Date(b[1][0]?.paymentDate || b[1][0]?.createdAt || '')
       return dateB.getTime() - dateA.getTime()
     })
 })
@@ -77,7 +82,12 @@ function confirmDelete() {
 function editExpense(expense: Expense) {
   router.push({
     name: 'expense-payment-form',
-    query: { id: expense.id, amount: expense.amount.toString(), categoryId: expense.categoryId }
+    query: { 
+      id: expense.id, 
+      amount: expense.amount.toString(), 
+      categoryId: expense.categoryId,
+      paymentDate: expense.paymentDate 
+    }
   })
 }
 
@@ -174,7 +184,7 @@ function editExpense(expense: Expense) {
                   </div>
 
                   <div class="expense-time">
-                    {{ formatTime(expense.createdAt) }}
+                    {{ formatTime(expense.paymentDate || expense.createdAt) }}
                   </div>
                 </div>
 
