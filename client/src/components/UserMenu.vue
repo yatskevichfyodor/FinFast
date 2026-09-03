@@ -100,7 +100,7 @@ function handleBackdropClick(event: MouseEvent) {
                 class="menu-button"
                 @click="openImport"
               >
-                Импорт
+                Импорт расходов
               </v-btn>
 
               <v-btn
@@ -109,7 +109,7 @@ function handleBackdropClick(event: MouseEvent) {
                 class="menu-button"
                 @click="openExport"
               >
-                Экспорт
+                Экспорт расходов
               </v-btn>
             </div>
 
