@@ -45,7 +45,21 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: [
           '**/*.{js,css,html,ico,png,webp,svg}'
-        ]
+        ],
+        runtimeCaching: [
+          {
+            urlPattern: /^https?.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'offline-cache',
+              expiration: {
+                maxEntries: 200,
+              },
+            },
+          },
+        ],
+        clientsClaim: true,
+        skipWaiting: true,
       }
     })
   ],
