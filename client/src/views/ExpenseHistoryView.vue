@@ -7,7 +7,7 @@ import {
   type Expense
 } from '@/stores/expense'
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
-import { formatDate, formatTime } from '@/utils/dateHelpers'
+import { formatDate, formatTime, parseDate } from '@/utils/dateHelpers'
 import ExportDialog from '@/components/ExportDialog.vue'
 import ImportDialog from '@/components/ImportDialog.vue'
 
@@ -32,7 +32,11 @@ const groupedExpenses = computed(() => {
 
   activeExpenses.value.forEach((expense: Expense) => {
     const dateForGrouping = expense.paymentDate || expense.createdAt
-    const date = new Date(dateForGrouping)
+    if (!dateForGrouping) {
+      return
+    }
+    
+    const date = parseDate(dateForGrouping)
     
     // Skip invalid dates
     if (isNaN(date.getTime())) {
@@ -52,8 +56,8 @@ const groupedExpenses = computed(() => {
     .map(([date, dayExpenses]) => {
       const sortedDayExpenses = [...dayExpenses].sort(
         (a, b) => {
-          const dateA = new Date(a.paymentDate || a.createdAt)
-          const dateB = new Date(b.paymentDate || b.createdAt)
+          const dateA = parseDate(a.paymentDate || a.createdAt)
+          const dateB = parseDate(b.paymentDate || b.createdAt)
           return dateB.getTime() - dateA.getTime()
         }
       )
@@ -61,8 +65,8 @@ const groupedExpenses = computed(() => {
       return [date, sortedDayExpenses] as const
     })
     .sort((a, b) => {
-      const dateA = new Date(a[1][0]?.paymentDate || a[1][0]?.createdAt || '')
-      const dateB = new Date(b[1][0]?.paymentDate || b[1][0]?.createdAt || '')
+      const dateA = parseDate(a[1][0]?.paymentDate || a[1][0]?.createdAt || '')
+      const dateB = parseDate(b[1][0]?.paymentDate || b[1][0]?.createdAt || '')
       return dateB.getTime() - dateA.getTime()
     })
 })
@@ -190,7 +194,7 @@ function editExpense(expense: Expense) {
                   </div>
 
                   <div class="expense-time">
-                    {{ formatTime(expense.paymentDate && !isNaN(new Date(expense.paymentDate).getTime()) ? expense.paymentDate : expense.createdAt) }}
+                    {{ formatTime(expense.paymentDate || expense.createdAt) }}
                   </div>
                 </div>
 

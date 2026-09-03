@@ -339,7 +339,7 @@ export const useExpenseStore = defineStore('expense', () => {
       id: newExpenseId,
       amount: payload.amount,
       categoryId: payload.categoryId,
-      createdAt: payload.paymentDate || new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       description: payload.description,
       paymentDate: payload.paymentDate,
       isSynced: false,

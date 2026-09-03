@@ -8,6 +8,7 @@ import {
   useExpenseStore,
   type ExpensePayload
 } from '@/stores/expense'
+import { convertDashFormatToDotFormat, convertDotFormatToDashFormat } from '@/utils/dateHelpers'
 
 const router = useRouter()
 const route = useRoute()
@@ -57,18 +58,27 @@ function handleSubmit(amountValue: number) {
     return
   }
 
-  // Convert YYYY.MM.DD to ISO format if payment date is provided
-  let paymentDateIso: string | undefined
+  // Convert YYYY.MM.DD to YYYY-MM-DD format if payment date is provided
+  // Store as simple date string without timezone to avoid timezone issues
+  console.log('paymentDate.value:', paymentDate.value, 'type:', typeof paymentDate.value)
+  
+  let paymentDateFormatted: string | undefined
   if (paymentDate.value) {
-    const parts = paymentDate.value.split('.')
-    if (parts.length === 3) {
-      const [year, month, day] = parts
-      const date = new Date(`${year}-${month}-${day}T12:00:00.000Z`)
-      if (!isNaN(date.getTime())) {
-        paymentDateIso = date.toISOString()
+    if (typeof paymentDate.value === 'string') {
+      paymentDateFormatted = convertDotFormatToDashFormat(paymentDate.value)
+    } else {
+      // Handle if v-date-input returns a Date object
+      const dateValue = paymentDate.value as any
+      if (dateValue instanceof Date) {
+        const year = dateValue.getFullYear()
+        const month = String(dateValue.getMonth() + 1).padStart(2, '0')
+        const day = String(dateValue.getDate()).padStart(2, '0')
+        paymentDateFormatted = `${year}-${month}-${day}`
       }
     }
   }
+
+  console.log('paymentDateFormatted:', paymentDateFormatted)
 
   if (isEditing.value) {
     const expenseId = editingExpenseId.value
@@ -84,7 +94,8 @@ function handleSubmit(amountValue: number) {
         amount: amountValue,
         categoryId: selectedCategoryId.value !== null ? selectedCategoryId.value : expense.categoryId,
         description: description.value || undefined,
-        paymentDate: paymentDateIso
+        // Update paymentDate only if a new value was provided (not null/undefined)
+        paymentDate: paymentDateFormatted
       }
       expenseStore.updateExpense(updatePayload)
     }
@@ -97,7 +108,7 @@ function handleSubmit(amountValue: number) {
       amount: amountValue,
       categoryId: selectedCategoryId.value || undefined,
       description: description.value || undefined,
-      paymentDate: paymentDateIso
+      paymentDate: paymentDateFormatted
     }
     expenseStore.addExpense(payload)
     router.push({
@@ -122,38 +133,17 @@ const loadExistingExpense = () => {
     const expense = expenseStore.getExpenseById(expenseId)
     if (expense) {
       initialDescription.value = expense.description || ''
-      // Convert ISO date to YYYY.MM.DD format for v-date-input
-      if (expense.paymentDate) {
-        const date = new Date(expense.paymentDate)
-        if (!isNaN(date.getTime())) {
-          const year = date.getFullYear()
-          const month = String(date.getMonth() + 1).padStart(2, '0')
-          const day = String(date.getDate()).padStart(2, '0')
-          initialPaymentDate.value = `${year}.${month}.${day}`
-        } else {
-          initialPaymentDate.value = null
-        }
-      } else {
-        initialPaymentDate.value = null
-      }
+      // Convert YYYY-MM-DD to YYYY.MM.DD format for v-date-input
+      initialPaymentDate.value = expense.paymentDate ? convertDashFormatToDotFormat(expense.paymentDate) : null
       description.value = initialDescription.value
       paymentDate.value = initialPaymentDate.value
     }
   } else if (route.query.paymentDate !== undefined) {
     // Load payment date from query parameter and convert to YYYY.MM.DD format
     const queryDate = route.query.paymentDate as string
-    const date = new Date(queryDate)
-    if (!isNaN(date.getTime())) {
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const convertedDate = `${year}.${month}.${day}`
-      paymentDate.value = convertedDate
-      initialPaymentDate.value = convertedDate
-    } else {
-      paymentDate.value = null
-      initialPaymentDate.value = null
-    }
+    const convertedDate = convertDashFormatToDotFormat(queryDate)
+    paymentDate.value = convertedDate
+    initialPaymentDate.value = convertedDate
   }
 }
 
