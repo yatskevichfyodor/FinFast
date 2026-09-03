@@ -7,7 +7,7 @@ import {
   type Expense
 } from '@/stores/expense'
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
-import { formatDate, formatTime, parseDate } from '@/utils/dateHelpers'
+import { formatDate, parseDate } from '@/utils/dateHelpers'
 
 const router = useRouter()
 const expenseStore = useExpenseStore()
@@ -161,9 +161,6 @@ function editExpense(expense: Expense) {
                     {{ expense.description }}
                   </div>
 
-                  <div class="expense-time">
-                    {{ formatTime(expense.paymentDate || expense.createdAt) }}
-                  </div>
                 </div>
 
                 <div class="expense-amount">
