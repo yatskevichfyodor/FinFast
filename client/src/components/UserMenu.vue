@@ -77,12 +77,12 @@ function handleBackdropClick(event: MouseEvent) {
   <Teleport to="body">
     <Transition name="menu-backdrop">
       <div
-        v-if="localOpen"
+        v-show="localOpen"
         class="menu-backdrop"
         @click="handleBackdropClick"
       >
         <Transition name="menu-slide">
-          <div v-if="localOpen" class="user-menu">
+          <div v-show="localOpen" class="user-menu">
             <div class="menu-header">
               <span class="menu-username">{{ authStore.username || 'Пользователь' }}</span>
             </div>
