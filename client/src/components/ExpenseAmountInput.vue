@@ -33,6 +33,11 @@ function addDigit(digit: string) {
     return
   }
 
+  if (digit === '.' && !amount.value) {
+    amount.value = '0.'
+    return
+  }
+
   if (amount.value === '0' && digit !== '.') {
     amount.value = digit
     return
