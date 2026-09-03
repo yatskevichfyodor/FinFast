@@ -84,25 +84,34 @@ function handleBackdropClick(event: MouseEvent) {
         <Transition name="menu-slide">
           <div v-show="localOpen" class="user-menu">
             <div class="menu-header">
-              <span class="menu-username">{{ authStore.username || 'Пользователь' }}</span>
+              <v-avatar class="menu-avatar" color="light-blue-lighten-5" size="46">
+                <v-icon color="light-blue-darken-2" size="28">mdi-account</v-icon>
+              </v-avatar>
+              <div class="menu-user-info">
+                <span class="menu-username">{{ authStore.username || 'Пользователь' }}</span>
+              </div>
             </div>
 
             <div class="menu-content">
               <v-btn
                 variant="text"
-                prepend-icon="mdi-file-upload-outline"
                 class="menu-button"
                 @click="openImport"
               >
+                <template #prepend>
+                  <v-icon class="menu-icon menu-icon-import">mdi-file-upload-outline</v-icon>
+                </template>
                 Импорт расходов
               </v-btn>
 
               <v-btn
                 variant="text"
-                prepend-icon="mdi-file-download-outline"
                 class="menu-button"
                 @click="openExport"
               >
+                <template #prepend>
+                  <v-icon class="menu-icon menu-icon-export">mdi-file-download-outline</v-icon>
+                </template>
                 Экспорт расходов
               </v-btn>
             </div>
@@ -110,10 +119,16 @@ function handleBackdropClick(event: MouseEvent) {
             <div class="menu-footer">
               <v-btn
                 variant="text"
-                :prepend-icon="authStore.isAnonymous ? 'mdi-login' : 'mdi-logout'"
                 class="menu-button menu-button-logout"
                 @click="logout"
               >
+                <template #prepend>
+                  <v-icon
+                    :class="authStore.isAnonymous ? 'menu-icon menu-icon-login' : 'menu-icon menu-icon-logout'"
+                  >
+                    {{ authStore.isAnonymous ? 'mdi-login' : 'mdi-logout' }}
+                  </v-icon>
+                </template>
                 {{ authStore.isAnonymous ? 'Войти' : 'Выйти' }}
               </v-btn>
             </div>
@@ -158,11 +173,30 @@ function handleBackdropClick(event: MouseEvent) {
 .menu-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 20px;
+  gap: 12px;
+  padding: 16px 20px;
   border-bottom: 1px solid #e0e0e0;
   background: white;
   color: #263238;
+}
+
+.menu-avatar {
+  flex: 0 0 auto;
+}
+
+.menu-user-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu-user-label {
+  color: #78909c;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .menu-username {
@@ -194,6 +228,26 @@ function handleBackdropClick(event: MouseEvent) {
   font-size: 16px;
   border-radius: 8px;
   text-transform: none;
+}
+
+.menu-icon {
+  font-size: 24px;
+}
+
+.menu-icon-import {
+  color: #1976d2;
+}
+
+.menu-icon-export {
+  color: #2e7d32;
+}
+
+.menu-icon-login {
+  color: #00897b;
+}
+
+.menu-icon-logout {
+  color: #d32f2f;
 }
 
 .menu-button-logout {
