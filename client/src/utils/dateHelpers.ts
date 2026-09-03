@@ -35,12 +35,13 @@ export function parseDate(dateString: string | undefined | null): Date {
   }
   
   // Check if it's YYYY-MM-DD format without timezone
-  if (typeof dateString === 'string' && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    const parts = dateString.split('-')
-    const year = parseInt(parts[0], 10)
-    const month = parseInt(parts[1], 10) - 1 // months are 0-indexed in JS
-    const day = parseInt(parts[2], 10)
-    return new Date(year, month, day)
+  const isoDateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString)
+  if (isoDateMatch) {
+    const [, year, month, day] = isoDateMatch
+
+    if (year && month && day) {
+      return new Date(Number(year), Number(month) - 1, Number(day))
+    }
   }
   
   // Default to regular Date parsing for ISO format
