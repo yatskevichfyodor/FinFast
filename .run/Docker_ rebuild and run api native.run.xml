@@ -3,7 +3,7 @@
     <deployment type="docker-compose.yml">
       <settings>
         <option name="commandLineOptions" value="--build" />
-        <option name="sourceFilePath" value="backend/docker-compose.dev.native.yml" />
+        <option name="sourceFilePath" value="services/expense-service/docker-compose.dev.native.yml" />
         <option name="upDetach" value="false" />
       </settings>
     </deployment>

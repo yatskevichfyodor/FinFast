@@ -3,8 +3,6 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-data/finfast.mv.db
-data/finfast.trace.db
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

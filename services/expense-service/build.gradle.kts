@@ -51,3 +51,15 @@ allOpen {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+tasks.bootJar {
+    archiveFileName.set("app.jar")
+}
+
+graalvmNative {
+    binaries {
+        named("main") {
+            imageName.set("app")
+        }
+    }
+}

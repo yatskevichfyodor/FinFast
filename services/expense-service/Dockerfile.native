@@ -25,10 +25,10 @@ FROM debian:bookworm-slim
 
 WORKDIR /app
 
-COPY --from=build /app/build/native/nativeCompile/FinFast .
+COPY --from=build /app/build/native/nativeCompile/app .
 
-RUN chmod +x FinFast
+RUN chmod +x app
 
 EXPOSE 10000
 
-ENTRYPOINT ["./FinFast"]
+ENTRYPOINT ["./app"]
