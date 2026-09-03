@@ -8,8 +8,6 @@ import {
 } from '@/stores/expense'
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { formatDate, formatTime, parseDate } from '@/utils/dateHelpers'
-import ExportDialog from '@/components/ExportDialog.vue'
-import ImportDialog from '@/components/ImportDialog.vue'
 
 const router = useRouter()
 const expenseStore = useExpenseStore()
@@ -20,8 +18,6 @@ onMounted(() => {
 
 const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)
-const exportDialogOpen = ref(false)
-const importDialogOpen = ref(false)
 
 const activeExpenses = computed(() =>
   expenseStore.expenses.filter(expense => !expense.isDeleted)
@@ -108,40 +104,12 @@ function editExpense(expense: Expense) {
     <v-container class="expense-page" max-width="600">
       <!-- Header -->
       <div class="mb-6">
-        <div class="d-flex align-center justify-space-between">
-          <div>
-            <div class="text-h5 font-weight-bold">
-              История расходов
-            </div>
+        <div class="text-h5 font-weight-bold">
+          История расходов
+        </div>
 
-            <div class="text-body-2 text-medium-emphasis mt-1">
-              Сначала новые
-            </div>
-          </div>
-
-           <div class="header-actions d-flex align-center">
-             <v-btn
-               prepend-icon="mdi-upload"
-               variant="tonal"
-               size="small"
-               rounded="lg"
-               class="operation-button"
-               @click="importDialogOpen = true"
-             >
-               Импорт
-             </v-btn>
-
-             <v-btn
-               prepend-icon="mdi-download"
-               variant="tonal"
-               size="small"
-               rounded="lg"
-               class="operation-button"
-               @click="exportDialogOpen = true"
-             >
-               Экспорт
-             </v-btn>
-           </div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
+          Сначала новые
         </div>
       </div>
 
@@ -251,32 +219,11 @@ function editExpense(expense: Expense) {
         </v-card>
       </v-dialog>
 
-      <ExportDialog v-model="exportDialogOpen" />
-
-       <ImportDialog v-model="importDialogOpen" />
-
      </v-container>
   </v-main>
 </template>
 
 <style scoped>
-.operation-button {
-  color: #16436f !important;
-  background: #dce9f5 !important;
-  box-shadow: none;
-  transition: color 0.2s ease, background-color 0.2s ease;
-}
-
-.header-actions {
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.operation-button:hover {
-  color: #12395f !important;
-  background: #cfe0f0 !important;
-}
-
 .empty-state {
   text-align: center;
   padding: 60px 20px;
@@ -366,14 +313,6 @@ function editExpense(expense: Expense) {
 
 .expense-menu-btn {
   flex-shrink: 0;
-}
-
-@media (max-width: 520px) {
-  .header-actions {
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
 }
 
 </style>
