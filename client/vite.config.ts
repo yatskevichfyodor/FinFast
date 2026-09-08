@@ -5,9 +5,13 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import vuetify from 'vite-plugin-vuetify'
 import { VitePWA } from 'vite-plugin-pwa'
+import { format } from 'date-fns'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
+  define: {
+    __BUILD_TIME__: JSON.stringify(format(new Date(), 'yyyy.MM.dd. HH:mm'))
+  },
   plugins: [
     vue(),
     ...(mode === 'development' ? [vueDevTools()] : []),

@@ -26,7 +26,7 @@ const buildInfo = computed(() => {
   const buildNumber = import.meta.env.VITE_BUILD_NUMBER || 'dev'
   const gitCommit = import.meta.env.VITE_GIT_COMMIT || 'local'
   const shortCommit = gitCommit.length > 7 ? gitCommit.substring(0, 7) : gitCommit
-  return `Build #${buildNumber} · ${shortCommit}`
+  return `Build #${buildNumber} · ${shortCommit} · ${__BUILD_TIME__}`
 })
 
 watch(() => props.modelValue, v => (localOpen.value = v))
