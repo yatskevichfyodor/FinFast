@@ -36,6 +36,13 @@ const initialDescription = ref<string>('')
 const initialPaymentDate = ref<string | null>(null)
 
 const initialAmount = computed(() => {
+  // When editing, load from existing expense instead of query parameter
+  if (isEditing.value && editingExpenseId.value) {
+    const expense = expenseStore.getExpenseById(editingExpenseId.value)
+    return expense?.amount
+  }
+  
+  // For new expenses, load from query parameter
   const value = route.query.amount
   return value !== undefined ? Number(value) : undefined
 })
@@ -147,8 +154,8 @@ const loadExistingExpense = () => {
   }
 }
 
-watchCategoryId()
 loadExistingExpense()
+watchCategoryId()
 </script>
 
 <template>
@@ -263,7 +270,7 @@ loadExistingExpense()
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 24px;
+  padding-bottom: 100px;
 }
 
 .fixed-bottom-panel {
@@ -275,7 +282,7 @@ loadExistingExpense()
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   padding: 16px 0;
   padding-bottom: max(16px, env(safe-area-inset-bottom));
-  z-index: 10;
+  z-index: 100;
 }
 
 .button-container {

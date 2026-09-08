@@ -89,7 +89,9 @@ watch(
 watch(
   () => amount.value,
   (value) => {
-    emit('amount-change', Number(value || 0), Number(value || 0) > 0)
+    const numValue = Number(value)
+    const isValid = value !== '' && numValue > 0
+    emit('amount-change', numValue, isValid)
   }
 )
 </script>
