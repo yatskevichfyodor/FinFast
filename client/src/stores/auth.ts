@@ -66,6 +66,10 @@ export const useAuthStore = defineStore('auth', () => {
     username.value = 'Без аккаунта'
     isAnonymous.value = true
     isOffline.value = true
+    localStorage.removeItem(ACCESS_TOKEN_KEY)
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
+    localStorage.setItem(USER_ID_KEY, userId.value)
+    localStorage.setItem(USERNAME_KEY, username.value)
     localStorage.setItem(OFFLINE_MODE_KEY, 'true')
   }
 
