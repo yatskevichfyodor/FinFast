@@ -6,6 +6,7 @@ import { useExpenseStore } from '@/stores/expense'
 import ExportDialog from '@/components/ExportDialog.vue'
 import ImportDialog from '@/components/ImportDialog.vue'
 import LogoutConfirmationDialog from '@/components/LogoutConfirmationDialog.vue'
+import { format } from 'date-fns/format'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -26,7 +27,7 @@ const buildInfo = computed(() => {
   const buildNumber = import.meta.env.VITE_BUILD_NUMBER || 'dev'
   const gitCommit = import.meta.env.VITE_GIT_COMMIT || 'local'
   const shortCommit = gitCommit.length > 7 ? gitCommit.substring(0, 7) : gitCommit
-  return `Build #${buildNumber} · ${shortCommit} · ${__BUILD_TIME__}`
+  return `Build #${buildNumber} · ${shortCommit} · ${format(new Date(__BUILD_TIME__), 'yyyy.MM.dd. HH:mm')}`
 })
 
 watch(() => props.modelValue, v => (localOpen.value = v))

@@ -10,7 +10,7 @@ import { format } from 'date-fns'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
   define: {
-    __BUILD_TIME__: JSON.stringify(format(new Date(), 'yyyy.MM.dd. HH:mm'))
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString())
   },
   plugins: [
     vue(),
