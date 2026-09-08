@@ -22,6 +22,13 @@ const showImportDialog = ref(false)
 const showLogoutDialog = ref(false)
 const pendingExpensesCount = computed(() => expenseStore.getPendingExpensesCount())
 
+const buildInfo = computed(() => {
+  const buildNumber = import.meta.env.VITE_BUILD_NUMBER || 'dev'
+  const gitCommit = import.meta.env.VITE_GIT_COMMIT || 'local'
+  const shortCommit = gitCommit.length > 7 ? gitCommit.substring(0, 7) : gitCommit
+  return `Build #${buildNumber} · ${shortCommit}`
+})
+
 watch(() => props.modelValue, v => (localOpen.value = v))
 watch(localOpen, v => emit('update:modelValue', v))
 
@@ -131,6 +138,7 @@ function handleBackdropClick(event: MouseEvent) {
                 </template>
                 {{ authStore.isAnonymous ? 'Войти' : 'Выйти' }}
               </v-btn>
+              <div class="menu-build-info">{{ buildInfo }}</div>
             </div>
           </div>
         </Transition>
@@ -257,6 +265,17 @@ function handleBackdropClick(event: MouseEvent) {
 .menu-button-logout:hover {
   background: rgba(211, 47, 47, 0.08);
   color: #d32f2f;
+}
+
+.menu-build-info {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+  font-size: 11px;
+  color: #9e9e9e;
+  text-align: center;
+  font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
 /* Slide-in animation */
