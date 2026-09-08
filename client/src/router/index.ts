@@ -54,8 +54,7 @@ router.beforeEach(to => {
   const isAuthenticated = localStorage.getItem('finfast-access-token') !== null || (
     localStorage.getItem('finfast-offline-mode') === 'true' &&
     localStorage.getItem('finfast-user-id') !== null
-  ) || localStorage.getItem('finfast-anonymous-profile') !== null &&
-    localStorage.getItem('finfast-offline-mode') === 'true'
+  )
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
