@@ -270,19 +270,20 @@ watchCategoryId()
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 100px;
+  padding-bottom: 172px;
 }
 
 .fixed-bottom-panel {
-  position: sticky;
-  bottom: 0;
-  flex-shrink: 0;
+  position: fixed;
+  right: 0;
+  bottom: 56px;
+  left: 0;
   background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
   backdrop-filter: blur(10px);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   padding: 16px 0;
   padding-bottom: max(16px, env(safe-area-inset-bottom));
-  z-index: 100;
+  z-index: 1005;
 }
 
 .button-container {

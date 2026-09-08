@@ -32,6 +32,14 @@ function readTokenClaims(token: string): TokenClaims | null {
   }
 }
 
+function createAnonymousProfileId(): string {
+  if (typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  return 'anonymous-' + Date.now()
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(localStorage.getItem(ACCESS_TOKEN_KEY))
   const refreshToken = ref<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY))
@@ -58,7 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function continueWithoutAccount() {
-    const anonymousProfile = localStorage.getItem(ANONYMOUS_PROFILE_KEY) ?? crypto.randomUUID()
+    const anonymousProfile = localStorage.getItem(ANONYMOUS_PROFILE_KEY) ?? createAnonymousProfileId()
     localStorage.setItem(ANONYMOUS_PROFILE_KEY, anonymousProfile)
     accessToken.value = null
     refreshToken.value = null
