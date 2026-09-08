@@ -23,6 +23,13 @@ export const api = axios.create({
 })
 
 api.interceptors.request.use(config => {
+  const requestUrl = config.url ?? ''
+  const isAuthRequest = requestUrl === '/auth/login' || requestUrl === '/auth/register' || requestUrl === '/auth/refresh'
+
+  if (isAuthRequest) {
+    return config
+  }
+
   const accessToken = localStorage.getItem('finfast-access-token')
 
   if (accessToken) {
