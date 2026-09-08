@@ -274,7 +274,6 @@ export const useExpenseStore = defineStore('expense', () => {
         description: expense.description,
         paymentDate: expense.paymentDate
       })
-      expense.isSynced = true
       expense.isCreatedLocally = false
       persistExpenses()
     } catch (error) {
@@ -357,7 +356,14 @@ export const useExpenseStore = defineStore('expense', () => {
       })
     } else {
       // Create directly when there are no other pending expenses
-      createExpenseDirectly(expense)
+      // Mark as syncing to prevent duplicate sync requests
+      expense.isSynced = true
+      persistExpenses()
+      createExpenseDirectly(expense).catch(error => {
+        // If direct creation fails, mark as pending for sync
+        expense.isSynced = false
+        persistExpenses()
+      })
     }
 
     return newExpenseId;
