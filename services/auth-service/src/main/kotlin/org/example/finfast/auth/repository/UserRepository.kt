@@ -1,4 +1,4 @@
-package org.example.finfast.auth
+package org.example.finfast.auth.repository
 
 import org.example.finfast.auth.entity.User
 import org.springframework.data.jpa.repository.JpaRepository

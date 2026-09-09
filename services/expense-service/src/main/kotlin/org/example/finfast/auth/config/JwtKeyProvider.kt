@@ -3,28 +3,20 @@ package org.example.finfast.auth.config
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.security.KeyFactory
-import java.security.KeyPair
-import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
-import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
-import java.util.Base64
+import java.util.*
 
 @Component
 class JwtKeyProvider(
-    @Value("\${finfast.jwt.private-key-b64:}") private val privateKeyB64: String,
     @Value("\${finfast.jwt.public-key-b64:}") private val publicKeyB64: String
 ) {
-    val keyPair: KeyPair = loadKeyPair()
+    val publicKey: RSAPublicKey = loadPublicKey()
 
-    private fun loadKeyPair(): KeyPair {
+    private fun loadPublicKey(): RSAPublicKey {
         val factory = KeyFactory.getInstance("RSA")
-        val privateKey = factory.generatePrivate(
-            PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyB64))
-        ) as RSAPrivateKey
-        val publicKey = factory.generatePublic(
+        return factory.generatePublic(
             X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyB64))
         ) as RSAPublicKey
-        return KeyPair(publicKey, privateKey)
     }
 }

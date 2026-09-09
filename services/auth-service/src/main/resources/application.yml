@@ -8,3 +8,4 @@ spring:
 finfast:
   jwt:
     issuer: finfast-api
+    key-id: finfast-rs256-1

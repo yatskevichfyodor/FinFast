@@ -8,6 +8,8 @@ import org.example.finfast.auth.dto.TokenResponse
 import org.example.finfast.auth.dto.UserResponse
 import org.example.finfast.auth.entity.RefreshToken
 import org.example.finfast.auth.entity.User
+import org.example.finfast.auth.repository.RefreshTokenRepository
+import org.example.finfast.auth.repository.UserRepository
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service

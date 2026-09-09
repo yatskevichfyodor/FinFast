@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run backend services" type="CompoundRunConfigurationType">
+    <toRun name="AuthApplication" type="SpringBootApplicationConfigurationType" />
+    <toRun name="ExpenseApplication" type="SpringBootApplicationConfigurationType" />
+    <method v="2" />
+  </configuration>
+</component>

@@ -1,5 +1,6 @@
 package org.example.finfast.auth.config
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -12,16 +13,17 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 class SecurityConfig(
+    @Value("\${finfast.jwt.issuer}") private val issuer: String,
     private val keyProvider: JwtKeyProvider
 ) {
     @Bean
     fun jwtDecoder(): JwtDecoder {
-        val decoder = NimbusJwtDecoder.withPublicKey(keyProvider.keyPair.public as java.security.interfaces.RSAPublicKey)
+        val decoder = NimbusJwtDecoder.withPublicKey(keyProvider.publicKey)
             .signatureAlgorithm(org.springframework.security.oauth2.jose.jws.SignatureAlgorithm.RS256)
             .build()
         decoder.setJwtValidator(
             DelegatingOAuth2TokenValidator(
-                JwtValidators.createDefaultWithIssuer("finfast-api")
+                JwtValidators.createDefaultWithIssuer(issuer)
             )
         )
         return decoder
@@ -33,18 +35,8 @@ class SecurityConfig(
             .cors { }
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
-            .authorizeHttpRequests {
-                it.requestMatchers(
-                    "/auth/register",
-                    "/auth/login",
-                    "/auth/refresh",
-                    "/auth/logout",
-                ).permitAll()
-                    .anyRequest().authenticated()
-            }
-            .headers {
-                it.frameOptions { frame -> frame.disable() }
-            }
+            .authorizeHttpRequests { it.anyRequest().authenticated() }
+            .headers { it.frameOptions { frame -> frame.disable() } }
             .oauth2ResourceServer { it.jwt { } }
 
         return http.build()
