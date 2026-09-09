@@ -8,6 +8,8 @@ COPY gradle gradle
 COPY build.gradle.kts .
 COPY settings.gradle.kts .
 
+RUN chmod +x ./gradlew
+
 # Сначала скачиваем зависимости.
 # Gradle cache сохраняется между Docker builds.
 RUN --mount=type=cache,target=/root/.gradle \
