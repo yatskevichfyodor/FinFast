@@ -1,4 +1,4 @@
-name: Build Native Image and Deploy
+name: Build Native Images and Deploy
 
 on:
   push:
@@ -27,7 +27,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      # Auth Service
+      - name: Build and push auth-service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/auth-service
+          file: ./services/auth-service/Dockerfile.native
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/finfast-auth:latest
+            ghcr.io/${{ github.repository_owner }}/finfast-auth:${{ github.sha }}
+
+      # Expense Service
+      - name: Build and push expense-service
         uses: docker/build-push-action@v6
         with:
           context: ./services/expense-service
@@ -35,8 +48,13 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/finfast-api:latest
-            ghcr.io/${{ github.repository_owner }}/finfast-api:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/finfast-expense:latest
+            ghcr.io/${{ github.repository_owner }}/finfast-expense:${{ github.sha }}
 
-      - name: Deploy to Render
-        run: curl -X POST "${{ secrets.DEPLOY_HOOK_URL }}"
+      # Deploy Auth Service
+      - name: Deploy auth-service to Render
+        run: curl -X POST "${{ secrets.AUTH_SERVICE_DEPLOY_HOOK_URL }}"
+
+      # Deploy Expense Service
+      - name: Deploy expense-service to Render
+        run: curl -X POST "${{ secrets.EXPENSE_SERVICE_DEPLOY_HOOK_URL }}"
