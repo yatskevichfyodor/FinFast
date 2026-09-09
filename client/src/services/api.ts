@@ -1,8 +1,8 @@
 import axios from 'axios'
 import router from '@/router'
-import { refresh } from './authApi'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE_URL
 const ACCESS_TOKEN_KEY = 'finfast-access-token'
 const REFRESH_TOKEN_KEY = 'finfast-refresh-token'
 
@@ -18,34 +18,52 @@ function onRefreshed(token: string) {
   refreshSubscribers = []
 }
 
-export const api = axios.create({
+export const authApi = axios.create({
+  baseURL: AUTH_BASE_URL
+})
+
+export const expenseApi = axios.create({
   baseURL: API_BASE_URL
 })
 
-api.interceptors.request.use(config => {
-  const requestUrl = config.url ?? ''
-  const isAuthRequest = requestUrl === '/auth/login' || requestUrl === '/auth/register' || requestUrl === '/auth/refresh'
+const clients = [authApi, expenseApi]
 
-  if (isAuthRequest) {
+clients.forEach(client => {
+  client.interceptors.request.use(config => {
+    if (isPublicAuthRequest(config.url ?? '')) {
+      return config
+    }
+
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY)
+
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`
+    }
+
     return config
-  }
-
-  const accessToken = localStorage.getItem('finfast-access-token')
-
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`
-  }
-
-  return config
+  })
 })
 
-api.interceptors.response.use(
-  response => response,
-  async error => {
-    const requestUrl = error.config?.url ?? ''
-    const isLoginOrRegisterRequest = requestUrl === '/auth/login' || requestUrl === '/auth/register' || requestUrl === '/auth/refresh'
+async function refreshAccessToken(refreshToken: string): Promise<string> {
+  const { data } = await authApi.post<{ accessToken: string }>('/auth/refresh', { refreshToken })
+  return data.accessToken
+}
 
-    if (error.response?.status === 401 && !isLoginOrRegisterRequest && router.currentRoute.value.name !== 'login') {
+function isPublicAuthRequest(url: string): boolean {
+  return url === '/auth/login' || url === '/auth/register' || url === '/auth/refresh'
+}
+
+clients.forEach(client => {
+  client.interceptors.response.use(
+    response => response,
+    async error => {
+      const requestUrl = error.config?.url ?? ''
+      const isRetry = error.config?._finfastRetry === true
+
+      if (error.response?.status !== 401 || isPublicAuthRequest(requestUrl) || isRetry) {
+        return Promise.reject(error)
+      }
+
       const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
 
       if (!refreshToken) {
@@ -63,12 +81,13 @@ api.interceptors.response.use(
         isRefreshing = true
 
         try {
-          const { accessToken } = await refresh(refreshToken)
+          const accessToken = await refreshAccessToken(refreshToken)
           localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
           onRefreshed(accessToken)
 
+          error.config._finfastRetry = true
           error.config.headers.Authorization = `Bearer ${accessToken}`
-          return api.request(error.config)
+          return client.request(error.config)
         } catch (refreshError) {
           localStorage.removeItem(ACCESS_TOKEN_KEY)
           localStorage.removeItem(REFRESH_TOKEN_KEY)
@@ -81,16 +100,15 @@ api.interceptors.response.use(
         } finally {
           isRefreshing = false
         }
-      } else {
-        return new Promise(resolve => {
-          subscribeTokenRefresh(token => {
-            error.config.headers.Authorization = `Bearer ${token}`
-            resolve(api.request(error.config))
-          })
-        })
       }
-    }
 
-    return Promise.reject(error)
-  }
-)
+      return new Promise(resolve => {
+        subscribeTokenRefresh(token => {
+          error.config._finfastRetry = true
+          error.config.headers.Authorization = `Bearer ${token}`
+          resolve(client.request(error.config))
+        })
+      })
+    }
+  )
+})

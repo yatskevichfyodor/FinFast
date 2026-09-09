@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { api } from '@/services/api'
+import { expenseApi } from '@/services/api'
 
 export interface ExpenseApiBody {
   id: string
@@ -38,7 +38,7 @@ export interface SyncExpensesRequest {
 
 export async function getExpense(id: string): Promise<ExpenseApiBody | undefined> {
   try {
-    const { data } = await api.get<ExpenseApiBody>(`/expenses/${id}`)
+    const { data } = await expenseApi.get<ExpenseApiBody>(`/expenses/${id}`)
     return data
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -55,7 +55,7 @@ export async function getExpensesByIds(ids: string[]): Promise<ExpenseApiBody[]>
   }
 
   try {
-    const { data } = await api.get<ExpenseApiBody[]>('/expenses', {
+    const { data } = await expenseApi.get<ExpenseApiBody[]>('/expenses', {
       params: { ids: ids.join(',') }
     })
     return data
@@ -69,12 +69,12 @@ export async function getExpensesByIds(ids: string[]): Promise<ExpenseApiBody[]>
 }
 
 export async function getExpenses(): Promise<ExpenseApiBody[]> {
-  const { data } = await api.get<ExpenseApiBody[]>('/expenses')
+  const { data } = await expenseApi.get<ExpenseApiBody[]>('/expenses')
   return data
 }
 
 export async function createExpense(expense: CreateExpensePayload): Promise<void> {
-  await api.post('/expenses', expense)
+  await expenseApi.post('/expenses', expense)
 }
 
 export async function createExpensesBatch(expenses: CreateExpensePayload[]): Promise<void> {
@@ -82,15 +82,15 @@ export async function createExpensesBatch(expenses: CreateExpensePayload[]): Pro
     return
   }
 
-  await api.post('/expenses/batch', expenses)
+  await expenseApi.post('/expenses/batch', expenses)
 }
 
 export async function syncExpenses(request: SyncExpensesRequest): Promise<void> {
-  await api.post('/expenses/sync', request)
+  await expenseApi.post('/expenses/sync', request)
 }
 
 export async function updateExpense(id: string, updates: UpdateExpenseRequest): Promise<void> {
-  await api.patch(`/expenses/${id}`, updates)
+  await expenseApi.patch(`/expenses/${id}`, updates)
 }
 
 export async function updateExpensesBatch(
@@ -100,12 +100,12 @@ export async function updateExpensesBatch(
     return
   }
 
-  await api.patch('/expenses/batch', updates)
+  await expenseApi.patch('/expenses/batch', updates)
 }
 
 export async function deleteExpense(id: string): Promise<void> {
   try {
-    await api.delete(`/expenses/${id}`)
+    await expenseApi.delete(`/expenses/${id}`)
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 404) {
       return
@@ -120,5 +120,5 @@ export async function deleteExpensesBatch(ids: string[]): Promise<void> {
     return
   }
 
-  await api.delete('/expenses/batch', { data: ids })
+  await expenseApi.delete('/expenses/batch', { data: ids })
 }
