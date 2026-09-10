@@ -5,6 +5,7 @@ WORKDIR /app
 # Gradle wrapper и конфигурация проекта
 COPY gradlew .
 COPY gradle gradle
+COPY gradle.properties .
 COPY build.gradle.kts .
 COPY settings.gradle.kts .
 
@@ -13,14 +14,16 @@ RUN chmod +x ./gradlew
 # Сначала скачиваем зависимости.
 # Gradle cache сохраняется между Docker builds.
 RUN --mount=type=cache,id=finfast-expense-gradle,target=/root/.gradle \
-    ./gradlew dependencies --no-daemon
+    ./gradlew dependencies \
+    --no-daemon
 
 # Исходный код копируем после зависимостей
 COPY src src
 
 # Собираем Linux Native Image
 RUN --mount=type=cache,id=finfast-expense-gradle,target=/root/.gradle \
-    ./gradlew nativeCompile --no-daemon
+    ./gradlew nativeCompile \
+    --no-daemon
 
 
 FROM debian:bookworm-slim

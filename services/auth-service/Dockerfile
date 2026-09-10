@@ -10,14 +10,15 @@ COPY settings.gradle.kts .
 
 RUN chmod +x ./gradlew
 
-RUN --mount=type=cache,id=finfast-expense-gradle,target=/root/.gradle \
+RUN --mount=type=cache,id=finfast-auth-gradle,target=/root/.gradle \
     ./gradlew dependencies \
     --no-daemon
 
 COPY src src
 
-RUN --mount=type=cache,id=finfast-expense-gradle,target=/root/.gradle \
-    ./gradlew bootJar \
+RUN --mount=type=cache,id=finfast-auth-gradle,target=/root/.gradle \
+    ./gradlew quarkusBuild \
+    -Dquarkus.package.jar.type=fast-jar \
     --no-daemon
 
 
@@ -25,6 +26,6 @@ FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
-COPY --from=build /app/build/libs/app.jar app.jar
+COPY --from=build /app/build/quarkus-app/ ./
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "quarkus-run.jar"]

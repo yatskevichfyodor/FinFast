@@ -13,12 +13,17 @@ COPY build.gradle.kts .
 RUN chmod +x ./gradlew
 
 RUN --mount=type=cache,id=finfast-auth-gradle,target=/root/.gradle \
-    ./gradlew dependencies --no-daemon
+    ./gradlew dependencies \
+    --no-daemon
 
 COPY src src
 
 RUN --mount=type=cache,id=finfast-auth-gradle,target=/root/.gradle \
-    ./gradlew quarkusBuild -Dquarkus.profile=${QUARKUS_PROFILE} -Dquarkus.native.enabled=true -Dquarkus.package.jar.enabled=false --no-daemon
+    ./gradlew quarkusBuild \
+    -Dquarkus.profile=${QUARKUS_PROFILE} \
+    -Dquarkus.native.enabled=true \
+    -Dquarkus.package.jar.enabled=false \
+    --no-daemon
 
 
 FROM debian:bookworm-slim
