@@ -1,4 +1,9 @@
 quarkus:
+  application:
+    name: auth-service
+  package:
+    output-name: auth-service
+
   http:
     port: 8082
     cors:
@@ -10,9 +15,8 @@ quarkus:
     db-kind: postgresql
 
   hibernate-orm:
-    database:
-      generation:
-        strategy: validate
+    schema-management:
+      strategy: validate
 
   flyway:
     migrate-at-start: true

@@ -2,35 +2,33 @@ FROM ghcr.io/graalvm/graalvm-community:25 AS build
 
 WORKDIR /app
 
-# Gradle wrapper и конфигурация проекта
+ARG QUARKUS_PROFILE=prod
+
 COPY gradlew .
 COPY gradle gradle
-COPY build.gradle.kts .
+COPY gradle.properties .
 COPY settings.gradle.kts .
+COPY build.gradle.kts .
 
 RUN chmod +x ./gradlew
 
-# Сначала скачиваем зависимости.
-# Gradle cache сохраняется между Docker builds.
-RUN --mount=type=cache,target=/root/.gradle \
+RUN --mount=type=cache,id=finfast-auth-gradle,target=/root/.gradle \
     ./gradlew dependencies --no-daemon
 
-# Исходный код копируем после зависимостей
 COPY src src
 
-# Собираем Linux Native Image
-RUN --mount=type=cache,target=/root/.gradle \
-    ./gradlew nativeCompile --no-daemon
+RUN --mount=type=cache,id=finfast-auth-gradle,target=/root/.gradle \
+    ./gradlew quarkusBuild -Dquarkus.profile=${QUARKUS_PROFILE} -Dquarkus.native.enabled=true -Dquarkus.package.jar.enabled=false --no-daemon
 
 
 FROM debian:bookworm-slim
 
 WORKDIR /app
 
-COPY --from=build /app/build/native/nativeCompile/app .
+COPY --from=build /app/build/auth-service-runner ./auth-service
 
-RUN chmod +x app
+RUN chmod +x auth-service
 
-EXPOSE 10000
+EXPOSE 8082
 
-ENTRYPOINT ["./app"]
+ENTRYPOINT ["./auth-service"]

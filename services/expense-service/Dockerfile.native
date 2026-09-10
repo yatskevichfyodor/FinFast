@@ -12,14 +12,14 @@ RUN chmod +x ./gradlew
 
 # Сначала скачиваем зависимости.
 # Gradle cache сохраняется между Docker builds.
-RUN --mount=type=cache,target=/root/.gradle \
+RUN --mount=type=cache,id=finfast-expense-gradle,target=/root/.gradle \
     ./gradlew dependencies --no-daemon
 
 # Исходный код копируем после зависимостей
 COPY src src
 
 # Собираем Linux Native Image
-RUN --mount=type=cache,target=/root/.gradle \
+RUN --mount=type=cache,id=finfast-expense-gradle,target=/root/.gradle \
     ./gradlew nativeCompile --no-daemon
 
 

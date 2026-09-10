@@ -2,6 +2,7 @@
 name: finfast
 
 services:
+
   db:
     image: postgres:18
     container_name: finfast-db
@@ -13,16 +14,32 @@ services:
       - postgres-data:/var/lib/postgresql
     ports:
       - "5432:5432"
-  backend:
+
+  auth-service:
     build:
-      context: .
+      context: ./services/auth-service
       dockerfile: Dockerfile.native
+      args:
+        QUARKUS_PROFILE: dev
+    container_name: finfast-auth
     env_file:
       - .env.dev
-    container_name: finfast-backend-native
+    ports:
+      - "8082:8082"
+    depends_on:
+      - db
+
+  expense-service:
+    build:
+      context: ./services/expense-service
+      dockerfile: Dockerfile.native
+    container_name: finfast-expense
+    env_file:
+      - .env.dev
     ports:
       - "8081:8081"
-
+    depends_on:
+      - db
 
 volumes:
   postgres-data:
