@@ -1,2 +1,0 @@
-ALTER TABLE expenses
-    ALTER COLUMN user_id SET NOT NULL;

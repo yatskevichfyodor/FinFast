@@ -1,11 +1,10 @@
 # docker compose for local launch, render.com launches production service using only Dockerfile and its own configuration
-name: finfast
+name: finfast-native
 
 services:
 
   db:
     image: postgres:18
-    container_name: finfast-db
     environment:
       POSTGRES_DB: finfast
       POSTGRES_USER: postgres
@@ -21,7 +20,6 @@ services:
       dockerfile: Dockerfile.native
       args:
         QUARKUS_PROFILE: dev
-    container_name: finfast-auth
     env_file:
       - .env.dev
     ports:
@@ -33,7 +31,6 @@ services:
     build:
       context: ./services/expense-service
       dockerfile: Dockerfile.native
-    container_name: finfast-expense
     env_file:
       - .env.dev
     ports:
@@ -43,3 +40,5 @@ services:
 
 volumes:
   postgres-data:
+    external: true
+    name: finfast_postgres-data

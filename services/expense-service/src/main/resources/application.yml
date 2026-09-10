@@ -4,6 +4,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+  flyway:
+    baseline-on-migrate: true
 
 finfast:
   jwt:
