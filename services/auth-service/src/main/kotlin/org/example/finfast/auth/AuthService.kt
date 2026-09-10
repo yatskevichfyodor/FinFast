@@ -1,5 +1,9 @@
 package org.example.finfast.auth
 
+import io.quarkus.elytron.security.common.BcryptUtil
+import jakarta.enterprise.context.ApplicationScoped
+import jakarta.transaction.Transactional
+import jakarta.ws.rs.WebApplicationException
 import org.example.finfast.auth.dto.LoginRequest
 import org.example.finfast.auth.dto.LogoutRequest
 import org.example.finfast.auth.dto.RefreshRequest
@@ -10,10 +14,6 @@ import org.example.finfast.auth.entity.RefreshToken
 import org.example.finfast.auth.entity.User
 import org.example.finfast.auth.repository.RefreshTokenRepository
 import org.example.finfast.auth.repository.UserRepository
-import org.springframework.security.authentication.BadCredentialsException
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -22,11 +22,10 @@ import java.time.temporal.ChronoUnit
 import java.util.Base64
 import java.util.UUID
 
-@Service
+@ApplicationScoped
 class AuthService(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
-    private val passwordEncoder: PasswordEncoder,
     private val jwtService: JwtService
 ) {
     private val random = SecureRandom()
@@ -37,7 +36,7 @@ class AuthService(
         require(username.isNotBlank() && request.password.isNotBlank()) { "Username and password are required" }
         require(userRepository.findByUsername(username) == null) { "Username is already taken" }
         val user = userRepository.save(
-            User(UUID.randomUUID(), username, passwordEncoder.encode(request.password)!!)
+            User(UUID.randomUUID(), username, BcryptUtil.bcryptHash(request.password))
         )
         return UserResponse(user.id, user.username)
     }
@@ -45,13 +44,13 @@ class AuthService(
     @Transactional
     fun login(request: LoginRequest): TokenResponse {
         val user = userRepository.findByUsername(request.username.trim())
-        if (user == null || !passwordEncoder.matches(request.password, user.passwordHash)) {
-            throw BadCredentialsException("Invalid credentials")
+        if (user == null || !BcryptUtil.matches(request.password, user.passwordHash)) {
+            throw WebApplicationException("Invalid credentials", 401)
         }
         return issueTokens(user)
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     fun currentUser(userId: UUID): UserResponse {
         val user = userRepository.findById(userId).orElseThrow {
             IllegalArgumentException("User not found")

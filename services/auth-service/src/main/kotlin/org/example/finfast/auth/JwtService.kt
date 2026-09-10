@@ -1,47 +1,50 @@
 package org.example.finfast.auth
 
-import com.nimbusds.jose.jwk.RSAKey
-import com.nimbusds.jose.jwk.JWKSet
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.JWSHeader
+import com.nimbusds.jose.JWSSigner
+import com.nimbusds.jose.crypto.RSASSASigner
+import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.jwt.SignedJWT
+import jakarta.enterprise.context.ApplicationScoped
 import org.example.finfast.auth.config.JwtKeyProvider
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm
-import org.springframework.security.oauth2.jwt.*
-import org.springframework.stereotype.Service
+import org.eclipse.microprofile.config.inject.ConfigProperty
+import java.security.interfaces.RSAPublicKey
 import java.time.Instant
+import java.util.Date
 import java.util.UUID
 
-@Service
+@ApplicationScoped
 class JwtService(
-    keyProvider: JwtKeyProvider,
-    @Value("\${finfast.jwt.issuer}") private val issuer: String,
-    @Value("\${finfast.jwt.key-id}") private val keyId: String
+    private val keyProvider: JwtKeyProvider,
+    @ConfigProperty(name = "finfast.jwt.issuer") private val issuer: String,
+    @ConfigProperty(name = "finfast.jwt.key-id") private val keyId: String
 ) {
-    private val encoder = NimbusJwtEncoder(
-        ImmutableJWKSet(
-            JWKSet(
-                RSAKey.Builder(keyProvider.keyPair.public as java.security.interfaces.RSAPublicKey)
-                    .privateKey(keyProvider.keyPair.private as java.security.interfaces.RSAPrivateKey)
-                    .keyID(keyId)
-                    .build()
-            )
-        )
-    )
+    private val signer: JWSSigner = RSASSASigner(keyProvider.keyPair.private)
 
     fun createAccessToken(userId: UUID): String {
         val now = Instant.now()
-        val claims = JwtClaimsSet.builder()
+        val claims = JWTClaimsSet.Builder()
             .issuer(issuer)
             .subject(userId.toString())
-            .issuedAt(now)
-            .expiresAt(now.plusSeconds(600))
-            .id(UUID.randomUUID().toString())
+            .issueTime(Date.from(now))
+            .expirationTime(Date.from(now.plusSeconds(600)))
+            .jwtID(UUID.randomUUID().toString())
             .build()
-        return encoder.encode(
-            JwtEncoderParameters.from(
-                JwsHeader.with(SignatureAlgorithm.RS256).keyId(keyId).build(),
-                claims
-            )
-        ).tokenValue
+        val header = JWSHeader.Builder(JWSAlgorithm.RS256).keyID(keyId).build()
+        val signed = SignedJWT(header, claims)
+        signed.sign(signer)
+        return signed.serialize()
+    }
+
+    fun parseSubject(token: String): String {
+        val signed = SignedJWT.parse(token)
+        val verifier = com.nimbusds.jose.crypto.RSASSAVerifier(keyProvider.keyPair.public as RSAPublicKey)
+        if (!signed.verify(verifier)) throw IllegalArgumentException("Invalid token signature")
+        val claims = signed.jwtClaimsSet
+        val exp = claims.expirationTime?.toInstant() ?: throw IllegalArgumentException("Invalid token")
+        if (exp.isBefore(Instant.now())) throw IllegalArgumentException("Token expired")
+        if (claims.issuer != issuer) throw IllegalArgumentException("Invalid issuer")
+        return claims.subject
     }
 }

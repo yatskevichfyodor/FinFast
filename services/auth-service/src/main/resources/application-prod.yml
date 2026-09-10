@@ -1,11 +1,14 @@
-server:
-  port: ${PORT}
+quarkus:
+  http:
+    port: ${PORT}
+    cors:
+      origins: ${CLIENT_URL}
 
-spring:
   datasource:
-    url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
+    jdbc:
+      url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
 
 logging:
   level:
@@ -17,4 +20,3 @@ finfast:
   jwt:
     private-key-b64: ${FINFAST_JWT_PRIVATE_KEY_B64}
     public-key-b64: ${FINFAST_JWT_PUBLIC_KEY_B64}
-  clientUrl: ${CLIENT_URL}

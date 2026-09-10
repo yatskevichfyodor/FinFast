@@ -1,4 +1,13 @@
-plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+pluginManagement {
+    val quarkusPluginVersion: String = providers.gradleProperty("quarkusPluginVersion").get()
+    val quarkusPluginId: String = providers.gradleProperty("quarkusPluginId").get()
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+        mavenLocal()
+    }
+    plugins {
+        id(quarkusPluginId) version quarkusPluginVersion
+    }
 }
 rootProject.name = "auth-service"

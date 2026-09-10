@@ -1,7 +1,7 @@
 package org.example.finfast.auth.config
 
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Component
+import jakarta.enterprise.context.ApplicationScoped
+import org.eclipse.microprofile.config.inject.ConfigProperty
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.interfaces.RSAPrivateKey
@@ -10,10 +10,10 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
-@Component
+@ApplicationScoped
 class JwtKeyProvider(
-    @Value("\${finfast.jwt.private-key-b64:}") private val privateKeyB64: String,
-    @Value("\${finfast.jwt.public-key-b64:}") private val publicKeyB64: String
+    @ConfigProperty(name = "finfast.jwt.private-key-b64", defaultValue = "") private val privateKeyB64: String,
+    @ConfigProperty(name = "finfast.jwt.public-key-b64", defaultValue = "") private val publicKeyB64: String
 ) {
     val keyPair: KeyPair = loadKeyPair()
 

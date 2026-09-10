@@ -1,11 +1,5 @@
 package org.example.finfast.auth
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
-
-@SpringBootApplication
+// Quarkus does not require a SpringBootApplication entrypoint.
+// This file is left as a placeholder for module identity.
 class AuthApplication
-
-fun main(args: Array<String>) {
-    runApplication<AuthApplication>(*args)
-}

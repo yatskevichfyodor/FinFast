@@ -1,9 +1,23 @@
-spring:
+quarkus:
+  http:
+    port: 8082
+    cors:
+      enabled: true
+      methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+      headers: Content-Type,Authorization
+
   datasource:
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: validate
+    db-kind: postgresql
+
+  hibernate-orm:
+    database:
+      generation:
+        strategy: validate
+
+  flyway:
+    migrate-at-start: true
+    table: auth_flyway_schema_history
+    baseline-on-migrate: true
 
 finfast:
   jwt:

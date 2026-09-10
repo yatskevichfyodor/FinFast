@@ -1,10 +1,8 @@
 plugins {
-    kotlin("jvm") version "2.3.21"
-    kotlin("plugin.spring") version "2.3.21"
-    id("org.springframework.boot") version "4.1.1"
-    id("io.spring.dependency-management") version "1.1.7"
-    kotlin("plugin.jpa") version "2.3.21"
-    id("org.graalvm.buildtools.native") version "1.1.11"
+    kotlin("jvm") version "2.4.10"
+    kotlin("plugin.allopen") version "2.4.10"
+    kotlin("plugin.noarg") version "2.4.10"
+    id("io.quarkus")
 }
 
 java {
@@ -17,49 +15,46 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-webmvc")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-flyway")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
-    implementation("org.springframework.security:spring-security-oauth2-jose")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("tools.jackson.module:jackson-module-kotlin")
-    runtimeOnly("org.postgresql:postgresql")
-    implementation("org.flywaydb:flyway-database-postgresql")
-    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-security-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-flyway-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
+val quarkusPlatformGroupId: String = providers.gradleProperty("quarkusPlatformGroupId").get()
+val quarkusPlatformArtifactId: String = providers.gradleProperty("quarkusPlatformArtifactId").get()
+val quarkusPlatformVersion: String = providers.gradleProperty("quarkusPlatformVersion").get()
 
-kotlin {
-    compilerOptions {
-        freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
-    }
+dependencies {
+    implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
+
+    implementation("io.quarkus:quarkus-rest")
+    implementation("io.quarkus:quarkus-rest-jackson")
+    implementation("io.quarkus:quarkus-hibernate-orm")
+    implementation("io.quarkus:quarkus-flyway")
+    implementation("io.quarkus:quarkus-config-yaml")
+    implementation("io.quarkus:quarkus-jdbc-postgresql")
+    implementation("io.quarkus:quarkus-arc")
+    implementation("io.quarkus:quarkus-kotlin")
+    implementation("io.quarkus:quarkus-elytron-security-common")
+    implementation("com.nimbusds:nimbus-jose-jwt:10.9.1")
+
+    testImplementation("io.quarkus:quarkus-junit")
+    testImplementation("io.rest-assured:rest-assured")
 }
 
 allOpen {
+    annotation("jakarta.ws.rs.Path")
+    annotation("jakarta.enterprise.context.ApplicationScoped")
     annotation("jakarta.persistence.Entity")
-    annotation("jakarta.persistence.MappedSuperclass")
-    annotation("jakarta.persistence.Embeddable")
+    annotation("io.quarkus.test.junit.QuarkusTest")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-tasks.bootJar {
-    archiveFileName.set("app.jar")
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
+        javaParameters = true
+    }
 }
 
-graalvmNative {
-    binaries {
-        named("main") {
-            imageName.set("app")
-        }
-    }
+noArg {
+    annotation("jakarta.persistence.Entity")
 }
