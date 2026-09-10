@@ -5,6 +5,7 @@ spring:
     hibernate:
       ddl-auto: validate
   flyway:
+    table: expense_flyway_schema_history
     baseline-on-migrate: true
 
 finfast:
