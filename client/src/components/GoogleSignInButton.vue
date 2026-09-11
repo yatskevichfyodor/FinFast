@@ -2,6 +2,10 @@
 import { onMounted, ref } from 'vue'
 import { loadGoogleIdentity } from '@/services/googleIdentity'
 
+const props = defineProps<{
+  hint?: string
+}>()
+
 const emit = defineEmits<{
   (e: 'credential', credential: string): void
   (e: 'error', message: string): void
@@ -41,15 +45,20 @@ onMounted(async () => {
 <template>
   <div class="google-sign-in-button">
     <div ref="container" class="google-button-container" />
+    <div v-if="props.hint" class="google-button-hint">
+      <v-icon size="15">mdi-information-outline</v-icon>
+      <span>{{ props.hint }}</span>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .google-sign-in-button {
   display: flex;
+  flex-direction: column;
   width: 100%;
   min-width: 0;
-  justify-content: center;
+  gap: 6px;
   min-height: 40px;
 }
 
@@ -57,5 +66,21 @@ onMounted(async () => {
   width: 100%;
   display: flex;
   justify-content: center;
+}
+
+.google-button-hint {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 5px;
+  color: #757575;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.google-button-hint .v-icon {
+  flex-shrink: 0;
+  color: #9e9e9e;
 }
 </style>

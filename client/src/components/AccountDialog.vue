@@ -378,6 +378,7 @@ function getRequestErrorMessage(
               <template v-else-if="!authStore.googleLinked && isGoogleSignInConfigured">
                 <div class="google-link-container">
                   <GoogleSignInButton
+                    hint="Привяжите аккаунт Google для входа без пароля"
                     @credential="linkGoogleAccount"
                     @error="handleGoogleLinkError"
                   />

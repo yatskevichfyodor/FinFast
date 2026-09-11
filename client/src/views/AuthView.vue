@@ -342,7 +342,10 @@ onMounted(() => {
 
         <template v-if="!isOfflineMode && !isCheckingService && isGoogleSignInConfigured">
           <div class="auth-divider"><span>или</span></div>
-          <GoogleSignInButton @credential="loginWithGoogle" @error="handleGoogleError" />
+          <GoogleSignInButton
+            @credential="loginWithGoogle"
+            @error="handleGoogleError"
+          />
         </template>
 
         <v-card-actions class="justify-center mt-3">
