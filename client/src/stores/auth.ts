@@ -51,6 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value || isOffline.value ? localStorage.getItem(USERNAME_KEY) : null
   )
   const isAnonymous = ref(false)
+  const googleLinked = ref(false)
 
   function restoreUserFromToken(token: string | null) {
     const claims = token ? readTokenClaims(token) : null
@@ -73,6 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
     userId.value = `anonymous:${anonymousProfile}`
     username.value = 'Без аккаунта'
     isAnonymous.value = true
+    googleLinked.value = false
     isOffline.value = true
     localStorage.removeItem(ACCESS_TOKEN_KEY)
     localStorage.removeItem(REFRESH_TOKEN_KEY)
@@ -120,10 +122,16 @@ export const useAuthStore = defineStore('auth', () => {
     await loadCurrentUser()
   }
 
+  async function linkGoogleAccount(credential: string) {
+    const user = await authApi.linkGoogleAccount(credential)
+    googleLinked.value = user.googleLinked
+  }
+
   async function loadCurrentUser() {
     if (!accessToken.value) {
       userId.value = null
       username.value = null
+      googleLinked.value = false
       return
     }
 
@@ -131,6 +139,7 @@ export const useAuthStore = defineStore('auth', () => {
       const user = await authApi.me()
       userId.value = user.id
       username.value = user.username
+      googleLinked.value = user.googleLinked
       localStorage.setItem(USER_ID_KEY, user.id)
       localStorage.setItem(USERNAME_KEY, user.username)
     } catch (error) {
@@ -153,6 +162,7 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = null
     isOffline.value = false
     isAnonymous.value = false
+    googleLinked.value = false
     userId.value = null
     username.value = null
     localStorage.removeItem(ACCESS_TOKEN_KEY)
@@ -178,9 +188,11 @@ export const useAuthStore = defineStore('auth', () => {
     isOffline,
     isAuthenticated,
     isAnonymous,
+    googleLinked,
     register,
     login,
     loginWithGoogle,
+    linkGoogleAccount,
     continueWithoutAccount,
     loadCurrentUser,
     refresh,

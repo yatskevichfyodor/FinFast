@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useExpenseStore } from '@/stores/expense'
@@ -8,7 +8,6 @@ import ImportDialog from '@/components/ImportDialog.vue'
 import LogoutConfirmationDialog from '@/components/LogoutConfirmationDialog.vue'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { format } from 'date-fns/format'
-import * as authApi from '@/services/authApi'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -38,6 +37,12 @@ const buildInfo = computed(() => {
 
 watch(() => props.modelValue, v => (localOpen.value = v))
 watch(localOpen, v => emit('update:modelValue', v))
+
+onMounted(() => {
+  if (authStore.accessToken && !authStore.isAnonymous) {
+    void authStore.loadCurrentUser()
+  }
+})
 
 function closeMenu() {
   localOpen.value = false
@@ -85,7 +90,7 @@ async function linkGoogleAccount(credential: string) {
   googleLinkMessage.value = ''
   googleLinkError.value = ''
   try {
-    await authApi.linkGoogleAccount(credential)
+    await authStore.linkGoogleAccount(credential)
     googleLinkMessage.value = 'Аккаунт Google успешно привязан'
   } catch (error) {
     googleLinkError.value = error instanceof Error ? error.message : 'Не удалось привязать аккаунт Google'
@@ -145,10 +150,14 @@ function handleBackdropClick(event: MouseEvent) {
                 Экспорт расходов
               </v-btn>
 
-              <template v-if="authStore.isAuthenticated && !authStore.isAnonymous && isGoogleSignInConfigured">
+              <template v-if="authStore.isAuthenticated && !authStore.isAnonymous && !authStore.googleLinked && isGoogleSignInConfigured">
                 <v-divider class="my-2" />
                 <div class="google-link-label">Привязать аккаунт Google</div>
-                <GoogleSignInButton @credential="linkGoogleAccount" @error="handleGoogleLinkError" />
+                <GoogleSignInButton
+                  v-if="localOpen"
+                  @credential="linkGoogleAccount"
+                  @error="handleGoogleLinkError"
+                />
                 <v-alert v-if="googleLinkMessage" class="mt-3" density="compact" type="success" variant="tonal">
                   {{ googleLinkMessage }}
                 </v-alert>

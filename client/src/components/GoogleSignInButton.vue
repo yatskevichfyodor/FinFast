@@ -29,7 +29,8 @@ onMounted(async () => {
       }
     })
     if (container.value) {
-      google.renderButton(container.value, { theme: 'outline', size: 'large', text: 'continue_with', width: 392 })
+      const width = Math.min(container.value.clientWidth || 392, 392)
+      google.renderButton(container.value, { theme: 'outline', size: 'large', text: 'continue_with', width })
     }
   } catch (error) {
     emit('error', error instanceof Error ? error.message : 'Не удалось подключиться к Google')
@@ -40,5 +41,5 @@ onMounted(async () => {
 <template><div ref="container" class="google-sign-in-button" /></template>
 
 <style scoped>
-.google-sign-in-button { display: flex; justify-content: center; min-height: 40px; }
+.google-sign-in-button { display: flex; width: 100%; min-width: 0; justify-content: center; min-height: 40px; }
 </style>
