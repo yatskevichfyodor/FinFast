@@ -23,8 +23,6 @@ quarkus:
     table: auth_flyway_schema_history
 
 finfast:
-  google:
-    client-id: ${GOOGLE_CLIENT_ID:}
   jwt:
     issuer: finfast-api
     key-id: finfast-rs256-1

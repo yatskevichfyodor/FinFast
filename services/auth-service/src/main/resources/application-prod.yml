@@ -20,3 +20,5 @@ finfast:
   jwt:
     private-key-b64: ${FINFAST_JWT_PRIVATE_KEY_B64}
     public-key-b64: ${FINFAST_JWT_PUBLIC_KEY_B64}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID}
