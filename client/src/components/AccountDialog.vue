@@ -214,16 +214,24 @@ function getRequestErrorMessage(
               </v-chip>
             </div>
             <div class="card-content">
-              <template v-if="!authStore.googleLinked && isGoogleSignInConfigured">
-                <div class="google-link-container">
-                  <GoogleSignInButton 
-                    @credential="linkGoogleAccount" 
-                    @error="handleGoogleLinkError"
-                  />
-                </div>
-              </template>
-              <template v-else-if="authStore.googleLinked">
-                <div class="google-linked-actions">
+              <div class="google-info">
+                <template v-if="authStore.googleLinked && authStore.email">
+                  <span class="google-email">{{ authStore.email }}</span>
+                </template>
+                <template v-else>
+                  <span class="google-placeholder">{{ authStore.googleLinked ? 'Email не указан' : 'Не подключён' }}</span>
+                </template>
+              </div>
+              <div class="google-actions">
+                <template v-if="!authStore.googleLinked && isGoogleSignInConfigured">
+                  <div class="google-link-container">
+                    <GoogleSignInButton 
+                      @credential="linkGoogleAccount" 
+                      @error="handleGoogleLinkError"
+                    />
+                  </div>
+                </template>
+                <template v-else-if="authStore.googleLinked">
                   <v-btn
                     v-if="!authStore.hasPassword"
                     size="small"
@@ -246,8 +254,8 @@ function getRequestErrorMessage(
                     <v-icon size="16" start>mdi-google</v-icon>
                     Отвязать
                   </v-btn>
-                </div>
-              </template>
+                </template>
+              </div>
             </div>
           </div>
         </div>
@@ -422,8 +430,7 @@ function getRequestErrorMessage(
 
 .card-content {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
 }
 
@@ -432,6 +439,33 @@ function getRequestErrorMessage(
   font-weight: 500;
   color: #212529;
   flex: 1;
+}
+
+.google-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.google-email {
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  word-break: break-all;
+}
+
+.google-placeholder {
+  font-size: 14px;
+  color: #9e9e9e;
+  font-style: italic;
+}
+
+.google-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .edit-btn {
@@ -446,11 +480,6 @@ function getRequestErrorMessage(
   width: 100%;
   display: flex;
   justify-content: center;
-}
-
-.google-linked-actions {
-  display: flex;
-  gap: 8px;
 }
 
 .google-action-btn {

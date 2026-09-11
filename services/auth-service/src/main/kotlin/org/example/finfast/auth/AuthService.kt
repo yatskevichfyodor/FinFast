@@ -163,7 +163,7 @@ class AuthService(
         return candidate
     }
 
-    private fun User.toResponse() = UserResponse(id, username, googleSubject != null, passwordHash != null)
+    private fun User.toResponse() = UserResponse(id, username, googleEmail, googleSubject != null, passwordHash != null)
 
     private fun hash(value: String): String =
         MessageDigest.getInstance("SHA-256")

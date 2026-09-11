@@ -50,6 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
   const username = ref<string | null>(
     accessToken.value || isOffline.value ? localStorage.getItem(USERNAME_KEY) : null
   )
+  const email = ref<string | null>(null)
   const isAnonymous = ref(false)
   const googleLinked = ref(false)
   const hasPassword = ref(false)
@@ -135,6 +136,7 @@ export const useAuthStore = defineStore('auth', () => {
   function applyUser(user: authApi.UserResponse) {
     userId.value = user.id
     username.value = user.username
+    email.value = user.email || null
     googleLinked.value = user.googleLinked
     hasPassword.value = user.hasPassword
     localStorage.setItem(USER_ID_KEY, user.id)
@@ -145,6 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!accessToken.value) {
       userId.value = null
       username.value = null
+      email.value = null
       googleLinked.value = false
       hasPassword.value = false
       return
@@ -177,6 +180,7 @@ export const useAuthStore = defineStore('auth', () => {
     hasPassword.value = false
     userId.value = null
     username.value = null
+    email.value = null
     localStorage.removeItem(ACCESS_TOKEN_KEY)
     localStorage.removeItem(REFRESH_TOKEN_KEY)
     localStorage.removeItem(USER_ID_KEY)
@@ -197,6 +201,7 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken,
     userId,
     username,
+    email,
     isOffline,
     isAuthenticated,
     isAnonymous,

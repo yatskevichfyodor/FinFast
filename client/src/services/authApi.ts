@@ -14,6 +14,7 @@ export interface LoginRequest {
 export interface UserResponse {
   id: string
   username: string
+  email?: string
   googleLinked: boolean
   hasPassword: boolean
 }
