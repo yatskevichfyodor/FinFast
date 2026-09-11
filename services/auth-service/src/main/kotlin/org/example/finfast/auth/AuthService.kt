@@ -48,7 +48,7 @@ class AuthService(
     @Transactional
     fun login(request: LoginRequest): TokenResponse {
         val user = userRepository.findByUsername(request.username.trim())
-        if (user == null || user.passwordHash == null || !BcryptUtil.matches(request.password, user.passwordHash)) {
+        if (user?.passwordHash == null || !BcryptUtil.matches(request.password, user.passwordHash)) {
             throw WebApplicationException("Invalid credentials", 401)
         }
         return issueTokens(user)
