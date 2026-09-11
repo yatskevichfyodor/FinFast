@@ -17,12 +17,14 @@ const router = useRouter()
 const authStore = useAuthStore()
 const expenseStore = useExpenseStore()
 
-const showPasswordDialog = ref(false)
+const showPasswordForm = ref(false)
 const showUnlinkGoogleDialog = ref(false)
 const showDeleteAccountDialog = ref(false)
 const isEditingUsername = ref(false)
 const editedUsername = ref('')
 const newPassword = ref('')
+const confirmPassword = ref('')
+const passwordError = ref('')
 const accountError = ref('')
 const isSavingAccount = ref(false)
 const isDeletingAccount = ref(false)
@@ -51,10 +53,17 @@ function cancelEditingUsername() {
   accountError.value = ''
 }
 
-function openPasswordDialog() {
+function togglePasswordForm() {
+  if (showPasswordForm.value) {
+    showPasswordForm.value = false
+    passwordError.value = ''
+    return
+  }
+
   newPassword.value = ''
-  accountError.value = ''
-  showPasswordDialog.value = true
+  confirmPassword.value = ''
+  passwordError.value = ''
+  showPasswordForm.value = true
 }
 
 function openUnlinkGoogleDialog() {
@@ -82,13 +91,24 @@ async function saveUsername() {
 }
 
 async function savePassword() {
-  accountError.value = ''
+  passwordError.value = ''
+
+  if (!newPassword.value) {
+    passwordError.value = 'Введите пароль'
+    return
+  }
+
+  if (newPassword.value !== confirmPassword.value) {
+    passwordError.value = 'Пароли не совпадают'
+    return
+  }
+
   isSavingAccount.value = true
   try {
     await authStore.setPassword(newPassword.value)
-    showPasswordDialog.value = false
+    showPasswordForm.value = false
   } catch (error) {
-    accountError.value = getRequestErrorMessage(error, 'Не удалось сохранить пароль')
+    passwordError.value = getRequestErrorMessage(error, 'Не удалось сохранить пароль')
   } finally {
     isSavingAccount.value = false
   }
@@ -261,6 +281,64 @@ function getRequestErrorMessage(
             </div>
           </div>
 
+          <!-- Password Card -->
+          <div class="info-card">
+            <div class="card-header">
+              <v-icon class="card-icon" :color="authStore.hasPassword ? '#2e7d32' : '#9e9e9e'">mdi-lock-outline</v-icon>
+              <span class="card-label">Пароль</span>
+              <v-chip
+                :color="authStore.hasPassword ? 'success' : 'default'"
+                size="x-small"
+                variant="tonal"
+                class="status-chip"
+              >
+                {{ authStore.hasPassword ? 'Установлен' : 'Не установлен' }}
+              </v-chip>
+            </div>
+            <div class="card-content">
+              <v-btn
+                block
+                size="small"
+                variant="tonal"
+                color="#1976d2"
+                class="password-action-btn"
+                @click="togglePasswordForm"
+              >
+                <v-icon size="16" start>{{ showPasswordForm ? 'mdi-chevron-up' : (authStore.hasPassword ? 'mdi-lock-reset' : 'mdi-lock-plus-outline') }}</v-icon>
+                {{ showPasswordForm ? 'Скрыть' : (authStore.hasPassword ? 'Изменить пароль' : 'Добавить пароль') }}
+              </v-btn>
+              <v-expand-transition>
+                <div v-if="showPasswordForm" class="password-form">
+                  <div class="password-hint">
+                    <v-icon size="16">mdi-information-outline</v-icon>
+                    <span>Пароль нужен для входа по имени пользователя и отвязки Google.</span>
+                  </div>
+                  <v-text-field
+                    v-model="newPassword"
+                    label="Новый пароль"
+                    type="password"
+                    autocomplete="new-password"
+                    hide-details="auto"
+                  />
+                  <v-text-field
+                    v-model="confirmPassword"
+                    label="Подтверждение пароля"
+                    type="password"
+                    autocomplete="new-password"
+                    hide-details="auto"
+                  />
+                  <v-alert v-if="passwordError" density="compact" type="error" variant="tonal">
+                    {{ passwordError }}
+                  </v-alert>
+                  <div class="password-form-actions">
+                    <v-btn variant="text" :disabled="isSavingAccount" @click="togglePasswordForm">Отмена</v-btn>
+                    <v-btn color="primary" :loading="isSavingAccount" @click="savePassword">Сохранить</v-btn>
+                  </div>
+                </div>
+              </v-expand-transition>
+            </div>
+          </div>
+
           <!-- Google Card -->
           <div class="info-card">
             <div class="card-header">
@@ -283,17 +361,6 @@ function getRequestErrorMessage(
                     <span class="google-email">{{ authStore.email }}</span>
                   </div>
                   <div class="google-email-actions">
-                    <v-btn
-                      v-if="!authStore.hasPassword"
-                      size="small"
-                      variant="tonal"
-                      color="#4285f4"
-                      class="google-action-btn"
-                      @click="openPasswordDialog"
-                    >
-                      <v-icon size="16" start>mdi-lock-outline</v-icon>
-                      Задать пароль
-                    </v-btn>
                     <v-btn
                       v-if="authStore.hasPassword"
                       size="small"
@@ -353,18 +420,6 @@ function getRequestErrorMessage(
         </div>
         </div>
       </v-card-text>
-    </v-card>
-  </v-dialog>
-
-  <v-dialog v-model="showPasswordDialog" max-width="420" persistent>
-    <v-card>
-      <v-card-title>Задать пароль</v-card-title>
-      <v-card-text>
-        <p class="dialog-description">Пароль позволит безопасно отвязать Google и входить по имени пользователя.</p>
-        <v-text-field v-model="newPassword" label="Пароль" type="password" autocomplete="new-password" />
-        <v-alert v-if="accountError" density="compact" type="error" variant="tonal">{{ accountError }}</v-alert>
-      </v-card-text>
-      <v-card-actions><v-spacer /><v-btn :disabled="isSavingAccount" @click="showPasswordDialog = false">Отмена</v-btn><v-btn color="primary" :loading="isSavingAccount" @click="savePassword">Сохранить</v-btn></v-card-actions>
     </v-card>
   </v-dialog>
 
@@ -582,6 +637,42 @@ function getRequestErrorMessage(
   border-radius: 8px;
   text-transform: none;
   letter-spacing: 0.3px;
+}
+
+.password-action-btn {
+  height: 36px;
+  font-size: 13px;
+  border-radius: 8px;
+  text-transform: none;
+  letter-spacing: 0.3px;
+}
+
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.password-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: #757575;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.password-hint .v-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #9e9e9e;
+}
+
+.password-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .alerts-container {
