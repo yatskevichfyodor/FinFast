@@ -7,6 +7,7 @@ import com.nimbusds.jose.crypto.RSASSASigner
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import jakarta.enterprise.context.ApplicationScoped
+import jakarta.ws.rs.WebApplicationException
 import org.example.finfast.auth.config.JwtKeyProvider
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import java.security.interfaces.RSAPublicKey
@@ -40,11 +41,11 @@ class JwtService(
     fun parseSubject(token: String): String {
         val signed = SignedJWT.parse(token)
         val verifier = com.nimbusds.jose.crypto.RSASSAVerifier(keyProvider.keyPair.public as RSAPublicKey)
-        if (!signed.verify(verifier)) throw IllegalArgumentException("Invalid token signature")
+        if (!signed.verify(verifier)) throw WebApplicationException("Invalid token signature", 401)
         val claims = signed.jwtClaimsSet
-        val exp = claims.expirationTime?.toInstant() ?: throw IllegalArgumentException("Invalid token")
-        if (exp.isBefore(Instant.now())) throw IllegalArgumentException("Token expired")
-        if (claims.issuer != issuer) throw IllegalArgumentException("Invalid issuer")
+        val exp = claims.expirationTime?.toInstant() ?: throw WebApplicationException("Invalid token", 401)
+        if (exp.isBefore(Instant.now())) throw WebApplicationException("Token expired", 401)
+        if (claims.issuer != issuer) throw WebApplicationException("Invalid issuer", 401)
         return claims.subject
     }
 }
