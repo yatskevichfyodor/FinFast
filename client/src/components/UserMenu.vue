@@ -151,6 +151,21 @@ function handleBackdropClick(event: MouseEvent) {
             </div>
 
             <div class="menu-content">
+              <template v-if="authStore.isAuthenticated && !authStore.isAnonymous">
+                <v-btn
+                  variant="text"
+                  class="menu-button"
+                  @click="openAccountDialog"
+                >
+                  <template #prepend>
+                    <v-icon class="menu-icon">mdi-account-cog-outline</v-icon>
+                  </template>
+                  Управление аккаунтом
+                </v-btn>
+
+                <v-divider class="my-2" />
+              </template>
+
               <v-btn
                 variant="text"
                 class="menu-button"
@@ -187,20 +202,6 @@ function handleBackdropClick(event: MouseEvent) {
                 <v-alert v-if="googleLinkError" class="mt-3" density="compact" type="error" variant="tonal">
                   {{ googleLinkError }}
                 </v-alert>
-              </template>
-
-              <template v-if="authStore.isAuthenticated && !authStore.isAnonymous">
-                <v-divider class="my-2" />
-                <v-btn
-                  variant="text"
-                  class="menu-button"
-                  @click="openAccountDialog"
-                >
-                  <template #prepend>
-                    <v-icon class="menu-icon">mdi-account-cog-outline</v-icon>
-                  </template>
-                  Управление аккаунтом
-                </v-btn>
               </template>
             </div>
 
