@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { expenseApi } from '@/services/api'
+import { expenseApi } from '@/services/http'
 
 export interface ExpenseApiBody {
   id: string

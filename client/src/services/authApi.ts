@@ -1,5 +1,5 @@
 import { isAxiosError } from 'axios'
-import { authApi } from '@/services/api'
+import { authApi } from '@/services/http'
 
 export interface RegisterRequest {
   username: string
