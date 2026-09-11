@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useExpenseStore } from '@/stores/expense'
@@ -17,10 +17,10 @@ const router = useRouter()
 const authStore = useAuthStore()
 const expenseStore = useExpenseStore()
 
-const showProfileDialog = ref(false)
 const showPasswordDialog = ref(false)
 const showUnlinkGoogleDialog = ref(false)
 const showDeleteAccountDialog = ref(false)
+const isEditingUsername = ref(false)
 const editedUsername = ref('')
 const newPassword = ref('')
 const accountError = ref('')
@@ -31,10 +31,24 @@ const googleLinkMessage = ref('')
 const googleLinkError = ref('')
 const isGoogleSignInConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
 
-function openProfileDialog() {
+editedUsername.value = authStore.username ?? ''
+
+watch(() => authStore.username, (newUsername) => {
+  if (!isEditingUsername.value) {
+    editedUsername.value = newUsername ?? ''
+  }
+})
+
+function startEditingUsername() {
   editedUsername.value = authStore.username ?? ''
+  isEditingUsername.value = true
   accountError.value = ''
-  showProfileDialog.value = true
+}
+
+function cancelEditingUsername() {
+  editedUsername.value = authStore.username ?? ''
+  isEditingUsername.value = false
+  accountError.value = ''
 }
 
 function openPasswordDialog() {
@@ -59,7 +73,7 @@ async function saveUsername() {
   isSavingAccount.value = true
   try {
     await authStore.updateProfile(editedUsername.value)
-    showProfileDialog.value = false
+    isEditingUsername.value = false
   } catch (error) {
     accountError.value = getRequestErrorMessage(error, 'Не удалось изменить имя пользователя')
   } finally {
@@ -185,17 +199,57 @@ function getRequestErrorMessage(
               <span class="card-label">Имя пользователя</span>
             </div>
             <div class="card-content">
-              <span class="card-value">{{ authStore.username }}</span>
-              <v-btn 
-                size="small" 
-                variant="tonal" 
-                color="#1976d2"
-                class="edit-btn"
-                @click="openProfileDialog"
-              >
-                <v-icon size="16" start>mdi-pencil-outline</v-icon>
-                Изменить
-              </v-btn>
+              <div class="username-input-wrapper">
+                <v-text-field
+                  v-model="editedUsername"
+                  :disabled="!isEditingUsername"
+                  :readonly="!isEditingUsername"
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  class="username-input"
+                  :class="{ 'username-input-locked': !isEditingUsername }"
+                />
+                <div class="username-actions">
+                  <template v-if="!isEditingUsername">
+                    <v-btn
+                      size="small"
+                      variant="tonal"
+                      color="#1976d2"
+                      class="edit-btn"
+                      @click="startEditingUsername"
+                    >
+                      <v-icon size="16" start>mdi-pencil-outline</v-icon>
+                      Изменить
+                    </v-btn>
+                  </template>
+                  <template v-else>
+                    <v-btn
+                      size="small"
+                      variant="tonal"
+                      color="#757575"
+                      class="action-btn"
+                      @click="cancelEditingUsername"
+                    >
+                      <v-icon size="16">mdi-close</v-icon>
+                    </v-btn>
+                    <v-btn
+                      size="small"
+                      variant="tonal"
+                      color="#1976d2"
+                      class="action-btn"
+                      :loading="isSavingAccount"
+                      :disabled="!editedUsername.trim()"
+                      @click="saveUsername"
+                    >
+                      <v-icon size="16">mdi-check</v-icon>
+                    </v-btn>
+                  </template>
+                </div>
+              </div>
+              <v-alert v-if="accountError" density="compact" type="error" variant="tonal" class="username-error">
+                {{ accountError }}
+              </v-alert>
             </div>
           </div>
 
@@ -204,8 +258,8 @@ function getRequestErrorMessage(
             <div class="card-header">
               <v-icon class="card-icon" :color="authStore.googleLinked ? '#4285f4' : '#9e9e9e'">mdi-google</v-icon>
               <span class="card-label">Google</span>
-              <v-chip 
-                :color="authStore.googleLinked ? 'success' : 'default'" 
+              <v-chip
+                :color="authStore.googleLinked ? 'success' : 'default'"
                 size="x-small"
                 variant="tonal"
                 class="status-chip"
@@ -214,48 +268,49 @@ function getRequestErrorMessage(
               </v-chip>
             </div>
             <div class="card-content">
-              <div class="google-info">
-                <template v-if="authStore.googleLinked && authStore.email">
-                  <span class="google-email">{{ authStore.email }}</span>
-                </template>
-                <template v-else>
-                  <span class="google-placeholder">{{ authStore.googleLinked ? 'Email не указан' : 'Не подключён' }}</span>
-                </template>
-              </div>
-              <div class="google-actions">
-                <template v-if="!authStore.googleLinked && isGoogleSignInConfigured">
-                  <div class="google-link-container">
-                    <GoogleSignInButton 
-                      @credential="linkGoogleAccount" 
-                      @error="handleGoogleLinkError"
-                    />
+              <template v-if="authStore.googleLinked && authStore.email">
+                <div class="google-email-wrapper">
+                  <div class="google-email-display">
+                    <v-icon size="16" color="#757575" class="email-icon">mdi-email-outline</v-icon>
+                    <span class="google-email">{{ authStore.email }}</span>
                   </div>
-                </template>
-                <template v-else-if="authStore.googleLinked">
-                  <v-btn
-                    v-if="!authStore.hasPassword"
-                    size="small"
-                    variant="tonal"
-                    color="#4285f4"
-                    class="google-action-btn"
-                    @click="openPasswordDialog"
-                  >
-                    <v-icon size="16" start>mdi-lock-outline</v-icon>
-                    Задать пароль
-                  </v-btn>
-                  <v-btn
-                    v-if="authStore.hasPassword"
-                    size="small"
-                    variant="tonal"
-                    color="#d32f2f"
-                    class="google-action-btn"
-                    @click="openUnlinkGoogleDialog"
-                  >
-                    <v-icon size="16" start>mdi-google</v-icon>
-                    Отвязать
-                  </v-btn>
-                </template>
-              </div>
+                  <div class="google-email-actions">
+                    <v-btn
+                      v-if="!authStore.hasPassword"
+                      size="small"
+                      variant="tonal"
+                      color="#4285f4"
+                      class="google-action-btn"
+                      @click="openPasswordDialog"
+                    >
+                      <v-icon size="16" start>mdi-lock-outline</v-icon>
+                      Задать пароль
+                    </v-btn>
+                    <v-btn
+                      v-if="authStore.hasPassword"
+                      size="small"
+                      variant="tonal"
+                      color="#d32f2f"
+                      class="google-action-btn"
+                      @click="openUnlinkGoogleDialog"
+                    >
+                      <v-icon size="16" start>mdi-link-variant-off</v-icon>
+                      Отвязать
+                    </v-btn>
+                  </div>
+                </div>
+              </template>
+              <template v-else-if="!authStore.googleLinked && isGoogleSignInConfigured">
+                <div class="google-link-container">
+                  <GoogleSignInButton
+                    @credential="linkGoogleAccount"
+                    @error="handleGoogleLinkError"
+                  />
+                </div>
+              </template>
+              <template v-else>
+                <div class="google-placeholder">{{ authStore.googleLinked ? 'Email не указан' : 'Не подключён' }}</div>
+              </template>
             </div>
           </div>
         </div>
@@ -296,17 +351,6 @@ function getRequestErrorMessage(
           Закрыть
         </v-btn>
       </v-card-actions>
-    </v-card>
-  </v-dialog>
-
-  <v-dialog v-model="showProfileDialog" max-width="420" persistent>
-    <v-card>
-      <v-card-title>Изменить имя пользователя</v-card-title>
-      <v-card-text>
-        <v-text-field v-model="editedUsername" label="Имя пользователя" autocomplete="username" />
-        <v-alert v-if="accountError" density="compact" type="error" variant="tonal">{{ accountError }}</v-alert>
-      </v-card-text>
-      <v-card-actions><v-spacer /><v-btn :disabled="isSavingAccount" @click="showProfileDialog = false">Отмена</v-btn><v-btn color="primary" :loading="isSavingAccount" @click="saveUsername">Сохранить</v-btn></v-card-actions>
     </v-card>
   </v-dialog>
 
@@ -434,18 +478,60 @@ function getRequestErrorMessage(
   gap: 12px;
 }
 
-.card-value {
-  font-size: 15px;
-  font-weight: 500;
-  color: #212529;
-  flex: 1;
+.username-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 
-.google-info {
+.username-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.username-input-locked :deep(.v-field__input) {
+  cursor: default;
+  background-color: #f8f9fa;
+}
+
+.username-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  min-width: 36px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+}
+
+.username-error {
+  margin-top: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.google-email-wrapper {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.google-email-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.email-icon {
+  flex-shrink: 0;
 }
 
 .google-email {
@@ -455,17 +541,16 @@ function getRequestErrorMessage(
   word-break: break-all;
 }
 
+.google-email-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .google-placeholder {
   font-size: 14px;
   color: #9e9e9e;
   font-style: italic;
-}
-
-.google-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
 }
 
 .edit-btn {
