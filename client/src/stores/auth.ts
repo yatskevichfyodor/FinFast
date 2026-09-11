@@ -161,13 +161,35 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+
+  let refreshPromise: Promise<void> | null = null
+
   async function refresh() {
     if (!refreshToken.value) {
       throw new Error('Refresh token is missing')
     }
 
-    saveTokens(await authApi.refresh(refreshToken.value))
-    await loadCurrentUser()
+    if (refreshPromise) {
+      return refreshPromise
+    }
+
+    refreshPromise = (async () => {
+      const currentRefreshToken = refreshToken.value
+
+      if (!currentRefreshToken) {
+        throw new Error('Refresh token is missing')
+      }
+
+      const tokens = await authApi.refresh(currentRefreshToken)
+      saveTokens(tokens)
+      await loadCurrentUser()
+    })()
+    
+    try {
+      await refreshPromise
+    } finally {
+      refreshPromise = null
+    }
   }
 
   async function logout() {
