@@ -15,6 +15,7 @@ export interface UserResponse {
   id: string
   username: string
   googleLinked: boolean
+  hasPassword: boolean
 }
 
 export interface TokenResponse {
@@ -45,6 +46,25 @@ export async function loginWithGoogle(credential: string): Promise<TokenResponse
 export async function linkGoogleAccount(credential: string): Promise<UserResponse> {
   const { data } = await authApi.post<UserResponse>('/auth/google/link', { credential })
   return data
+}
+
+export async function unlinkGoogleAccount(): Promise<UserResponse> {
+  const { data } = await authApi.delete<UserResponse>('/auth/google/link')
+  return data
+}
+
+export async function updateProfile(username: string): Promise<UserResponse> {
+  const { data } = await authApi.patch<UserResponse>('/auth/me', { username })
+  return data
+}
+
+export async function setPassword(password: string): Promise<UserResponse> {
+  const { data } = await authApi.put<UserResponse>('/auth/me/password', { password })
+  return data
+}
+
+export async function deleteAccount(): Promise<void> {
+  await authApi.delete('/auth/me')
 }
 
 export async function me(): Promise<UserResponse> {

@@ -5,4 +5,5 @@ import java.util.UUID
 
 interface ExpenseRepository : JpaRepository<Expense, ExpenseId> {
     fun findAllByExpenseId_UserIdOrderByCreatedAtDesc(userId: UUID): List<Expense>
+    fun deleteAllByExpenseId_UserId(userId: UUID): Long
 }

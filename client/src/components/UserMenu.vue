@@ -9,6 +9,8 @@ import LogoutConfirmationDialog from '@/components/LogoutConfirmationDialog.vue'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { format } from 'date-fns/format'
 import { isAxiosError } from 'axios'
+import * as expenseApi from '@/services/expenseApi'
+import * as authApi from '@/services/authApi'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -25,6 +27,16 @@ const showImportDialog = ref(false)
 const showLogoutDialog = ref(false)
 const googleLinkMessage = ref('')
 const googleLinkError = ref('')
+const showProfileDialog = ref(false)
+const showPasswordDialog = ref(false)
+const showUnlinkGoogleDialog = ref(false)
+const showDeleteAccountDialog = ref(false)
+const editedUsername = ref('')
+const newPassword = ref('')
+const accountError = ref('')
+const isSavingAccount = ref(false)
+const isDeletingAccount = ref(false)
+const deleteConfirmed = ref(false)
 const pendingExpensesCount = computed(() => expenseStore.getPendingExpensesCount())
 const shouldShowLogin = computed(() => !authStore.isAuthenticated || authStore.isAnonymous)
 const isGoogleSignInConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
@@ -87,6 +99,93 @@ async function goToLogin() {
   await router.replace({ name: 'login' })
 }
 
+function openProfileDialog() {
+  editedUsername.value = authStore.username ?? ''
+  accountError.value = ''
+  closeMenu()
+  showProfileDialog.value = true
+}
+
+function openPasswordDialog() {
+  newPassword.value = ''
+  accountError.value = ''
+  closeMenu()
+  showPasswordDialog.value = true
+}
+
+function openUnlinkGoogleDialog() {
+  accountError.value = ''
+  closeMenu()
+  showUnlinkGoogleDialog.value = true
+}
+
+function openDeleteAccountDialog() {
+  accountError.value = ''
+  deleteConfirmed.value = false
+  closeMenu()
+  showDeleteAccountDialog.value = true
+}
+
+async function saveUsername() {
+  accountError.value = ''
+  isSavingAccount.value = true
+  try {
+    await authStore.updateProfile(editedUsername.value)
+    showProfileDialog.value = false
+  } catch (error) {
+    accountError.value = getRequestErrorMessage(error, 'Не удалось изменить имя пользователя')
+  } finally {
+    isSavingAccount.value = false
+  }
+}
+
+async function savePassword() {
+  accountError.value = ''
+  isSavingAccount.value = true
+  try {
+    await authStore.setPassword(newPassword.value)
+    showPasswordDialog.value = false
+  } catch (error) {
+    accountError.value = getRequestErrorMessage(error, 'Не удалось сохранить пароль')
+  } finally {
+    isSavingAccount.value = false
+  }
+}
+
+async function unlinkGoogleAccount() {
+  accountError.value = ''
+  isSavingAccount.value = true
+  try {
+    await authStore.unlinkGoogleAccount()
+    showUnlinkGoogleDialog.value = false
+  } catch (error) {
+    accountError.value = getRequestErrorMessage(error, 'Не удалось отвязать аккаунт Google')
+  } finally {
+    isSavingAccount.value = false
+  }
+}
+
+async function deleteAccount() {
+  if (!deleteConfirmed.value) {
+    return
+  }
+
+  accountError.value = ''
+  isDeletingAccount.value = true
+  try {
+    await expenseApi.deleteAllExpenses()
+    await authApi.deleteAccount()
+    await expenseStore.clearCurrentUserExpenses()
+    showDeleteAccountDialog.value = false
+    await authStore.logout()
+    await router.replace({ name: 'login' })
+  } catch (error) {
+    accountError.value = getRequestErrorMessage(error, 'Не удалось удалить аккаунт')
+  } finally {
+    isDeletingAccount.value = false
+  }
+}
+
 async function linkGoogleAccount(credential: string) {
   googleLinkMessage.value = ''
   googleLinkError.value = ''
@@ -99,18 +198,28 @@ async function linkGoogleAccount(credential: string) {
 }
 
 function getGoogleLinkErrorMessage(error: unknown): string {
+  return getRequestErrorMessage(error, 'Не удалось привязать аккаунт Google. Попробуйте ещё раз.', 409,
+    'Этот аккаунт Google уже привязан к другому пользователю')
+}
+
+function getRequestErrorMessage(
+  error: unknown,
+  fallback: string,
+  expectedStatus?: number,
+  expectedStatusMessage?: string
+): string {
   if (isAxiosError(error)) {
     const responseMessage = error.response?.data?.message
     if (typeof responseMessage === 'string' && responseMessage.trim()) {
       return responseMessage
     }
 
-    if (error.response?.status === 409) {
-      return 'Этот аккаунт Google уже привязан к другому пользователю'
+    if (error.response?.status === expectedStatus && expectedStatusMessage) {
+      return expectedStatusMessage
     }
   }
 
-  return 'Не удалось привязать аккаунт Google. Попробуйте ещё раз.'
+  return fallback
 }
 
 function handleGoogleLinkError(message: string) {
@@ -181,6 +290,45 @@ function handleBackdropClick(event: MouseEvent) {
                   {{ googleLinkError }}
                 </v-alert>
               </template>
+
+              <template v-if="authStore.isAuthenticated && !authStore.isAnonymous">
+                <v-divider class="my-2" />
+                <section class="account-section">
+                  <div class="account-section-title">Аккаунт</div>
+                  <div class="account-details">
+                    <span class="account-detail-label">Имя пользователя</span>
+                    <span class="account-detail-value">{{ authStore.username }}</span>
+                    <span class="account-detail-label">Вход через Google</span>
+                    <span class="account-detail-value">{{ authStore.googleLinked ? 'Подключён' : 'Не подключён' }}</span>
+                  </div>
+                  <v-btn variant="text" class="menu-button account-action" @click="openProfileDialog">
+                    <template #prepend><v-icon>mdi-pencil-outline</v-icon></template>
+                    Изменить имя
+                  </v-btn>
+                  <v-btn
+                    v-if="authStore.googleLinked && !authStore.hasPassword"
+                    variant="text"
+                    class="menu-button account-action"
+                    @click="openPasswordDialog"
+                  >
+                    <template #prepend><v-icon>mdi-lock-outline</v-icon></template>
+                    Задать пароль
+                  </v-btn>
+                  <v-btn
+                    v-if="authStore.googleLinked && authStore.hasPassword"
+                    variant="text"
+                    class="menu-button account-action"
+                    @click="openUnlinkGoogleDialog"
+                  >
+                    <template #prepend><v-icon>mdi-google</v-icon></template>
+                    Отвязать Google
+                  </v-btn>
+                  <v-btn variant="text" class="menu-button account-action account-action-danger" @click="openDeleteAccountDialog">
+                    <template #prepend><v-icon>mdi-delete-outline</v-icon></template>
+                    Удалить аккаунт
+                  </v-btn>
+                </section>
+              </template>
             </div>
 
             <div class="menu-footer">
@@ -212,6 +360,45 @@ function handleBackdropClick(event: MouseEvent) {
       :pending-expenses-count="pendingExpensesCount"
       @confirm="completeLogout"
     />
+    <v-dialog v-model="showProfileDialog" max-width="420" persistent>
+      <v-card>
+        <v-card-title>Изменить имя пользователя</v-card-title>
+        <v-card-text>
+          <v-text-field v-model="editedUsername" label="Имя пользователя" autocomplete="username" />
+          <v-alert v-if="accountError" density="compact" type="error" variant="tonal">{{ accountError }}</v-alert>
+        </v-card-text>
+        <v-card-actions><v-spacer /><v-btn :disabled="isSavingAccount" @click="showProfileDialog = false">Отмена</v-btn><v-btn color="primary" :loading="isSavingAccount" @click="saveUsername">Сохранить</v-btn></v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="showPasswordDialog" max-width="420" persistent>
+      <v-card>
+        <v-card-title>Задать пароль</v-card-title>
+        <v-card-text>
+          <p class="dialog-description">Пароль позволит безопасно отвязать Google и входить по имени пользователя.</p>
+          <v-text-field v-model="newPassword" label="Пароль" type="password" autocomplete="new-password" />
+          <v-alert v-if="accountError" density="compact" type="error" variant="tonal">{{ accountError }}</v-alert>
+        </v-card-text>
+        <v-card-actions><v-spacer /><v-btn :disabled="isSavingAccount" @click="showPasswordDialog = false">Отмена</v-btn><v-btn color="primary" :loading="isSavingAccount" @click="savePassword">Сохранить</v-btn></v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="showUnlinkGoogleDialog" max-width="420" persistent>
+      <v-card>
+        <v-card-title>Отвязать Google?</v-card-title>
+        <v-card-text>После этого вход через Google станет недоступен. Вы сможете войти по имени пользователя и паролю.</v-card-text>
+        <v-card-actions><v-spacer /><v-btn :disabled="isSavingAccount" @click="showUnlinkGoogleDialog = false">Отмена</v-btn><v-btn color="primary" :loading="isSavingAccount" @click="unlinkGoogleAccount">Отвязать</v-btn></v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="showDeleteAccountDialog" max-width="440" persistent>
+      <v-card>
+        <v-card-title>Удалить аккаунт?</v-card-title>
+        <v-card-text>
+          <p class="dialog-description">Будут безвозвратно удалены аккаунт и все расходы, сохранённые на сервере.</p>
+          <v-checkbox v-model="deleteConfirmed" color="error" label="Я понимаю, что отменить это действие нельзя" hide-details />
+          <v-alert v-if="accountError" class="mt-3" density="compact" type="error" variant="tonal">{{ accountError }}</v-alert>
+        </v-card-text>
+        <v-card-actions><v-spacer /><v-btn :disabled="isDeletingAccount" @click="showDeleteAccountDialog = false">Отмена</v-btn><v-btn color="error" :disabled="!deleteConfirmed" :loading="isDeletingAccount" @click="deleteAccount">Удалить навсегда</v-btn></v-card-actions>
+      </v-card>
+    </v-dialog>
   </Teleport>
 </template>
 
@@ -278,6 +465,7 @@ function handleBackdropClick(event: MouseEvent) {
 
 .menu-content {
   flex: 1;
+  overflow-y: auto;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -344,6 +532,15 @@ function handleBackdropClick(event: MouseEvent) {
   font-size: 13px;
   font-weight: 600;
 }
+
+.account-section { display: flex; flex-direction: column; gap: 4px; }
+.account-section-title { margin: 8px 0 4px; color: #37474f; font-size: 14px; font-weight: 700; }
+.account-details { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 8px 4px; font-size: 13px; }
+.account-detail-label { color: #78909c; }
+.account-detail-value { max-width: 150px; overflow: hidden; color: #37474f; font-weight: 600; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.account-action { height: 40px; font-size: 14px; }
+.account-action-danger { color: #d32f2f; }
+.dialog-description { margin-bottom: 16px; color: #546e7a; line-height: 1.45; }
 
 /* Slide-in animation */
 .menu-backdrop-enter-active,

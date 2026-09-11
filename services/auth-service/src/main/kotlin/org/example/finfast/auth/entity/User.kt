@@ -12,9 +12,9 @@ class User(
     @Id
     val id: UUID,
     @Column(nullable = false, unique = true, length = 100)
-    val username: String,
+    var username: String,
     @Column(name = "password_hash")
-    val passwordHash: String?,
+    var passwordHash: String?,
     @Column(name = "google_subject", unique = true, length = 255)
     var googleSubject: String? = null,
     @Column(name = "google_email", length = 320)

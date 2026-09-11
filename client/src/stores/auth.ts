@@ -52,6 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
   )
   const isAnonymous = ref(false)
   const googleLinked = ref(false)
+  const hasPassword = ref(false)
 
   function restoreUserFromToken(token: string | null) {
     const claims = token ? readTokenClaims(token) : null
@@ -75,6 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
     username.value = 'Без аккаунта'
     isAnonymous.value = true
     googleLinked.value = false
+    hasPassword.value = false
     isOffline.value = true
     localStorage.removeItem(ACCESS_TOKEN_KEY)
     localStorage.removeItem(REFRESH_TOKEN_KEY)
@@ -123,8 +125,20 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function linkGoogleAccount(credential: string) {
-    const user = await authApi.linkGoogleAccount(credential)
+    applyUser(await authApi.linkGoogleAccount(credential))
+  }
+
+  async function unlinkGoogleAccount() { applyUser(await authApi.unlinkGoogleAccount()) }
+  async function updateProfile(username: string) { applyUser(await authApi.updateProfile(username)) }
+  async function setPassword(password: string) { applyUser(await authApi.setPassword(password)) }
+
+  function applyUser(user: authApi.UserResponse) {
+    userId.value = user.id
+    username.value = user.username
     googleLinked.value = user.googleLinked
+    hasPassword.value = user.hasPassword
+    localStorage.setItem(USER_ID_KEY, user.id)
+    localStorage.setItem(USERNAME_KEY, user.username)
   }
 
   async function loadCurrentUser() {
@@ -132,16 +146,13 @@ export const useAuthStore = defineStore('auth', () => {
       userId.value = null
       username.value = null
       googleLinked.value = false
+      hasPassword.value = false
       return
     }
 
     try {
       const user = await authApi.me()
-      userId.value = user.id
-      username.value = user.username
-      googleLinked.value = user.googleLinked
-      localStorage.setItem(USER_ID_KEY, user.id)
-      localStorage.setItem(USERNAME_KEY, user.username)
+      applyUser(user)
     } catch (error) {
       console.warn('Failed to load current user, using token claims:', error)
     }
@@ -163,6 +174,7 @@ export const useAuthStore = defineStore('auth', () => {
     isOffline.value = false
     isAnonymous.value = false
     googleLinked.value = false
+    hasPassword.value = false
     userId.value = null
     username.value = null
     localStorage.removeItem(ACCESS_TOKEN_KEY)
@@ -189,10 +201,14 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     isAnonymous,
     googleLinked,
+    hasPassword,
     register,
     login,
     loginWithGoogle,
     linkGoogleAccount,
+    unlinkGoogleAccount,
+    updateProfile,
+    setPassword,
     continueWithoutAccount,
     loadCurrentUser,
     refresh,

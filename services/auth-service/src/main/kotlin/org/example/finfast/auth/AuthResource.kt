@@ -11,6 +11,8 @@ import org.example.finfast.auth.dto.LogoutRequest
 import org.example.finfast.auth.dto.RefreshRequest
 import org.example.finfast.auth.dto.RegisterRequest
 import org.example.finfast.auth.dto.UserResponse
+import org.example.finfast.auth.dto.UpdateProfileRequest
+import org.example.finfast.auth.dto.SetPasswordRequest
 import java.util.UUID
 
 @Path("/auth")
@@ -25,6 +27,30 @@ class AuthResource @Inject constructor(private val authService: AuthService, pri
         val subject = jwtService.parseSubject(token)
         return authService.currentUser(UUID.fromString(subject))
     }
+
+    @PATCH
+    @Path("/me")
+    @Authenticated
+    fun updateProfile(
+        @HeaderParam("Authorization") authHeader: String?,
+        request: UpdateProfileRequest
+    ): UserResponse = authService.updateProfile(currentUserId(authHeader), request)
+
+    @DELETE
+    @Path("/me")
+    @Authenticated
+    fun deleteAccount(@HeaderParam("Authorization") authHeader: String?): Response {
+        authService.deleteAccount(currentUserId(authHeader))
+        return Response.noContent().build()
+    }
+
+    @PUT
+    @Path("/me/password")
+    @Authenticated
+    fun setPassword(
+        @HeaderParam("Authorization") authHeader: String?,
+        request: SetPasswordRequest
+    ): UserResponse = authService.setPassword(currentUserId(authHeader), request)
 
     @POST
     @Path("/register")
@@ -46,9 +72,14 @@ class AuthResource @Inject constructor(private val authService: AuthService, pri
         @HeaderParam("Authorization") authHeader: String?,
         request: GoogleIdTokenRequest
     ): UserResponse {
-        val token = authHeader?.removePrefix("Bearer ") ?: throw WebApplicationException("Missing Authorization header", 401)
-        return authService.linkGoogleAccount(UUID.fromString(jwtService.parseSubject(token)), request)
+        return authService.linkGoogleAccount(currentUserId(authHeader), request)
     }
+
+    @DELETE
+    @Path("/google/link")
+    @Authenticated
+    fun unlinkGoogleAccount(@HeaderParam("Authorization") authHeader: String?): UserResponse =
+        authService.unlinkGoogleAccount(currentUserId(authHeader))
 
     @POST
     @Path("/refresh")
@@ -59,5 +90,10 @@ class AuthResource @Inject constructor(private val authService: AuthService, pri
     fun logout(request: LogoutRequest): Response {
         authService.logout(request)
         return Response.noContent().build()
+    }
+
+    private fun currentUserId(authHeader: String?): UUID {
+        val token = authHeader?.removePrefix("Bearer ") ?: throw WebApplicationException("Missing Authorization header", 401)
+        return UUID.fromString(jwtService.parseSubject(token))
     }
 }

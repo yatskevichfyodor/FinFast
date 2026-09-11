@@ -121,6 +121,11 @@ class ExpenseService(
         expenseRepository.deleteAllById(ids.map { ExpenseId(userId, it) })
     }
 
+    @Transactional
+    fun deleteAllForCurrentUser() {
+        expenseRepository.deleteAllByExpenseId_UserId(currentUserId())
+    }
+
     private fun updateExpense(
         expense: Expense,
         dto: UpdateExpenseDto

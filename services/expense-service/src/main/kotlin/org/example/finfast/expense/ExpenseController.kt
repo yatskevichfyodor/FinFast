@@ -100,4 +100,10 @@ class ExpenseController(
 
         return ResponseEntity.noContent().build()
     }
+
+    @DeleteMapping
+    fun deleteAll(): ResponseEntity<Void> {
+        expenseService.deleteAllForCurrentUser()
+        return ResponseEntity.noContent().build()
+    }
 }

@@ -57,6 +57,21 @@ export const useExpenseStore = defineStore('expense', () => {
     await loadExpenses()
   }
 
+  async function clearCurrentUserExpenses() {
+    const userId = authStore.userId
+    if (!userId) {
+      return
+    }
+
+    loadVersion++
+    expensesByUser.delete(userId)
+    if (loadedUserId === userId) {
+      loadedUserId = null
+      expenses.value = []
+    }
+    await saveStoredExpenses(userId, [])
+  }
+
   watch(() => authStore.userId, () => {
     void loadExpenses()
       .then(() => {
@@ -537,6 +552,7 @@ export const useExpenseStore = defineStore('expense', () => {
     syncError,
     loadExpenses,
     forceReloadExpenses,
+    clearCurrentUserExpenses,
     refreshExpenses,
     addExpense,
     updateExpense,

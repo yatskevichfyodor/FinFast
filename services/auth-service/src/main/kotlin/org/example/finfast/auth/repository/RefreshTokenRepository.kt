@@ -19,4 +19,11 @@ class RefreshTokenRepository @Inject constructor(private val em: EntityManager) 
         em.persist(token)
         return token
     }
+
+    @Transactional
+    fun deleteAllByUserId(userId: java.util.UUID) {
+        em.createQuery("DELETE FROM RefreshToken r WHERE r.userId = :userId")
+            .setParameter("userId", userId)
+            .executeUpdate()
+    }
 }

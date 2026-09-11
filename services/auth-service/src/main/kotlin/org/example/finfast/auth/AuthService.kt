@@ -10,6 +10,8 @@ import org.example.finfast.auth.dto.LogoutRequest
 import org.example.finfast.auth.dto.RefreshRequest
 import org.example.finfast.auth.dto.RegisterRequest
 import org.example.finfast.auth.dto.TokenResponse
+import org.example.finfast.auth.dto.UpdateProfileRequest
+import org.example.finfast.auth.dto.SetPasswordRequest
 import org.example.finfast.auth.dto.UserResponse
 import org.example.finfast.auth.entity.RefreshToken
 import org.example.finfast.auth.entity.User
@@ -83,6 +85,41 @@ class AuthService(
     }
 
     @Transactional
+    fun unlinkGoogleAccount(userId: UUID): UserResponse {
+        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+        require(user.passwordHash != null) { "Нельзя отвязать Google: задайте пароль для аккаунта" }
+        user.googleSubject = null
+        user.googleEmail = null
+        return user.toResponse()
+    }
+
+    @Transactional
+    fun updateProfile(userId: UUID, request: UpdateProfileRequest): UserResponse {
+        val username = request.username.trim()
+        require(username.isNotBlank()) { "Имя пользователя не должно быть пустым" }
+        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+        val existingUser = userRepository.findByUsername(username)
+        require(existingUser == null || existingUser.id == user.id) { "Это имя пользователя уже занято" }
+        user.username = username
+        return user.toResponse()
+    }
+
+    @Transactional
+    fun setPassword(userId: UUID, request: SetPasswordRequest): UserResponse {
+        require(request.password.length >= 8) { "Пароль должен содержать не менее 8 символов" }
+        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+        user.passwordHash = BcryptUtil.bcryptHash(request.password)
+        return user.toResponse()
+    }
+
+    @Transactional
+    fun deleteAccount(userId: UUID) {
+        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+        refreshTokenRepository.deleteAllByUserId(user.id)
+        userRepository.delete(user)
+    }
+
+    @Transactional
     fun refresh(request: RefreshRequest): TokenResponse {
         val old = refreshTokenRepository.findByTokenHash(hash(request.refreshToken))
             ?: throw IllegalArgumentException("Invalid refresh token")
@@ -126,7 +163,7 @@ class AuthService(
         return candidate
     }
 
-    private fun User.toResponse() = UserResponse(id, username, googleSubject != null)
+    private fun User.toResponse() = UserResponse(id, username, googleSubject != null, passwordHash != null)
 
     private fun hash(value: String): String =
         MessageDigest.getInstance("SHA-256")

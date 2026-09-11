@@ -28,4 +28,9 @@ class UserRepository @Inject constructor(private val em: EntityManager) {
     }
 
     fun findById(id: UUID): Optional<User> = Optional.ofNullable(em.find(User::class.java, id))
+
+    @Transactional
+    fun delete(user: User) {
+        em.remove(if (em.contains(user)) user else em.merge(user))
+    }
 }

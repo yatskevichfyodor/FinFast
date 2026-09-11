@@ -122,3 +122,7 @@ export async function deleteExpensesBatch(ids: string[]): Promise<void> {
 
   await expenseApi.delete('/expenses/batch', { data: ids })
 }
+
+export async function deleteAllExpenses(): Promise<void> {
+  await expenseApi.delete('/expenses')
+}
