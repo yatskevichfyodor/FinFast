@@ -3,7 +3,7 @@
     <option name="ACTIVE_PROFILES" value="dev" />
     <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UnknownPolicyInFreeMode" />
     <module name="expense-service.main" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="org.example.finfast.ExpenseApplication" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="org.example.finfast.expense.ExpenseApplication" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/services/expense-service" />
     <extension name="coverage">
       <pattern>

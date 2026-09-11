@@ -1,4 +1,4 @@
-package org.example.finfast
+package org.example.finfast.expense
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
