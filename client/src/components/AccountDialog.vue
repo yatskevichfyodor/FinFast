@@ -166,76 +166,127 @@ function getRequestErrorMessage(
 </script>
 
 <template>
-  <v-dialog :model-value="props.modelValue" max-width="500" @update:model-value="emit('update:modelValue', $event)">
-    <v-card>
-      <v-card-title>Аккаунт</v-card-title>
-      <v-card-text>
-        <div class="account-details">
-          <span class="account-detail-label">Имя пользователя</span>
-          <span class="account-detail-value">{{ authStore.username }}</span>
-          <span class="account-detail-label">Вход через Google</span>
-          <span class="account-detail-value">{{ authStore.googleLinked ? 'Подключён' : 'Не подключён' }}</span>
+  <v-dialog :model-value="props.modelValue" max-width="420" @update:model-value="emit('update:modelValue', $event)">
+    <v-card class="account-dialog">
+      <div class="dialog-header">
+        <div class="header-avatar">
+          <v-icon size="32" color="white">mdi-account-circle</v-icon>
         </div>
-        <v-divider class="my-4" />
-        
-        <!-- Google Linking Section -->
-        <template v-if="!authStore.googleLinked && isGoogleSignInConfigured">
-          <div class="google-section">
-            <div class="google-section-title">Привязать аккаунт Google</div>
-            <GoogleSignInButton
-              @credential="linkGoogleAccount"
-              @error="handleGoogleLinkError"
-            />
-            <v-alert v-if="googleLinkMessage" class="mt-3" density="compact" type="success" variant="tonal">
-              {{ googleLinkMessage }}
-            </v-alert>
-            <v-alert v-if="googleLinkError" class="mt-3" density="compact" type="error" variant="tonal">
-              {{ googleLinkError }}
-            </v-alert>
-          </div>
-          <v-divider class="my-4" />
-        </template>
+        <div class="header-title">Управление аккаунтом</div>
+      </div>
 
-        <!-- Google Unlinking Section -->
-        <template v-if="authStore.googleLinked">
-          <div class="google-section">
-            <div class="google-section-title">Управление Google</div>
-            <v-btn
-              v-if="!authStore.hasPassword"
-              variant="text"
-              class="account-action"
-              @click="openPasswordDialog"
-            >
-              <template #prepend><v-icon>mdi-lock-outline</v-icon></template>
-              Задать пароль
-            </v-btn>
-            <v-btn
-              v-if="authStore.hasPassword"
-              variant="text"
-              class="account-action"
-              @click="openUnlinkGoogleDialog"
-            >
-              <template #prepend><v-icon>mdi-google</v-icon></template>
-              Отвязать Google
-            </v-btn>
+      <v-card-text class="dialog-content">
+        <div class="scrollable-content">
+          <div class="info-sections">
+          <!-- Username Card -->
+          <div class="info-card">
+            <div class="card-header">
+              <v-icon class="card-icon" color="#1976d2">mdi-account</v-icon>
+              <span class="card-label">Имя пользователя</span>
+            </div>
+            <div class="card-content">
+              <span class="card-value">{{ authStore.username }}</span>
+              <v-btn 
+                size="small" 
+                variant="tonal" 
+                color="#1976d2"
+                class="edit-btn"
+                @click="openProfileDialog"
+              >
+                <v-icon size="16" start>mdi-pencil-outline</v-icon>
+                Изменить
+              </v-btn>
+            </div>
           </div>
-          <v-divider class="my-4" />
-        </template>
 
-        <div class="account-actions">
-          <v-btn variant="text" class="account-action" @click="openProfileDialog">
-            <template #prepend><v-icon>mdi-pencil-outline</v-icon></template>
-            Изменить имя
-          </v-btn>
-          <v-btn variant="text" class="account-action account-action-danger" @click="openDeleteAccountDialog">
-            <template #prepend><v-icon>mdi-delete-outline</v-icon></template>
+          <!-- Google Card -->
+          <div class="info-card">
+            <div class="card-header">
+              <v-icon class="card-icon" :color="authStore.googleLinked ? '#4285f4' : '#9e9e9e'">mdi-google</v-icon>
+              <span class="card-label">Google</span>
+              <v-chip 
+                :color="authStore.googleLinked ? 'success' : 'default'" 
+                size="x-small"
+                variant="tonal"
+                class="status-chip"
+              >
+                {{ authStore.googleLinked ? 'Подключён' : 'Не подключён' }}
+              </v-chip>
+            </div>
+            <div class="card-content">
+              <template v-if="!authStore.googleLinked && isGoogleSignInConfigured">
+                <div class="google-link-container">
+                  <GoogleSignInButton 
+                    @credential="linkGoogleAccount" 
+                    @error="handleGoogleLinkError"
+                  />
+                </div>
+              </template>
+              <template v-else-if="authStore.googleLinked">
+                <div class="google-linked-actions">
+                  <v-btn
+                    v-if="!authStore.hasPassword"
+                    size="small"
+                    variant="tonal"
+                    color="#4285f4"
+                    class="google-action-btn"
+                    @click="openPasswordDialog"
+                  >
+                    <v-icon size="16" start>mdi-lock-outline</v-icon>
+                    Задать пароль
+                  </v-btn>
+                  <v-btn
+                    v-if="authStore.hasPassword"
+                    size="small"
+                    variant="tonal"
+                    color="#d32f2f"
+                    class="google-action-btn"
+                    @click="openUnlinkGoogleDialog"
+                  >
+                    <v-icon size="16" start>mdi-google</v-icon>
+                    Отвязать
+                  </v-btn>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Google Alerts -->
+        <div v-if="googleLinkMessage || googleLinkError" class="alerts-container">
+          <v-alert v-if="googleLinkMessage" density="compact" type="success" variant="tonal" class="custom-alert">
+            {{ googleLinkMessage }}
+          </v-alert>
+          <v-alert v-if="googleLinkError" density="compact" type="error" variant="tonal" class="custom-alert">
+            {{ googleLinkError }}
+          </v-alert>
+        </div>
+
+        <v-divider class="section-divider" />
+
+        <!-- Danger Zone -->
+        <div class="danger-zone">
+          <div class="danger-header">
+            <v-icon class="danger-icon" color="#d32f2f">mdi-alert-circle</v-icon>
+            <span class="danger-label">Опасная зона</span>
+          </div>
+          <v-btn 
+            variant="tonal" 
+            color="#d32f2f" 
+            class="delete-btn"
+            @click="openDeleteAccountDialog"
+          >
+            <v-icon start>mdi-delete-outline</v-icon>
             Удалить аккаунт
           </v-btn>
         </div>
+        </div>
       </v-card-text>
-      <v-card-actions>
-        <v-spacer />
-        <v-btn @click="emit('update:modelValue', false)">Закрыть</v-btn>
+
+      <v-card-actions class="dialog-actions">
+        <v-btn variant="text" @click="emit('update:modelValue', false)">
+          Закрыть
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -285,61 +336,212 @@ function getRequestErrorMessage(
 </template>
 
 <style scoped>
-.account-details {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px 12px;
-  padding: 8px 4px;
-  font-size: 14px;
-}
-
-.account-detail-label {
-  color: #78909c;
-}
-
-.account-detail-value {
-  max-width: 200px;
+.account-dialog {
+  border-radius: 16px;
   overflow: hidden;
-  color: #37474f;
-  font-weight: 600;
-  text-align: right;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.account-actions {
+.dialog-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 24px 20px;
+  text-align: center;
+  color: white;
+}
+
+.header-avatar {
+  width: 64px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  backdrop-filter: blur(10px);
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.dialog-content {
+  padding: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.scrollable-content {
+  padding: 24px 20px;
+}
+
+.info-sections {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.account-action {
+.info-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.info-card:hover {
+  border-color: #dee2e6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.card-icon {
+  font-size: 20px;
+}
+
+.card-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+  flex: 1;
+}
+
+.status-chip {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-value {
+  font-size: 15px;
+  font-weight: 500;
+  color: #212529;
+  flex: 1;
+}
+
+.edit-btn {
+  height: 32px;
+  font-size: 13px;
+  border-radius: 8px;
+  text-transform: none;
+  letter-spacing: 0.3px;
+}
+
+.google-link-container {
   width: 100%;
-  justify-content: flex-start;
-  height: 44px;
+  display: flex;
+  justify-content: center;
+}
+
+.google-linked-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.google-action-btn {
+  height: 32px;
+  font-size: 13px;
+  border-radius: 8px;
+  text-transform: none;
+  letter-spacing: 0.3px;
+}
+
+.alerts-container {
+  margin-bottom: 16px;
+}
+
+.custom-alert {
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.section-divider {
+  margin: 20px 0;
+  border-color: #e9ecef;
+}
+
+.danger-zone {
+  background: #fff5f5;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #fed7d7;
+}
+
+.danger-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.danger-icon {
+  font-size: 18px;
+}
+
+.danger-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c53030;
+  letter-spacing: 0.3px;
+}
+
+.delete-btn {
+  width: 100%;
+  height: 40px;
   font-size: 14px;
   border-radius: 8px;
   text-transform: none;
+  letter-spacing: 0.3px;
+  font-weight: 500;
 }
 
-.account-action-danger {
-  color: #d32f2f;
+.dialog-actions {
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  justify-content: center;
 }
 
-.dialog-description {
-  margin-bottom: 16px;
-  color: #546e7a;
-  line-height: 1.45;
-}
-
-.google-section {
-  margin-bottom: 16px;
-}
-
-.google-section-title {
-  margin-bottom: 12px;
-  color: #546e7a;
+.dialog-actions .v-btn {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  border-radius: 8px;
+  height: 40px;
+  padding: 0 24px;
+}
+
+/* Custom scrollbar */
+.dialog-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dialog-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 </style>
