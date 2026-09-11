@@ -22,6 +22,7 @@ const showExportDialog = ref(false)
 const showImportDialog = ref(false)
 const showLogoutDialog = ref(false)
 const pendingExpensesCount = computed(() => expenseStore.getPendingExpensesCount())
+const shouldShowLogin = computed(() => !authStore.isAuthenticated || authStore.isAnonymous)
 
 const buildInfo = computed(() => {
   const buildNumber = import.meta.env.VITE_BUILD_NUMBER || 'dev'
@@ -48,7 +49,7 @@ function openImport() {
 }
 
 async function logout() {
-  if (authStore.isAnonymous) {
+  if (shouldShowLogin.value) {
     await goToLogin()
     return
   }
@@ -63,6 +64,7 @@ async function logout() {
 }
 
 async function completeLogout() {
+  closeMenu()
   showLogoutDialog.value = false
   await authStore.logout()
   await router.replace({ name: 'login' })
@@ -132,12 +134,12 @@ function handleBackdropClick(event: MouseEvent) {
               >
                 <template #prepend>
                   <v-icon
-                    :class="authStore.isAnonymous ? 'menu-icon menu-icon-login' : 'menu-icon menu-icon-logout'"
+                    :class="shouldShowLogin ? 'menu-icon menu-icon-login' : 'menu-icon menu-icon-logout'"
                   >
-                    {{ authStore.isAnonymous ? 'mdi-login' : 'mdi-logout' }}
+                    {{ shouldShowLogin ? 'mdi-login' : 'mdi-logout' }}
                   </v-icon>
                 </template>
-                {{ authStore.isAnonymous ? 'Войти' : 'Выйти' }}
+                {{ shouldShowLogin ? 'Войти' : 'Выйти' }}
               </v-btn>
               <div class="menu-build-info">{{ buildInfo }}</div>
             </div>
