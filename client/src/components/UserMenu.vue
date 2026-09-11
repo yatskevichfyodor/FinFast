@@ -8,6 +8,7 @@ import ImportDialog from '@/components/ImportDialog.vue'
 import LogoutConfirmationDialog from '@/components/LogoutConfirmationDialog.vue'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { format } from 'date-fns/format'
+import { isAxiosError } from 'axios'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -93,8 +94,23 @@ async function linkGoogleAccount(credential: string) {
     await authStore.linkGoogleAccount(credential)
     googleLinkMessage.value = 'Аккаунт Google успешно привязан'
   } catch (error) {
-    googleLinkError.value = error instanceof Error ? error.message : 'Не удалось привязать аккаунт Google'
+    googleLinkError.value = getGoogleLinkErrorMessage(error)
   }
+}
+
+function getGoogleLinkErrorMessage(error: unknown): string {
+  if (isAxiosError(error)) {
+    const responseMessage = error.response?.data?.message
+    if (typeof responseMessage === 'string' && responseMessage.trim()) {
+      return responseMessage
+    }
+
+    if (error.response?.status === 409) {
+      return 'Этот аккаунт Google уже привязан к другому пользователю'
+    }
+  }
+
+  return 'Не удалось привязать аккаунт Google. Попробуйте ещё раз.'
 }
 
 function handleGoogleLinkError(message: string) {
