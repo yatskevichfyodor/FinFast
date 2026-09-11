@@ -123,9 +123,15 @@ class AuthService(
     fun refresh(request: RefreshRequest): TokenResponse {
         val old = refreshTokenRepository.findByTokenHash(hash(request.refreshToken))
             ?: throw IllegalArgumentException("Invalid refresh token")
-        require(old.revokedAt == null && old.expiresAt.isAfter(Instant.now())) {
-            "Invalid refresh token"
+
+        if (old.revokedAt != null) {
+            throw IllegalArgumentException("Refresh token already revoked")
         }
+
+        if (!old.expiresAt.isAfter(Instant.now())) {
+            throw IllegalArgumentException("Refresh token expired")
+        }
+
         old.revokedAt = Instant.now() // todo: delete too old tokens
         refreshTokenRepository.save(old)
         return issueTokens(userRepository.findById(old.userId).orElseThrow())
