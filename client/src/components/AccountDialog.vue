@@ -183,8 +183,16 @@ function getRequestErrorMessage(
   <v-dialog :model-value="props.modelValue" max-width="420" @update:model-value="emit('update:modelValue', $event)">
     <v-card class="account-dialog">
       <div class="dialog-header">
+        <v-btn
+          icon="mdi-close"
+          size="small"
+          variant="text"
+          color="white"
+          class="close-btn"
+          @click="emit('update:modelValue', false)"
+        />
         <div class="header-avatar">
-          <v-icon size="32" color="white">mdi-account-circle</v-icon>
+          <v-icon size="25" color="white">mdi-account-circle</v-icon>
         </div>
         <div class="header-title">Управление аккаунтом</div>
       </div>
@@ -346,12 +354,6 @@ function getRequestErrorMessage(
         </div>
         </div>
       </v-card-text>
-
-      <v-card-actions class="dialog-actions">
-        <v-btn variant="text" @click="emit('update:modelValue', false)">
-          Закрыть
-        </v-btn>
-      </v-card-actions>
     </v-card>
   </v-dialog>
 
@@ -395,21 +397,28 @@ function getRequestErrorMessage(
 }
 
 .dialog-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 24px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #09204d 100%);
+  padding: 20px 20px 16px;
   text-align: center;
   color: white;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 
 .header-avatar {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 12px;
+  margin: 0 auto 8px;
   backdrop-filter: blur(10px);
 }
 
@@ -623,22 +632,6 @@ function getRequestErrorMessage(
   text-transform: none;
   letter-spacing: 0.3px;
   font-weight: 500;
-}
-
-.dialog-actions {
-  padding: 16px 20px;
-  background: #f8f9fa;
-  border-top: 1px solid #e9ecef;
-  justify-content: center;
-}
-
-.dialog-actions .v-btn {
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  border-radius: 8px;
-  height: 40px;
-  padding: 0 24px;
 }
 
 /* Custom scrollbar */
