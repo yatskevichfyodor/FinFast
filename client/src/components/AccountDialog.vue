@@ -6,6 +6,7 @@ import { useExpenseStore } from '@/stores/expense'
 import { isAxiosError } from 'axios'
 import * as expenseApi from '@/services/expenseApi'
 import * as authApi from '@/services/authApi'
+import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -26,6 +27,9 @@ const accountError = ref('')
 const isSavingAccount = ref(false)
 const isDeletingAccount = ref(false)
 const deleteConfirmed = ref(false)
+const googleLinkMessage = ref('')
+const googleLinkError = ref('')
+const isGoogleSignInConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
 
 function openProfileDialog() {
   editedUsername.value = authStore.username ?? ''
@@ -110,6 +114,36 @@ async function deleteAccount() {
   }
 }
 
+async function linkGoogleAccount(credential: string) {
+  googleLinkMessage.value = ''
+  googleLinkError.value = ''
+  try {
+    await authStore.linkGoogleAccount(credential)
+    googleLinkMessage.value = 'Аккаунт Google успешно привязан'
+  } catch (error) {
+    googleLinkError.value = getGoogleLinkErrorMessage(error)
+  }
+}
+
+function getGoogleLinkErrorMessage(error: unknown): string {
+  if (isAxiosError(error)) {
+    const responseMessage = error.response?.data?.message
+    if (typeof responseMessage === 'string' && responseMessage.trim()) {
+      return responseMessage
+    }
+
+    if (error.response?.status === 409) {
+      return 'Этот аккаунт Google уже привязан к другому пользователю'
+    }
+  }
+
+  return 'Не удалось привязать аккаунт Google. Попробуйте ещё раз.'
+}
+
+function handleGoogleLinkError(message: string) {
+  googleLinkError.value = message
+}
+
 function getRequestErrorMessage(
   error: unknown,
   fallback: string,
@@ -143,28 +177,55 @@ function getRequestErrorMessage(
           <span class="account-detail-value">{{ authStore.googleLinked ? 'Подключён' : 'Не подключён' }}</span>
         </div>
         <v-divider class="my-4" />
+        
+        <!-- Google Linking Section -->
+        <template v-if="!authStore.googleLinked && isGoogleSignInConfigured">
+          <div class="google-section">
+            <div class="google-section-title">Привязать аккаунт Google</div>
+            <GoogleSignInButton
+              @credential="linkGoogleAccount"
+              @error="handleGoogleLinkError"
+            />
+            <v-alert v-if="googleLinkMessage" class="mt-3" density="compact" type="success" variant="tonal">
+              {{ googleLinkMessage }}
+            </v-alert>
+            <v-alert v-if="googleLinkError" class="mt-3" density="compact" type="error" variant="tonal">
+              {{ googleLinkError }}
+            </v-alert>
+          </div>
+          <v-divider class="my-4" />
+        </template>
+
+        <!-- Google Unlinking Section -->
+        <template v-if="authStore.googleLinked">
+          <div class="google-section">
+            <div class="google-section-title">Управление Google</div>
+            <v-btn
+              v-if="!authStore.hasPassword"
+              variant="text"
+              class="account-action"
+              @click="openPasswordDialog"
+            >
+              <template #prepend><v-icon>mdi-lock-outline</v-icon></template>
+              Задать пароль
+            </v-btn>
+            <v-btn
+              v-if="authStore.hasPassword"
+              variant="text"
+              class="account-action"
+              @click="openUnlinkGoogleDialog"
+            >
+              <template #prepend><v-icon>mdi-google</v-icon></template>
+              Отвязать Google
+            </v-btn>
+          </div>
+          <v-divider class="my-4" />
+        </template>
+
         <div class="account-actions">
           <v-btn variant="text" class="account-action" @click="openProfileDialog">
             <template #prepend><v-icon>mdi-pencil-outline</v-icon></template>
             Изменить имя
-          </v-btn>
-          <v-btn
-            v-if="authStore.googleLinked && !authStore.hasPassword"
-            variant="text"
-            class="account-action"
-            @click="openPasswordDialog"
-          >
-            <template #prepend><v-icon>mdi-lock-outline</v-icon></template>
-            Задать пароль
-          </v-btn>
-          <v-btn
-            v-if="authStore.googleLinked && authStore.hasPassword"
-            variant="text"
-            class="account-action"
-            @click="openUnlinkGoogleDialog"
-          >
-            <template #prepend><v-icon>mdi-google</v-icon></template>
-            Отвязать Google
           </v-btn>
           <v-btn variant="text" class="account-action account-action-danger" @click="openDeleteAccountDialog">
             <template #prepend><v-icon>mdi-delete-outline</v-icon></template>
@@ -269,5 +330,16 @@ function getRequestErrorMessage(
   margin-bottom: 16px;
   color: #546e7a;
   line-height: 1.45;
+}
+
+.google-section {
+  margin-bottom: 16px;
+}
+
+.google-section-title {
+  margin-bottom: 12px;
+  color: #546e7a;
+  font-size: 14px;
+  font-weight: 600;
 }
 </style>

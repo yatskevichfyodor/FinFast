@@ -6,10 +6,8 @@ import { useExpenseStore } from '@/stores/expense'
 import ExportDialog from '@/components/ExportDialog.vue'
 import ImportDialog from '@/components/ImportDialog.vue'
 import LogoutConfirmationDialog from '@/components/LogoutConfirmationDialog.vue'
-import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import AccountDialog from '@/components/AccountDialog.vue'
 import { format } from 'date-fns/format'
-import { isAxiosError } from 'axios'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -25,11 +23,8 @@ const showExportDialog = ref(false)
 const showImportDialog = ref(false)
 const showLogoutDialog = ref(false)
 const showAccountDialog = ref(false)
-const googleLinkMessage = ref('')
-const googleLinkError = ref('')
 const pendingExpensesCount = computed(() => expenseStore.getPendingExpensesCount())
 const shouldShowLogin = computed(() => !authStore.isAuthenticated || authStore.isAnonymous)
-const isGoogleSignInConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
 
 const buildInfo = computed(() => {
   const buildNumber = import.meta.env.VITE_BUILD_NUMBER || 'dev'
@@ -92,36 +87,6 @@ async function goToLogin() {
 function openAccountDialog() {
   closeMenu()
   showAccountDialog.value = true
-}
-
-async function linkGoogleAccount(credential: string) {
-  googleLinkMessage.value = ''
-  googleLinkError.value = ''
-  try {
-    await authStore.linkGoogleAccount(credential)
-    googleLinkMessage.value = 'Аккаунт Google успешно привязан'
-  } catch (error) {
-    googleLinkError.value = getGoogleLinkErrorMessage(error)
-  }
-}
-
-function getGoogleLinkErrorMessage(error: unknown): string {
-  if (isAxiosError(error)) {
-    const responseMessage = error.response?.data?.message
-    if (typeof responseMessage === 'string' && responseMessage.trim()) {
-      return responseMessage
-    }
-
-    if (error.response?.status === 409) {
-      return 'Этот аккаунт Google уже привязан к другому пользователю'
-    }
-  }
-
-  return 'Не удалось привязать аккаунт Google. Попробуйте ещё раз.'
-}
-
-function handleGoogleLinkError(message: string) {
-  googleLinkError.value = message
 }
 
 function handleBackdropClick(event: MouseEvent) {
@@ -187,22 +152,6 @@ function handleBackdropClick(event: MouseEvent) {
                 </template>
                 Экспорт расходов
               </v-btn>
-
-              <template v-if="authStore.isAuthenticated && !authStore.isAnonymous && !authStore.googleLinked && isGoogleSignInConfigured">
-                <v-divider class="my-2" />
-                <div class="google-link-label">Привязать аккаунт Google</div>
-                <GoogleSignInButton
-                  v-if="localOpen"
-                  @credential="linkGoogleAccount"
-                  @error="handleGoogleLinkError"
-                />
-                <v-alert v-if="googleLinkMessage" class="mt-3" density="compact" type="success" variant="tonal">
-                  {{ googleLinkMessage }}
-                </v-alert>
-                <v-alert v-if="googleLinkError" class="mt-3" density="compact" type="error" variant="tonal">
-                  {{ googleLinkError }}
-                </v-alert>
-              </template>
             </div>
 
             <div class="menu-footer">
@@ -360,13 +309,6 @@ function handleBackdropClick(event: MouseEvent) {
   text-align: center;
   font-weight: 400;
   letter-spacing: 0.02em;
-}
-
-.google-link-label {
-  margin: 12px 0 8px;
-  color: #546e7a;
-  font-size: 13px;
-  font-weight: 600;
 }
 
 /* Slide-in animation */
