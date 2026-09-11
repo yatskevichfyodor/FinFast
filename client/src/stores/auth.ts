@@ -115,6 +115,11 @@ export const useAuthStore = defineStore('auth', () => {
     await loadCurrentUser()
   }
 
+  async function loginWithGoogle(credential: string) {
+    saveTokens(await authApi.loginWithGoogle(credential))
+    await loadCurrentUser()
+  }
+
   async function loadCurrentUser() {
     if (!accessToken.value) {
       userId.value = null
@@ -175,6 +180,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAnonymous,
     register,
     login,
+    loginWithGoogle,
     continueWithoutAccount,
     loadCurrentUser,
     refresh,

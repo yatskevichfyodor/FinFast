@@ -32,6 +32,8 @@ dependencies {
     implementation("io.quarkus:quarkus-kotlin")
     implementation("io.quarkus:quarkus-elytron-security-common")
     implementation("com.nimbusds:nimbus-jose-jwt:10.9.1")
+    implementation("com.google.api-client:google-api-client:2.8.1")
+    implementation("com.google.api-client:google-api-client-gson:2.8.1")
 
     testImplementation("io.quarkus:quarkus-junit")
     testImplementation("io.rest-assured:rest-assured")

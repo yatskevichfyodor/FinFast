@@ -16,10 +16,15 @@ class UserRepository @Inject constructor(private val em: EntityManager) {
         return q.resultList.firstOrNull()
     }
 
+    fun findByGoogleSubject(subject: String): User? {
+        val q = em.createQuery("SELECT u FROM User u WHERE u.googleSubject = :subject", User::class.java)
+        q.setParameter("subject", subject)
+        return q.resultList.firstOrNull()
+    }
+
     @Transactional
     fun save(user: User): User {
-        em.persist(user)
-        return user
+        return if (em.contains(user)) user else em.merge(user)
     }
 
     fun findById(id: UUID): Optional<User> = Optional.ofNullable(em.find(User::class.java, id))

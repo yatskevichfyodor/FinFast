@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useExpenseStore } from '@/stores/expense'
 import { loadExpenses as loadStoredExpenses } from '@/services/expenseStorage'
 import * as authApi from '@/services/authApi'
+import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,6 +28,7 @@ const showRetryButton = ref(false)
 
 const isRegistration = computed(() => route.name === 'register')
 const title = computed(() => isRegistration.value ? 'Регистрация' : 'Вход')
+const isGoogleSignInConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
 const isOfflineMode = computed(() =>
   !isRegistration.value && !isCheckingService.value && !isServiceAvailable.value
 )
@@ -108,16 +110,7 @@ async function submit() {
       await router.push({ name: 'login', query: { registered: 'true' } })
     } else {
       await authStore.login(username.value, password.value, loginAbortController.value.signal)
-      const profileId = localStorage.getItem('finfast-anonymous-profile')
-      if (profileId) {
-        anonymousExpensesCount.value = (await loadStoredExpenses(`anonymous:${profileId}`)).length
-      }
-
-      if (anonymousExpensesCount.value > 0) {
-        showTransferDialog.value = true
-      } else {
-        await router.push({ name: 'home' })
-      }
+      await continueAfterLogin()
     }
   } catch (error) {
     const errorMsg = getErrorMessage(error)
@@ -132,6 +125,36 @@ async function submit() {
     isSubmitting.value = false
     isSlowResponse.value = false
     loginAbortController.value = null
+  }
+}
+
+async function loginWithGoogle(credential: string) {
+  errorMessage.value = ''
+  isSubmitting.value = true
+  try {
+    await authStore.loginWithGoogle(credential)
+    await continueAfterLogin()
+  } catch (error) {
+    errorMessage.value = getErrorMessage(error)
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+function handleGoogleError(message: string) {
+  errorMessage.value = message
+}
+
+async function continueAfterLogin() {
+  const profileId = localStorage.getItem('finfast-anonymous-profile')
+  if (profileId) {
+    anonymousExpensesCount.value = (await loadStoredExpenses(`anonymous:${profileId}`)).length
+  }
+
+  if (anonymousExpensesCount.value > 0) {
+    showTransferDialog.value = true
+  } else {
+    await router.push({ name: 'home' })
   }
 }
 
@@ -317,6 +340,11 @@ onMounted(() => {
           </v-btn>
         </v-form>
 
+        <template v-if="!isOfflineMode && !isCheckingService && isGoogleSignInConfigured">
+          <div class="auth-divider"><span>или</span></div>
+          <GoogleSignInButton @credential="loginWithGoogle" @error="handleGoogleError" />
+        </template>
+
         <v-card-actions class="justify-center mt-3">
           <v-btn
             v-if="isRegistration && !isOfflineMode"
@@ -474,6 +502,23 @@ onMounted(() => {
 
 .auth-switch-label {
   color: rgba(var(--v-theme-on-surface), 0.65);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+  color: rgba(var(--v-theme-on-surface), 0.55);
+  font-size: 13px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  height: 1px;
+  flex: 1;
+  background: rgba(var(--v-theme-on-surface), 0.14);
+  content: '';
 }
 
 @media (max-width: 600px) {

@@ -50,7 +50,7 @@ async function refreshAccessToken(refreshToken: string): Promise<string> {
 }
 
 function isPublicAuthRequest(url: string): boolean {
-  return url === '/auth/login' || url === '/auth/register' || url === '/auth/refresh'
+  return url === '/auth/login' || url === '/auth/register' || url === '/auth/refresh' || url === '/auth/google'
 }
 
 clients.forEach(client => {

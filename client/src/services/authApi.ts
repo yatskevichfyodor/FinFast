@@ -14,6 +14,7 @@ export interface LoginRequest {
 export interface UserResponse {
   id: string
   username: string
+  googleLinked: boolean
 }
 
 export interface TokenResponse {
@@ -33,6 +34,16 @@ export async function login(request: LoginRequest, signal?: AbortSignal): Promis
     signal,
     timeout: 65000
   })
+  return data
+}
+
+export async function loginWithGoogle(credential: string): Promise<TokenResponse> {
+  const { data } = await authApi.post<TokenResponse>('/auth/google', { credential })
+  return data
+}
+
+export async function linkGoogleAccount(credential: string): Promise<UserResponse> {
+  const { data } = await authApi.post<UserResponse>('/auth/google/link', { credential })
   return data
 }
 

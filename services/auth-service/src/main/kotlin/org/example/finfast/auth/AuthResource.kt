@@ -6,6 +6,7 @@ import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import org.example.finfast.auth.dto.LoginRequest
+import org.example.finfast.auth.dto.GoogleIdTokenRequest
 import org.example.finfast.auth.dto.LogoutRequest
 import org.example.finfast.auth.dto.RefreshRequest
 import org.example.finfast.auth.dto.RegisterRequest
@@ -33,6 +34,21 @@ class AuthResource @Inject constructor(private val authService: AuthService, pri
     @POST
     @Path("/login")
     fun login(request: LoginRequest) = authService.login(request)
+
+    @POST
+    @Path("/google")
+    fun loginWithGoogle(request: GoogleIdTokenRequest) = authService.loginWithGoogle(request)
+
+    @POST
+    @Path("/google/link")
+    @Authenticated
+    fun linkGoogleAccount(
+        @HeaderParam("Authorization") authHeader: String?,
+        request: GoogleIdTokenRequest
+    ): UserResponse {
+        val token = authHeader?.removePrefix("Bearer ") ?: throw WebApplicationException("Missing Authorization header", 401)
+        return authService.linkGoogleAccount(UUID.fromString(jwtService.parseSubject(token)), request)
+    }
 
     @POST
     @Path("/refresh")

@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.transaction.Transactional
 import jakarta.ws.rs.WebApplicationException
 import org.example.finfast.auth.dto.LoginRequest
+import org.example.finfast.auth.dto.GoogleIdTokenRequest
 import org.example.finfast.auth.dto.LogoutRequest
 import org.example.finfast.auth.dto.RefreshRequest
 import org.example.finfast.auth.dto.RegisterRequest
@@ -26,7 +27,8 @@ import java.util.UUID
 class AuthService(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
-    private val jwtService: JwtService
+    private val jwtService: JwtService,
+    private val googleTokenVerifier: GoogleTokenVerifier
 ) {
     private val random = SecureRandom()
 
@@ -38,13 +40,13 @@ class AuthService(
         val user = userRepository.save(
             User(UUID.randomUUID(), username, BcryptUtil.bcryptHash(request.password))
         )
-        return UserResponse(user.id, user.username)
+        return user.toResponse()
     }
 
     @Transactional
     fun login(request: LoginRequest): TokenResponse {
         val user = userRepository.findByUsername(request.username.trim())
-        if (user == null || !BcryptUtil.matches(request.password, user.passwordHash)) {
+        if (user == null || user.passwordHash == null || !BcryptUtil.matches(request.password, user.passwordHash)) {
             throw WebApplicationException("Invalid credentials", 401)
         }
         return issueTokens(user)
@@ -55,7 +57,29 @@ class AuthService(
         val user = userRepository.findById(userId).orElseThrow {
             IllegalArgumentException("User not found")
         }
-        return UserResponse(user.id, user.username)
+        return user.toResponse()
+    }
+
+    @Transactional
+    fun loginWithGoogle(request: GoogleIdTokenRequest): TokenResponse {
+        val identity = googleTokenVerifier.verify(request.credential)
+        val user = userRepository.findByGoogleSubject(identity.subject)
+            ?: userRepository.save(User(UUID.randomUUID(), uniqueGoogleUsername(identity.email), null, identity.subject, identity.email))
+        return issueTokens(user)
+    }
+
+    @Transactional
+    fun linkGoogleAccount(userId: UUID, request: GoogleIdTokenRequest): UserResponse {
+        val identity = googleTokenVerifier.verify(request.credential)
+        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+        val linkedUser = userRepository.findByGoogleSubject(identity.subject)
+        if (linkedUser != null && linkedUser.id != user.id) {
+            throw WebApplicationException("Этот аккаунт Google уже привязан к другому пользователю", 409)
+        }
+        user.googleSubject = identity.subject
+        user.googleEmail = identity.email
+        userRepository.save(user)
+        return user.toResponse()
     }
 
     @Transactional
@@ -89,6 +113,20 @@ class AuthService(
         )
         return TokenResponse(jwtService.createAccessToken(user.id), refreshValue)
     }
+
+    private fun uniqueGoogleUsername(email: String?): String {
+        val base = (email?.substringBefore('@')?.takeIf { it.isNotBlank() } ?: "google-user")
+            .take(90)
+        var candidate = base
+        var suffix = 2
+        while (userRepository.findByUsername(candidate) != null) {
+            candidate = "${base.take(90 - suffix.toString().length)}-$suffix"
+            suffix++
+        }
+        return candidate
+    }
+
+    private fun User.toResponse() = UserResponse(id, username, googleSubject != null)
 
     private fun hash(value: String): String =
         MessageDigest.getInstance("SHA-256")
