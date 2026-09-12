@@ -6,6 +6,15 @@ spring:
       ddl-auto: validate
   flyway:
     table: expense_flyway_schema_history
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: expense-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        isolation.level: read_committed
 
 finfast:
   jwt:

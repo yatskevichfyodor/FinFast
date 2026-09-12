@@ -22,7 +22,20 @@ quarkus:
     migrate-at-start: true
     table: auth_flyway_schema_history
 
+mp:
+  messaging:
+    outgoing:
+      user-events-out:
+        connector: smallrye-kafka
+        topic: user-events
+        value:
+          serializer: org.apache.kafka.common.serialization.StringSerializer
+        bootstrap:
+          servers: localhost:9092
+
 finfast:
   jwt:
     issuer: finfast-api
     key-id: finfast-rs256-1
+  outbox:
+    max-attempts: 5

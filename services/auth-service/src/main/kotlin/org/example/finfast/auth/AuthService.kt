@@ -1,5 +1,6 @@
 package org.example.finfast.auth
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.quarkus.elytron.security.common.BcryptUtil
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.transaction.Transactional
@@ -15,6 +16,7 @@ import org.example.finfast.auth.dto.SetPasswordRequest
 import org.example.finfast.auth.dto.UserResponse
 import org.example.finfast.auth.entity.RefreshToken
 import org.example.finfast.auth.entity.User
+import org.example.finfast.auth.outbox.OutboxEventPublisher
 import org.example.finfast.auth.repository.RefreshTokenRepository
 import org.example.finfast.auth.repository.UserRepository
 import java.nio.charset.StandardCharsets
@@ -30,7 +32,9 @@ class AuthService(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val jwtService: JwtService,
-    private val googleTokenVerifier: GoogleTokenVerifier
+    private val googleTokenVerifier: GoogleTokenVerifier,
+    private val outboxEventPublisher: OutboxEventPublisher,
+    private val objectMapper: ObjectMapper
 ) {
     private val random = SecureRandom()
 
@@ -115,6 +119,18 @@ class AuthService(
     @Transactional
     fun deleteAccount(userId: UUID) {
         val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+        
+        // Create outbox event before deleting user
+        val eventPayload = mapOf(
+            "eventId" to UUID.randomUUID(),
+            "eventType" to "USER_DELETED",
+            "userId" to user.id,
+            "timestamp" to Instant.now()
+        )
+        val payloadJson = objectMapper.writeValueAsString(eventPayload)
+        outboxEventPublisher.createOutboxEvent("USER_DELETED", user.id, payloadJson)
+        
+        // Delete user data in the same transaction
         refreshTokenRepository.deleteAllByUserId(user.id)
         userRepository.delete(user)
     }

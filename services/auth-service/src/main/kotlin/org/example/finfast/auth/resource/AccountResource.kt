@@ -35,7 +35,7 @@ class AccountResource @Inject constructor(
     @DELETE
     fun deleteAccount(@HeaderParam("Authorization") authHeader: String?): Response {
         authService.deleteAccount(currentUserId(authHeader))
-        return Response.noContent().build()
+        return Response.accepted().build()
     }
 
     @PUT
