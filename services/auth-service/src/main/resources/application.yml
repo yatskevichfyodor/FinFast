@@ -22,6 +22,10 @@ quarkus:
     migrate-at-start: true
     table: auth_flyway_schema_history
 
+  kafka:
+    devservices:
+      enabled: false
+
 mp:
   messaging:
     outgoing:

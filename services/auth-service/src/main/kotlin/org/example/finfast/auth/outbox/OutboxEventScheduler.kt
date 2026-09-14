@@ -17,6 +17,8 @@ class OutboxEventScheduler @Inject constructor(
         logger.debug("Processing pending outbox events")
         try {
             outboxEventPublisher.processPendingEvents()
+        } catch (e: jakarta.enterprise.inject.spi.DefinitionException) {
+            logger.error("Kafka is not available - outbox events will not be processed. Start Kafka to enable event publishing.", e)
         } catch (e: Exception) {
             logger.error("Error processing outbox events", e)
         }
