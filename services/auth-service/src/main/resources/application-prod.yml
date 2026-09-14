@@ -10,6 +10,13 @@ quarkus:
     jdbc:
       url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
 
+mp:
+  messaging:
+    outgoing:
+      user-events-out:
+        bootstrap:
+          servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
 logging:
   level:
     root: INFO
