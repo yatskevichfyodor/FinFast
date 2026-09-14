@@ -17,6 +17,7 @@ const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const errorMessage = ref('')
+const successMessage = ref('')
 const isSubmitting = ref(false)
 const isCheckingService = ref(false)
 const isServiceAvailable = ref(true)
@@ -187,6 +188,12 @@ function cancelLogin() {
 
 onMounted(() => {
   void checkAuthService()
+  
+  // Show success message when account was deleted
+  if (route.query.deleted === 'true') {
+    successMessage.value = 'Аккаунт успешно удалён'
+    router.replace({ name: 'login' })
+  }
 })
 </script>
 
@@ -245,6 +252,10 @@ onMounted(() => {
           variant="tonal"
         >
           Регистрация завершена. Войдите в аккаунт.
+        </v-alert>
+
+        <v-alert v-if="successMessage" class="mt-4" type="success" variant="tonal">
+          {{ successMessage }}
         </v-alert>
 
         <v-alert v-if="errorMessage" class="mt-4" type="error" variant="tonal">

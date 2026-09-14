@@ -138,8 +138,9 @@ async function deleteAccount() {
     await authApi.deleteAccount()
     await expenseStore.clearCurrentUserExpenses()
     showDeleteAccountDialog.value = false
+    emit('update:modelValue', false)
     await authStore.logout()
-    await router.replace({ name: 'login' })
+    await router.replace({ name: 'login', query: { deleted: 'true' } })
   } catch (error) {
     accountError.value = getRequestErrorMessage(error, 'Не удалось удалить аккаунт')
   } finally {
