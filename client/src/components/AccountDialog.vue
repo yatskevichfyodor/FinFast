@@ -135,7 +135,6 @@ async function deleteAccount() {
   accountError.value = ''
   isDeletingAccount.value = true
   try {
-    await expenseApi.deleteAllExpenses()
     await authApi.deleteAccount()
     await expenseStore.clearCurrentUserExpenses()
     showDeleteAccountDialog.value = false
@@ -436,7 +435,7 @@ function getRequestErrorMessage(
     <v-card>
       <v-card-title>Удалить аккаунт?</v-card-title>
       <v-card-text>
-        <p class="dialog-description">Будут безвозвратно удалены аккаунт и все расходы, сохранённые на сервере.</p>
+        <p class="dialog-description">Будет безвозвратно удалён аккаунт и все связанные данные.</p>
         <v-checkbox v-model="deleteConfirmed" color="error" label="Я понимаю, что отменить это действие нельзя" hide-details />
         <v-alert v-if="accountError" class="mt-3" density="compact" type="error" variant="tonal">{{ accountError }}</v-alert>
       </v-card-text>
