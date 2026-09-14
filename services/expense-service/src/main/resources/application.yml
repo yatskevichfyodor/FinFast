@@ -7,7 +7,6 @@ spring:
   flyway:
     table: expense_flyway_schema_history
   kafka:
-    bootstrap-servers: localhost:9092
     consumer:
       group-id: expense-service
       auto-offset-reset: earliest

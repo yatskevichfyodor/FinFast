@@ -7,6 +7,8 @@ spring:
     url: jdbc:postgresql://${DATABASE_HOST:localhost}:5432/finfast
     username: postgres
     password: postgres
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
 
 logging:
   level:
