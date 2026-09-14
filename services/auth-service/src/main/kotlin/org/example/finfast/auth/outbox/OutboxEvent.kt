@@ -15,7 +15,7 @@ class OutboxEvent(
     @Id
     val id: UUID = UUID.randomUUID(),
     
-    @Column(nullable = false)
+    @Column(name = "event_type", nullable = false)
     val eventType: String,
     
     @Column(name = "aggregate_id", nullable = false)
