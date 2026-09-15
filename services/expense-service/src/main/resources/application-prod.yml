@@ -22,6 +22,6 @@ logging:
     org.springframework.security: WARN
 
 finfast:
-  jwt:
-    public-key-b64: ${FINFAST_JWT_PUBLIC_KEY_B64}
+  auth-service:
+    url: ${AUTH_SERVICE_URL}
   clientUrl: ${CLIENT_URL}

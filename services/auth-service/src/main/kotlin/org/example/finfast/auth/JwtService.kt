@@ -18,13 +18,15 @@ import java.util.UUID
 @ApplicationScoped
 class JwtService(
     private val keyProvider: JwtKeyProvider,
-    @ConfigProperty(name = "finfast.jwt.issuer") private val issuer: String,
-    @ConfigProperty(name = "finfast.jwt.key-id") private val keyId: String
+    private val keyRotationService: KeyRotationService,
+    @ConfigProperty(name = "finfast.jwt.issuer") private val issuer: String
 ) {
-    private val signer: JWSSigner = RSASSASigner(keyProvider.keyPair.private)
 
     fun createAccessToken(userId: UUID): String {
         val now = Instant.now()
+        val keyPair = keyProvider.keyPair
+        val keyId = keyProvider.currentKeyId
+        
         val claims = JWTClaimsSet.Builder()
             .issuer(issuer)
             .subject(userId.toString())
@@ -32,20 +34,28 @@ class JwtService(
             .expirationTime(Date.from(now.plusSeconds(600)))
             .jwtID(UUID.randomUUID().toString())
             .build()
+        
         val header = JWSHeader.Builder(JWSAlgorithm.RS256).keyID(keyId).build()
         val signed = SignedJWT(header, claims)
-        signed.sign(signer)
+        signed.sign(RSASSASigner(keyPair.private))
         return signed.serialize()
     }
 
     fun parseSubject(token: String): String {
         val signed = SignedJWT.parse(token)
-        val verifier = com.nimbusds.jose.crypto.RSASSAVerifier(keyProvider.keyPair.public as RSAPublicKey)
+        val keyId = signed.header.keyID ?: throw WebApplicationException("Token missing key ID", 401)
+
+        val storedKey = keyRotationService.getKeyById(keyId)
+            ?: throw WebApplicationException("Unknown key ID: $keyId", 401)
+        
+        val verifier = com.nimbusds.jose.crypto.RSASSAVerifier(storedKey.keyPair.public as RSAPublicKey)
         if (!signed.verify(verifier)) throw WebApplicationException("Invalid token signature", 401)
+        
         val claims = signed.jwtClaimsSet
         val exp = claims.expirationTime?.toInstant() ?: throw WebApplicationException("Invalid token", 401)
         if (exp.isBefore(Instant.now())) throw WebApplicationException("Token expired", 401)
         if (claims.issuer != issuer) throw WebApplicationException("Invalid issuer", 401)
+        
         return claims.subject
     }
 }

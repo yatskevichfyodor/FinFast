@@ -1,30 +1,17 @@
 package org.example.finfast.auth.config
 
 import jakarta.enterprise.context.ApplicationScoped
-import org.eclipse.microprofile.config.inject.ConfigProperty
-import java.security.KeyFactory
+import jakarta.inject.Inject
+import org.example.finfast.auth.KeyRotationService
 import java.security.KeyPair
-import java.security.interfaces.RSAPrivateKey
-import java.security.interfaces.RSAPublicKey
-import java.security.spec.PKCS8EncodedKeySpec
-import java.security.spec.X509EncodedKeySpec
-import java.util.Base64
 
 @ApplicationScoped
 class JwtKeyProvider(
-    @ConfigProperty(name = "finfast.jwt.private-key-b64", defaultValue = "") private val privateKeyB64: String,
-    @ConfigProperty(name = "finfast.jwt.public-key-b64", defaultValue = "") private val publicKeyB64: String
+    @Inject private val keyRotationService: KeyRotationService
 ) {
-    val keyPair: KeyPair = loadKeyPair()
-
-    private fun loadKeyPair(): KeyPair {
-        val factory = KeyFactory.getInstance("RSA")
-        val privateKey = factory.generatePrivate(
-            PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyB64))
-        ) as RSAPrivateKey
-        val publicKey = factory.generatePublic(
-            X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyB64))
-        ) as RSAPublicKey
-        return KeyPair(publicKey, privateKey)
-    }
+    val keyPair: KeyPair
+        get() = keyRotationService.getActiveKey().keyPair
+    
+    val currentKeyId: String
+        get() = keyRotationService.getActiveKey().keyId
 }

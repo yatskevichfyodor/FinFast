@@ -14,12 +14,16 @@ spring:
       sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="admin-client-secret";
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level %pid --- [%thread] %logger : %msg%n%wEx"
   level:
     root: INFO
     org.example.finfast: DEBUG
     org.springframework.security: DEBUG
+    com.nimbusds.jose: DEBUG
+    org.springframework.security.oauth2.jwt: DEBUG
 
 finfast:
-  jwt:
-    public-key-b64: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyX2z8Dyhcw449qQ7G2B43+z8ORbEjXOTPJYAbSKkTARYZBYz2rmiplNpv83an9v7Y4LxJBcJd0skmUSBR5IQltfDnf8l2zQl8qeCAtlfaoH/0suEVTNZuiWkcI2wljhxwu/Qn7WpbVTYQbeecSU2WV7uJ5IwtrzlZudVqOs3E/tHkDy5OGNUGghN9oIf46K285nWfDt07Nl7sSQNj0qbKzJnQPRIxz+VaaJYr8F0nrmUoUIIUZ99LSbN8joY6KWRPJgQ4pYoqwLRnv63mLHUdptr7G25EbkLahn56znn/XaRy0Lf8b0aTEoDLBCn6GAT+sI0QVhl4g43CelKtp7CswIDAQAB
+  auth-service:
+    url: http://localhost:8082
   clientUrl: http://localhost:5173

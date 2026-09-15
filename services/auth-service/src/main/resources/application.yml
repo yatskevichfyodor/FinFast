@@ -42,6 +42,6 @@ mp:
 finfast:
   jwt:
     issuer: finfast-api
-    key-id: finfast-rs256-1
+    key-ttl-minutes: 1440
   outbox:
     max-attempts: 5
