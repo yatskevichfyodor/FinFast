@@ -20,5 +20,3 @@ spring:
 finfast:
   jwt:
     issuer: finfast-api
-  auth-service:
-    url: http://localhost:8080
