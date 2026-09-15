@@ -15,7 +15,7 @@ spring:
 
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level %pid --- [%thread] %logger : %msg%n%wEx"
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level ${PID:- } --- [%thread] %logger : %msg%n%wEx"
   level:
     root: INFO
     org.example.finfast: DEBUG

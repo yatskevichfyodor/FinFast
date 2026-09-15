@@ -5,15 +5,8 @@ import io.quarkus.elytron.security.common.BcryptUtil
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.transaction.Transactional
 import jakarta.ws.rs.WebApplicationException
-import org.example.finfast.auth.dto.LoginRequest
-import org.example.finfast.auth.dto.GoogleIdTokenRequest
-import org.example.finfast.auth.dto.LogoutRequest
-import org.example.finfast.auth.dto.RefreshRequest
-import org.example.finfast.auth.dto.RegisterRequest
-import org.example.finfast.auth.dto.TokenResponse
-import org.example.finfast.auth.dto.UpdateProfileRequest
-import org.example.finfast.auth.dto.SetPasswordRequest
-import org.example.finfast.auth.dto.UserResponse
+import org.eclipse.microprofile.config.inject.ConfigProperty
+import org.example.finfast.auth.dto.*
 import org.example.finfast.auth.entity.RefreshToken
 import org.example.finfast.auth.entity.User
 import org.example.finfast.auth.outbox.OutboxEventPublisher
@@ -24,8 +17,7 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.Base64
-import java.util.UUID
+import java.util.*
 
 @ApplicationScoped
 class AuthService(
@@ -34,7 +26,8 @@ class AuthService(
     private val jwtService: JwtService,
     private val googleTokenVerifier: GoogleTokenVerifier,
     private val outboxEventPublisher: OutboxEventPublisher,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    @ConfigProperty(name = "finfast.jwt.access-token-lifetime-seconds") private val accessTokenLifetimeSeconds: Long
 ) {
     private val random = SecureRandom()
 
@@ -170,7 +163,8 @@ class AuthService(
                 Instant.now().plus(30, ChronoUnit.DAYS), Instant.now()
             )
         )
-        return TokenResponse(jwtService.createAccessToken(user.id), refreshValue)
+        val accessTokenResult = jwtService.createAccessToken(user.id)
+        return TokenResponse(accessTokenResult, refreshValue, expiresIn = accessTokenLifetimeSeconds)
     }
 
     private fun uniqueGoogleUsername(email: String?): String {

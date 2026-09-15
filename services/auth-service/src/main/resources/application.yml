@@ -42,6 +42,8 @@ mp:
 finfast:
   jwt:
     issuer: finfast-api
-    key-ttl-minutes: 1440
+    access-token-lifetime-seconds: 900 # 15 minutes
+    key-ttl-minutes: 1440 # 24 hours for old key retention
+    rotation-interval: 7d # 7 days for key rotation
   outbox:
     max-attempts: 5

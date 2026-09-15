@@ -2,24 +2,23 @@ package org.example.finfast.auth
 
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.JWSSigner
 import com.nimbusds.jose.crypto.RSASSASigner
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.ws.rs.WebApplicationException
-import org.example.finfast.auth.config.JwtKeyProvider
 import org.eclipse.microprofile.config.inject.ConfigProperty
+import org.example.finfast.auth.config.JwtKeyProvider
 import java.security.interfaces.RSAPublicKey
 import java.time.Instant
-import java.util.Date
-import java.util.UUID
+import java.util.*
 
 @ApplicationScoped
 class JwtService(
     private val keyProvider: JwtKeyProvider,
     private val keyRotationService: KeyRotationService,
-    @ConfigProperty(name = "finfast.jwt.issuer") private val issuer: String
+    @ConfigProperty(name = "finfast.jwt.issuer") private val issuer: String,
+    @ConfigProperty(name = "finfast.jwt.access-token-lifetime-seconds") private val accessTokenLifetimeSeconds: Long
 ) {
 
     fun createAccessToken(userId: UUID): String {
@@ -31,7 +30,7 @@ class JwtService(
             .issuer(issuer)
             .subject(userId.toString())
             .issueTime(Date.from(now))
-            .expirationTime(Date.from(now.plusSeconds(600)))
+            .expirationTime(Date.from(now.plusSeconds(accessTokenLifetimeSeconds)))
             .jwtID(UUID.randomUUID().toString())
             .build()
         
