@@ -35,7 +35,9 @@ class AuthService(
     fun register(request: RegisterRequest): UserResponse {
         val username = request.username.trim()
         require(username.isNotBlank() && request.password.isNotBlank()) { "Username and password are required" }
-        require(userRepository.findByUsername(username) == null) { "Username is already taken" }
+        if (userRepository.findByUsername(username) != null) {
+            throw WebApplicationException("Username is already taken", 409)
+        }
         val user = userRepository.save(
             User(UUID.randomUUID(), username, BcryptUtil.bcryptHash(request.password))
         )

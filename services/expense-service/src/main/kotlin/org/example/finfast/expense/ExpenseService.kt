@@ -19,7 +19,7 @@ class ExpenseService(
     @Transactional(readOnly = true)
     fun get(id: UUID): ExpenseDto {
         val expense = expenseRepository.findById(ExpenseId(currentUserId(), id))
-            .orElseThrow { RuntimeException("Expense not found: $id") }
+            .orElseThrow { ExpenseNotFoundException(id) }
 
         return expense.toDto()
     }
@@ -82,7 +82,7 @@ class ExpenseService(
         dto: UpdateExpenseDto
     ) {
         val expense = expenseRepository.findById(ExpenseId(currentUserId(), id))
-            .orElseThrow { RuntimeException("Expense not found: $id") }
+            .orElseThrow { ExpenseNotFoundException(id) }
 
         updateExpense(expense, dto)
 
@@ -94,7 +94,7 @@ class ExpenseService(
         val userId = currentUserId()
         val expenses = dtos.map { batchUpdateDto ->
             val expense = expenseRepository.findById(ExpenseId(userId, batchUpdateDto.id))
-                .orElseThrow { RuntimeException("Expense not found: ${batchUpdateDto.id}") }
+                .orElseThrow { ExpenseNotFoundException(batchUpdateDto.id) }
 
             updateExpense(expense, batchUpdateDto.toUpdateDto())
 
@@ -150,7 +150,7 @@ class ExpenseService(
     private fun currentUserId(): UUID {
         val authentication = SecurityContextHolder.getContext().authentication
             ?.takeIf { it.isAuthenticated }
-            ?: throw IllegalStateException("Authenticated user is required")
+            ?: throw AuthenticationRequiredException()
         return UUID.fromString(authentication.name)
     }
 }

@@ -70,6 +70,10 @@ function getErrorMessage(error: unknown): string {
     if (error.response.status === 401) {
       return 'Неверный логин или пароль'
     }
+
+    if (error.response.status === 409 && isRegistration.value) {
+      return 'Пользователь с таким именем уже зарегистрирован'
+    }
   }
 
   return isRegistration.value
