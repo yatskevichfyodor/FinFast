@@ -12,13 +12,11 @@ class OutboxEventScheduler @Inject constructor(
     
     private val logger = LoggerFactory.getLogger(OutboxEventScheduler::class.java)
     
-    @Scheduled(every = "30s")
+    @Scheduled(every = "30s", delayed = "30s")
     fun processOutboxEvents() {
         logger.debug("Processing pending outbox events")
         try {
             outboxEventPublisher.processPendingEvents()
-        } catch (e: jakarta.enterprise.inject.spi.DefinitionException) {
-            logger.error("Kafka is not available - outbox events will not be processed. Start Kafka to enable event publishing.", e)
         } catch (e: Exception) {
             logger.error("Error processing outbox events", e)
         }

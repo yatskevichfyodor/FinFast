@@ -11,12 +11,14 @@ quarkus:
       # DATABASE_HOST will be postgres for local launch in docker container
       url: jdbc:postgresql://${DATABASE_HOST:localhost}:5432/finfast
 
-mp:
-  messaging:
-    outgoing:
-      user-events-out:
-        bootstrap:
-          servers: localhost:9094
+kafka:
+  bootstrap:
+    servers: localhost:9094
+  security:
+    protocol: SASL_PLAINTEXT
+  sasl:
+    jaas:
+      config: org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="admin-client-secret";
 
 logging:
   level:

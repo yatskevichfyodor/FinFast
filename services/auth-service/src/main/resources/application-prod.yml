@@ -10,12 +10,14 @@ quarkus:
     jdbc:
       url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
 
-mp:
-  messaging:
-    outgoing:
-      user-events-out:
-        bootstrap:
-          servers: ${KAFKA_BOOTSTRAP_SERVERS}
+kafka:
+  bootstrap:
+    servers: ${KAFKA_BOOTSTRAP_SERVERS}
+  security:
+    protocol: SASL_SSL
+  sasl:
+    jaas:
+      config: org.apache.kafka.common.security.plain.PlainLoginModule required username="${KAFKA_USERNAME}" password="${KAFKA_PASSWORD}";
 
 logging:
   level:
