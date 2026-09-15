@@ -14,6 +14,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     properties:
+      sasl.mechanism: PLAIN
       isolation.level: read_committed
 
 finfast:
