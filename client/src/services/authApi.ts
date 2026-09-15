@@ -1,4 +1,3 @@
-import { isAxiosError } from 'axios'
 import { authApi } from '@/services/http'
 
 export interface RegisterRequest {
@@ -75,10 +74,10 @@ export async function me(): Promise<UserResponse> {
 
 export async function isAvailable(): Promise<boolean> {
   try {
-    await authApi.get('/auth/me', { timeout: 3000 })
+    await authApi.get('/health', { timeout: 20000 })
     return true
-  } catch (error) {
-    return isAxiosError(error) && error.response !== undefined
+  } catch {
+    return false
   }
 }
 
