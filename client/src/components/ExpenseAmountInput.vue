@@ -251,6 +251,7 @@ watch(
 .keypad-card {
   background: #ffffff;
   border: 1px solid #edf0f3;
+  touch-action: none;
 }
 
 .key-button {
