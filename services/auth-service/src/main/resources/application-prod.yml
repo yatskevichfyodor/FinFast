@@ -16,9 +16,6 @@ quarkus:
         pem:
           certs: /etc/secrets/aiven-ca.pem
 
-  kafka:
-    tls-configuration-name: aiven-kafka
-
 kafka:
   bootstrap:
     servers: ${KAFKA_BOOTSTRAP_SERVERS}
@@ -27,6 +24,7 @@ kafka:
   sasl:
     jaas:
       config: org.apache.kafka.common.security.plain.PlainLoginModule required username="${KAFKA_USERNAME}" password="${KAFKA_PASSWORD}";
+  tls-configuration-name: aiven-kafka
 
 logging:
   level:
