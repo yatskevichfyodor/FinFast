@@ -16,7 +16,7 @@ services:
 
   auth-service:
     build:
-      context: ./services/auth-service
+      context: ../services/auth-service
       dockerfile: Dockerfile.native
       args:
         QUARKUS_PROFILE: dev
@@ -29,7 +29,7 @@ services:
 
   expense-service:
     build:
-      context: ./services/expense-service
+      context: ../services/expense-service
       dockerfile: Dockerfile.native
     env_file:
       - .env.dev

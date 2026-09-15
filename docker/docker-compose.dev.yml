@@ -55,14 +55,14 @@ services:
         -Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf
 
     volumes:
-      - ./docker/kafka/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf:ro
+      - ./kafka/kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf:ro
 
   kafka-init:
     image: apache/kafka:4.3.1
     depends_on:
       - kafka
     volumes:
-      - ./docker/kafka/kafka_client.properties:/etc/kafka/kafka_client.properties:ro
+      - ./kafka/kafka_client.properties:/etc/kafka/kafka_client.properties:ro
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
@@ -88,7 +88,7 @@ services:
 
   auth-service:
     build:
-      context: ./services/auth-service
+      context: ../services/auth-service
       dockerfile: Dockerfile
     env_file:
       - .env.dev
@@ -100,7 +100,7 @@ services:
 
   expense-service:
     build:
-      context: ./services/expense-service
+      context: ../services/expense-service
       dockerfile: Dockerfile
     env_file:
       - .env.dev

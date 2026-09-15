@@ -8,7 +8,7 @@
             <option value="auth-service" />
           </list>
         </option>
-        <option name="sourceFilePath" value="docker-compose.dev.native.yml" />
+        <option name="sourceFilePath" value="docker/docker-compose.dev.native.yml" />
       </settings>
     </deployment>
     <method v="2" />
