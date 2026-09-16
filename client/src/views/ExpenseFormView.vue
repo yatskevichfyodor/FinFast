@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import CategoryPicker from '@/components/CategoryPicker.vue'
@@ -20,6 +20,28 @@ const emit = defineEmits<{
 
 const expenseStore = useExpenseStore()
 
+// Breakpoint for mobile/desktop mode
+const MOBILE_BREAKPOINT = 960
+
+// Responsive state
+const isMobile = ref(true)
+const windowWidth = ref(window.innerWidth)
+
+function updateScreenWidth() {
+  windowWidth.value = window.innerWidth
+  isMobile.value = windowWidth.value <= MOBILE_BREAKPOINT
+}
+
+onMounted(() => {
+  updateScreenWidth()
+  window.addEventListener('resize', updateScreenWidth)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateScreenWidth)
+})
+
+// Form state
 const isEditing = computed(() => route.query.id !== undefined)
 const editingExpenseId = computed(() => {
   const expenseId = route.query.id
@@ -32,6 +54,12 @@ const paymentDate = ref<string | null>(null)
 const currentAmount = ref<number | null>(null)
 const canSubmitAmount = ref(false)
 
+// Mobile step state
+const mobileStep = ref(1)
+const createdExpenseId = ref<string | null>(null)
+
+// Initial values for comparison (mobile step 2)
+const initialCategoryId = ref<string | null>(null)
 const initialDescription = ref<string>('')
 const initialPaymentDate = ref<string | null>(null)
 
@@ -47,45 +75,117 @@ const initialAmount = computed(() => {
   return value !== undefined ? Number(value) : undefined
 })
 
+const getButtonText = computed(() => {
+  if (isEditing.value) {
+    return 'Сохранить изменения'
+  }
+  
+  if (isMobile.value) {
+    return mobileStep.value === 1 ? 'Ввод' : 'Готово'
+  }
+  
+  return 'Готово'
+})
+
 function handleAmountChange(amountValue: number, valid: boolean) {
   currentAmount.value = amountValue
   canSubmitAmount.value = valid
 }
 
-function submitCurrentAmount() {
+function formatPaymentDate(dateValue: string | null): string | undefined {
+  if (!dateValue) {
+    return undefined
+  }
+  
+  if (typeof dateValue === 'string') {
+    return convertDotFormatToDashFormat(dateValue)
+  } else {
+    // Handle if v-date-input returns a Date object
+    const dateObj = dateValue as any
+    if (dateObj instanceof Date) {
+      const year = dateObj.getFullYear()
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0')
+      const day = String(dateObj.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+  }
+  
+  return undefined
+}
+
+// Mobile step 1: Create expense with amount only
+function handleMobileStep1Submit() {
   if (!canSubmitAmount.value || currentAmount.value === null) {
     return
   }
 
-  handleSubmit(currentAmount.value)
-}
-
-function handleSubmit(amountValue: number) {
+  const amountValue = currentAmount.value
   if (amountValue <= 0) {
     return
   }
 
-  // Convert YYYY.MM.DD to YYYY-MM-DD format if payment date is provided
-  // Store as simple date string without timezone to avoid timezone issues
-  console.log('paymentDate.value:', paymentDate.value, 'type:', typeof paymentDate.value)
-  
-  let paymentDateFormatted: string | undefined
-  if (paymentDate.value) {
-    if (typeof paymentDate.value === 'string') {
-      paymentDateFormatted = convertDotFormatToDashFormat(paymentDate.value)
-    } else {
-      // Handle if v-date-input returns a Date object
-      const dateValue = paymentDate.value as any
-      if (dateValue instanceof Date) {
-        const year = dateValue.getFullYear()
-        const month = String(dateValue.getMonth() + 1).padStart(2, '0')
-        const day = String(dateValue.getDate()).padStart(2, '0')
-        paymentDateFormatted = `${year}-${month}-${day}`
-      }
-    }
+  const paymentDateFormatted = formatPaymentDate(paymentDate.value)
+
+  const payload: ExpensePayload = {
+    amount: amountValue,
+    categoryId: selectedCategoryId.value || undefined,
+    description: description.value || undefined,
+    paymentDate: paymentDateFormatted
   }
 
-  console.log('paymentDateFormatted:', paymentDateFormatted)
+  const newExpenseId = expenseStore.addExpense(payload)
+  createdExpenseId.value = newExpenseId
+
+  // Store initial values for step 2 comparison
+  initialCategoryId.value = selectedCategoryId.value
+  initialDescription.value = description.value
+  initialPaymentDate.value = paymentDate.value
+
+  // Move to step 2
+  mobileStep.value = 2
+}
+
+// Mobile step 2: Update expense if values changed
+function handleMobileStep2Submit() {
+  if (!createdExpenseId.value) {
+    return
+  }
+
+  const hasChanges = 
+    selectedCategoryId.value !== initialCategoryId.value ||
+    description.value !== initialDescription.value ||
+    paymentDate.value !== initialPaymentDate.value
+
+  if (hasChanges) {
+    const paymentDateFormatted = formatPaymentDate(paymentDate.value)
+
+    const updatePayload: ExpensePayload = {
+      id: createdExpenseId.value,
+      amount: currentAmount.value || 0,
+      categoryId: selectedCategoryId.value !== null ? selectedCategoryId.value : undefined,
+      description: description.value || undefined,
+      paymentDate: paymentDateFormatted
+    }
+    expenseStore.updateExpense(updatePayload)
+  }
+
+  router.push({
+    name: 'expense-history'
+  })
+}
+
+// Desktop single-step: Create expense with all data
+function handleDesktopSubmit() {
+  if (!canSubmitAmount.value || currentAmount.value === null) {
+    return
+  }
+
+  const amountValue = currentAmount.value
+  if (amountValue <= 0) {
+    return
+  }
+
+  const paymentDateFormatted = formatPaymentDate(paymentDate.value)
 
   if (isEditing.value) {
     const expenseId = editingExpenseId.value
@@ -101,7 +201,6 @@ function handleSubmit(amountValue: number) {
         amount: amountValue,
         categoryId: selectedCategoryId.value !== null ? selectedCategoryId.value : expense.categoryId,
         description: description.value || undefined,
-        // Update paymentDate only if a new value was provided (not null/undefined)
         paymentDate: paymentDateFormatted
       }
       expenseStore.updateExpense(updatePayload)
@@ -121,6 +220,20 @@ function handleSubmit(amountValue: number) {
     router.push({
       name: 'expense-history'
     })
+  }
+}
+
+function handleSubmit() {
+  if (isEditing.value) {
+    handleDesktopSubmit()
+  } else if (isMobile.value) {
+    if (mobileStep.value === 1) {
+      handleMobileStep1Submit()
+    } else {
+      handleMobileStep2Submit()
+    }
+  } else {
+    handleDesktopSubmit()
   }
 }
 
@@ -144,6 +257,7 @@ const loadExistingExpense = () => {
       initialPaymentDate.value = expense.paymentDate ? convertDashFormatToDotFormat(expense.paymentDate) : null
       description.value = initialDescription.value
       paymentDate.value = initialPaymentDate.value
+      selectedCategoryId.value = expense.categoryId || null
     }
   } else if (route.query.paymentDate !== undefined) {
     // Load payment date from query parameter and convert to YYYY.MM.DD format
@@ -162,75 +276,230 @@ watchCategoryId()
   <v-main class="app-background expense-main">
     <div class="expense-container">
       <div class="scrollable-content">
-        <v-container class="expense-page" max-width="600">
-          <ExpenseAmountInput
-            :expense-id="editingExpenseId"
-            :amount="initialAmount"
-            @submit="handleSubmit"
-            @cancel="handleCancel"
-            @amount-change="handleAmountChange"
-          />
+        <!-- Desktop layout with centered header -->
+        <div v-if="!isMobile && !isEditing" class="desktop-wrapper">
+          <!-- Centered header -->
+          <div class="desktop-header">
+            <div class="text-h5 font-weight-bold text-center">
+              Новый расход
+            </div>
+            <div class="text-body-2 text-medium-emphasis text-center mt-1">
+              Сколько вы потратили?
+            </div>
+          </div>
 
-          <v-card
-            rounded="xl"
-            elevation="0"
-            class="additional-fields-card mb-5"
-          >
-            <v-card-text class="pa-4">
-              <div class="text-subtitle-1 font-weight-medium mb-4">
-                Дополнительно
-              </div>
-
-              <CategoryPicker
-                v-model:selectedCategoryId="selectedCategoryId"
+          <div class="desktop-content">
+            <!-- Amount Input (left side) -->
+            <div class="amount-section">
+              <ExpenseAmountInput
+                :expense-id="editingExpenseId"
+                :amount="initialAmount"
+                :show-header="false"
+                :show-keypad="true"
+                @submit="handleSubmit"
+                @cancel="handleCancel"
+                @amount-change="handleAmountChange"
               />
+            </div>
 
-              <div class="field-group mt-4">
-                <v-text-field
-                  v-model="description"
-                  label="Описание"
-                  placeholder="Например: продукты, обед, бензин"
-                  variant="outlined"
-                  density="comfortable"
-                  clearable
-                  class="custom-text-field"
-                  color="primary"
-                  prepend-inner-icon="mdi-text"
-                >
-                  <template #append-inner>
-                    <v-icon 
-                      v-if="!description" 
-                      color="grey-lighten-1" 
-                      size="20"
+            <!-- Desktop: Show additional fields (right side) -->
+            <div class="additional-section">
+              <v-card
+                rounded="xl"
+                elevation="0"
+                class="additional-fields-card"
+              >
+                <v-card-text class="pa-4">
+                  <div class="text-subtitle-1 font-weight-medium mb-4">
+                    Дополнительно
+                  </div>
+
+                  <CategoryPicker
+                    v-model:selectedCategoryId="selectedCategoryId"
+                  />
+
+                  <div class="field-group mt-4">
+                    <v-text-field
+                      v-model="description"
+                      label="Описание"
+                      placeholder="Например: продукты, обед, бензин"
+                      variant="outlined"
+                      density="comfortable"
+                      clearable
+                      class="custom-text-field"
+                      color="primary"
+                      prepend-inner-icon="mdi-text"
                     >
-                      mdi-pencil-outline
-                    </v-icon>
-                  </template>
-                </v-text-field>
-              </div>
+                      <template #append-inner>
+                        <v-icon 
+                          v-if="!description" 
+                          color="grey-lighten-1" 
+                          size="20"
+                        >
+                          mdi-pencil-outline
+                        </v-icon>
+                      </template>
+                    </v-text-field>
+                  </div>
 
-              <div class="field-group">
-                <v-date-input
-                  v-model="paymentDate"
-                  label="Дата платежа"
-                  variant="outlined"
-                  density="comfortable"
-                  clearable
-                  hide-actions
-                  input-format="yyyy.mm.dd"
-                  persistent-hint
-                  class="custom-text-field"
-                  color="primary"
-                  prepend-icon="mdi-calendar"
+                  <div class="field-group">
+                    <v-date-input
+                      v-model="paymentDate"
+                      label="Дата платежа"
+                      variant="outlined"
+                      density="comfortable"
+                      clearable
+                      hide-actions
+                      input-format="yyyy.mm.dd"
+                      persistent-hint
+                      class="custom-text-field"
+                      color="primary"
+                      prepend-icon="mdi-calendar"
+                    />
+                  </div>
+                </v-card-text>
+              </v-card>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile/Editing layout -->
+        <v-container v-else class="expense-page" max-width="600" style="padding-top: 24px;">
+          <!-- Amount Input -->
+          <div class="amount-section">
+            <ExpenseAmountInput
+              :expense-id="editingExpenseId"
+              :amount="initialAmount"
+              :show-header="true"
+              :show-keypad="isMobile ? mobileStep === 1 : true"
+              @submit="handleSubmit"
+              @cancel="handleCancel"
+              @amount-change="handleAmountChange"
+            />
+          </div>
+
+          <!-- Mobile Step 2: Show additional fields after creating expense -->
+          <div v-if="isMobile && mobileStep === 2 && !isEditing" class="additional-section">
+            <v-card
+              rounded="xl"
+              elevation="0"
+              class="additional-fields-card mb-5"
+            >
+              <v-card-text class="pa-4">
+                <div class="text-subtitle-1 font-weight-medium mb-4">
+                  Дополнительно
+                </div>
+
+                <CategoryPicker
+                  v-model:selectedCategoryId="selectedCategoryId"
                 />
-              </div>
-            </v-card-text>
-          </v-card>
+
+                <div class="field-group mt-4">
+                  <v-text-field
+                    v-model="description"
+                    label="Описание"
+                    placeholder="Например: продукты, обед, бензин"
+                    variant="outlined"
+                    density="comfortable"
+                    clearable
+                    class="custom-text-field"
+                    color="primary"
+                    prepend-inner-icon="mdi-text"
+                  >
+                    <template #append-inner>
+                      <v-icon 
+                        v-if="!description" 
+                        color="grey-lighten-1" 
+                        size="20"
+                      >
+                        mdi-pencil-outline
+                      </v-icon>
+                    </template>
+                  </v-text-field>
+                </div>
+
+                <div class="field-group">
+                  <v-date-input
+                    v-model="paymentDate"
+                    label="Дата платежа"
+                    variant="outlined"
+                    density="comfortable"
+                    clearable
+                    hide-actions
+                    input-format="yyyy.mm.dd"
+                    persistent-hint
+                    class="custom-text-field"
+                    color="primary"
+                    prepend-icon="mdi-calendar"
+                  />
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
+
+          <!-- Editing mode: Show additional fields on both mobile and desktop -->
+          <div v-if="isEditing" class="additional-section">
+            <v-card
+              rounded="xl"
+              elevation="0"
+              class="additional-fields-card mb-5"
+            >
+              <v-card-text class="pa-4">
+                <div class="text-subtitle-1 font-weight-medium mb-4">
+                  Дополнительно
+                </div>
+
+                <CategoryPicker
+                  v-model:selectedCategoryId="selectedCategoryId"
+                />
+
+                <div class="field-group mt-4">
+                  <v-text-field
+                    v-model="description"
+                    label="Описание"
+                    placeholder="Например: продукты, обед, бензин"
+                    variant="outlined"
+                    density="comfortable"
+                    clearable
+                    class="custom-text-field"
+                    color="primary"
+                    prepend-inner-icon="mdi-text"
+                  >
+                    <template #append-inner>
+                      <v-icon 
+                        v-if="!description" 
+                        color="grey-lighten-1" 
+                        size="20"
+                      >
+                        mdi-pencil-outline
+                      </v-icon>
+                    </template>
+                  </v-text-field>
+                </div>
+
+                <div class="field-group">
+                  <v-date-input
+                    v-model="paymentDate"
+                    label="Дата платежа"
+                    variant="outlined"
+                    density="comfortable"
+                    clearable
+                    hide-actions
+                    input-format="yyyy.mm.dd"
+                    persistent-hint
+                    class="custom-text-field"
+                    color="primary"
+                    prepend-icon="mdi-calendar"
+                  />
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
         </v-container>
       </div>
 
       <div class="fixed-bottom-panel">
-        <v-container class="pa-0" max-width="600">
+        <v-container class="pa-0" :max-width="!isMobile && !isEditing ? '1200' : undefined">
           <div class="button-container">
             <v-btn
               block
@@ -241,9 +510,9 @@ watchCategoryId()
               :disabled="!canSubmitAmount"
               prepend-icon="mdi-check"
               class="submit-button"
-              @click="submitCurrentAmount"
+              @click="handleSubmit"
             >
-              {{ isEditing ? 'Сохранить изменения' : 'Готово' }}
+              {{ getButtonText }}
             </v-btn>
           </div>
         </v-container>
@@ -270,6 +539,7 @@ watchCategoryId()
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  padding-top: 24px;
   padding-bottom: 172px;
 }
 
@@ -385,6 +655,61 @@ watchCategoryId()
 
 .custom-text-field :deep(.v-input__append-inner) {
   padding-right: 8px;
+}
+
+.amount-section {
+  width: 100%;
+}
+
+.additional-section {
+  width: 100%;
+}
+
+/* Desktop layout */
+@media (min-width: 961px) {
+  .desktop-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  .desktop-header {
+    text-align: center;
+    margin-top: 32px;
+    margin-bottom: 32px;
+  }
+
+  .desktop-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .scrollable-content {
+    padding-bottom: 100px;
+  }
+
+  .fixed-bottom-panel {
+    position: static;
+    background: transparent;
+    border-top: none;
+    padding: 24px 0;
+    backdrop-filter: none;
+  }
+
+  .fixed-bottom-panel .v-container {
+    max-width: 1200px;
+  }
+
+  .button-container {
+    padding: 0;
+  }
+
+  .submit-button {
+    max-width: 300px;
+    margin: 0 auto;
+  }
 }
 
 @media (max-width: 600px) {

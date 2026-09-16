@@ -3,7 +3,9 @@ import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
   expenseId?: string,
-  amount?: number
+  amount?: number,
+  showKeypad?: boolean,
+  showHeader?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -15,6 +17,8 @@ const emit = defineEmits<{
 const amount = ref('')
 
 const isEditing = computed(() => props.expenseId !== undefined)
+const showKeypad = computed(() => props.showKeypad !== false)
+const showHeader = computed(() => props.showHeader !== false)
 
 const formattedAmount = computed(() => {
   if (!amount.value) {
@@ -98,7 +102,7 @@ watch(
 
 <template>
   <div>
-    <div class="mb-6">
+    <div v-if="showHeader" class="mb-6">
       <div class="d-flex align-center justify-space-between">
         <div>
           <div class="text-h5 font-weight-bold">
@@ -147,6 +151,7 @@ watch(
     </v-card>
 
     <v-card
+      v-if="showKeypad"
       rounded="xl"
       elevation="0"
       class="keypad-card mb-5"
