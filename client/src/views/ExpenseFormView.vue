@@ -364,7 +364,7 @@ watchCategoryId()
         </div>
 
         <!-- Mobile/Editing layout -->
-        <v-container v-else class="expense-page" max-width="600" style="padding-top: 24px;">
+        <v-container v-else class="expense-page" max-width="600">
           <!-- Amount Input -->
           <div class="amount-section">
             <ExpenseAmountInput
@@ -383,7 +383,7 @@ watchCategoryId()
             <v-card
               rounded="xl"
               elevation="0"
-              class="additional-fields-card mb-5"
+              class="additional-fields-card"
             >
               <v-card-text class="pa-4">
                 <div class="text-subtitle-1 font-weight-medium mb-4">
@@ -442,7 +442,7 @@ watchCategoryId()
             <v-card
               rounded="xl"
               elevation="0"
-              class="additional-fields-card mb-5"
+              class="additional-fields-card"
             >
               <v-card-text class="pa-4">
                 <div class="text-subtitle-1 font-weight-medium mb-4">
@@ -539,8 +539,8 @@ watchCategoryId()
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-top: 24px;
-  padding-bottom: 172px;
+  padding-top: 16px;
+  padding-bottom: 140px;
 }
 
 .fixed-bottom-panel {
@@ -565,57 +565,6 @@ watchCategoryId()
   font-weight: 600;
   letter-spacing: 0.5px;
   min-height: 56px;
-}
-
-.amount-card {
-  background: linear-gradient(
-    135deg,
-    #e8f5e9,
-    #e0f2f1
-  );
-}
-
-.amount-display {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.amount {
-  font-size: 52px;
-  line-height: 1;
-  font-weight: 700;
-  letter-spacing: -1.5px;
-  color: #263238;
-}
-
-.currency {
-  font-size: 25px;
-  font-weight: 600;
-  color: #607d8b;
-}
-
-.keypad-card {
-  background: #ffffff;
-  border: 1px solid #edf0f3;
-}
-
-.key-button {
-  border-radius: 16px;
-  font-size: 25px;
-  font-weight: 500;
-  color: #263238;
-}
-
-.key-button:hover {
-  background: #f1f8e9;
-}
-
-.summary-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #607d8b;
 }
 
 .additional-fields-card {
@@ -663,6 +612,7 @@ watchCategoryId()
 
 .additional-section {
   width: 100%;
+  margin-top: 16px;
 }
 
 /* Desktop layout */
@@ -717,6 +667,11 @@ watchCategoryId()
     font-size: 46px;
   }
 
+  .scrollable-content {
+    padding-top: 12px;
+    padding-bottom: 120px;
+  }
+
   .fixed-bottom-panel {
     padding: 12px 0;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
@@ -730,6 +685,10 @@ watchCategoryId()
     font-size: 15px;
     min-height: 52px;
   }
+
+  .additional-section {
+    margin-top: 12px;
+  }
 }
 
 @media (max-width: 360px) {
@@ -740,6 +699,37 @@ watchCategoryId()
   .key-button {
     height: 56px;
     font-size: 22px;
+  }
+
+  .scrollable-content {
+    padding-top: 8px;
+    padding-bottom: 100px;
+  }
+}
+
+/* Short viewport handling */
+@media (max-height: 600px) and (max-width: 600px) {
+  .scrollable-content {
+    padding-top: 8px;
+    padding-bottom: 100px;
+  }
+
+  .fixed-bottom-panel {
+    padding: 8px 0;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .button-container {
+    padding: 0 8px;
+  }
+
+  .submit-button {
+    min-height: 48px;
+    font-size: 14px;
+  }
+
+  .additional-section {
+    margin-top: 8px;
   }
 }
 </style>

@@ -101,15 +101,15 @@ watch(
 </script>
 
 <template>
-  <div>
-    <div v-if="showHeader" class="mb-6">
-      <div class="d-flex align-center justify-space-between">
-        <div>
-          <div class="text-h5 font-weight-bold">
+  <div class="expense-amount-input">
+    <div v-if="showHeader" class="header-section">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="header-title">
             {{ isEditing ? 'Редактирование расхода' : 'Новый расход' }}
           </div>
 
-          <div class="text-body-2 text-medium-emphasis mt-1">
+          <div class="header-subtitle">
             Сколько вы потратили?
           </div>
         </div>
@@ -119,6 +119,7 @@ watch(
           icon="mdi-close"
           variant="tonal"
           aria-label="Отменить редактирование"
+          class="header-button"
           @click="emit('cancel')"
         />
       </div>
@@ -127,9 +128,9 @@ watch(
     <v-card
       rounded="xl"
       elevation="0"
-      class="amount-card mb-5"
+      class="amount-card"
     >
-      <v-card-text class="py-8">
+      <v-card-text class="amount-card-text">
         <div class="amount-display">
           <span class="amount">
             {{ formattedAmount }}
@@ -144,7 +145,7 @@ watch(
           </span>
         </div>
 
-        <div class="text-center mt-2 summary-label">
+        <div class="summary-label">
           Введите сумму расхода
         </div>
       </v-card-text>
@@ -154,9 +155,9 @@ watch(
       v-if="showKeypad"
       rounded="xl"
       elevation="0"
-      class="keypad-card mb-5"
+      class="keypad-card"
     >
-      <v-card-text class="pa-3">
+      <v-card-text class="keypad-card-text">
         <v-row dense>
           <v-col
             v-for="digit in [
@@ -169,7 +170,6 @@ watch(
           >
             <v-btn
               block
-              height="64"
               variant="text"
               class="key-button"
               @click="addDigit(digit)"
@@ -181,7 +181,6 @@ watch(
           <v-col cols="4">
             <v-btn
               block
-              height="64"
               variant="text"
               class="key-button"
               @click="addDigit('.')"
@@ -193,7 +192,6 @@ watch(
           <v-col cols="4">
             <v-btn
               block
-              height="64"
               variant="text"
               class="key-button"
               @click="addDigit('0')"
@@ -205,14 +203,13 @@ watch(
           <v-col cols="4">
             <v-btn
               block
-              height="64"
               variant="text"
               class="key-button"
               @click="removeLastDigit"
             >
               <v-icon
                 icon="mdi-backspace-outline"
-                size="25"
+                size="24"
               />
             </v-btn>
           </v-col>
@@ -224,12 +221,60 @@ watch(
 </template>
 
 <style scoped>
+.expense-amount-input {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+
+/* Header section */
+.header-section {
+  margin-bottom: 8px;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #263238;
+  letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  color: #607d8b;
+  margin-top: 4px;
+}
+
+.header-button {
+  flex-shrink: 0;
+}
+
+/* Amount card */
 .amount-card {
   background: linear-gradient(
     135deg,
     #e8f5e9,
     #e0f2f1
   );
+}
+
+.amount-card-text {
+  padding: 24px 16px;
 }
 
 .amount-display {
@@ -253,10 +298,28 @@ watch(
   color: #607d8b;
 }
 
+.currency-symbol {
+  width: 24px;
+  height: 24px;
+}
+
+.summary-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #607d8b;
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* Keypad card */
 .keypad-card {
   background: #ffffff;
   border: 1px solid #edf0f3;
   touch-action: none;
+}
+
+.keypad-card-text {
+  padding: 12px;
 }
 
 .key-button {
@@ -264,21 +327,144 @@ watch(
   font-size: 25px;
   font-weight: 500;
   color: #263238;
+  height: 64px;
 }
 
 .key-button:hover {
   background: #f1f8e9;
 }
 
-.summary-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #607d8b;
-}
-
+/* Mobile responsive */
 @media (max-width: 600px) {
+  .expense-amount-input {
+    gap: 12px;
+  }
+
+  .header-section {
+    margin-bottom: 4px;
+  }
+
+  .header-title {
+    font-size: 20px;
+  }
+
+  .header-subtitle {
+    font-size: 13px;
+  }
+
+  .amount-card-text {
+    padding: 20px 16px;
+  }
+
   .amount {
     font-size: 46px;
+  }
+
+  .currency {
+    font-size: 22px;
+  }
+
+  .currency-symbol {
+    width: 22px;
+    height: 22px;
+  }
+
+  .summary-label {
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  .keypad-card-text {
+    padding: 8px;
+  }
+
+  .key-button {
+    height: 56px;
+    font-size: 24px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 360px) {
+  .header-title {
+    font-size: 18px;
+  }
+
+  .header-subtitle {
+    font-size: 12px;
+  }
+
+  .amount-card-text {
+    padding: 16px 12px;
+  }
+
+  .amount {
+    font-size: 40px;
+  }
+
+  .currency {
+    font-size: 20px;
+  }
+
+  .currency-symbol {
+    width: 20px;
+    height: 20px;
+  }
+
+  .key-button {
+    height: 52px;
+    font-size: 22px;
+  }
+}
+
+/* Short viewport handling */
+@media (max-height: 600px) and (max-width: 600px) {
+  .expense-amount-input {
+    gap: 8px;
+  }
+
+  .header-section {
+    margin-bottom: 0;
+  }
+
+  .header-title {
+    font-size: 18px;
+  }
+
+  .header-subtitle {
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  .amount-card-text {
+    padding: 16px 12px;
+  }
+
+  .amount {
+    font-size: 36px;
+  }
+
+  .currency {
+    font-size: 18px;
+  }
+
+  .currency-symbol {
+    width: 18px;
+    height: 18px;
+  }
+
+  .summary-label {
+    font-size: 12px;
+    margin-top: 6px;
+  }
+
+  .keypad-card-text {
+    padding: 6px;
+  }
+
+  .key-button {
+    height: 48px;
+    font-size: 20px;
   }
 }
 </style>
