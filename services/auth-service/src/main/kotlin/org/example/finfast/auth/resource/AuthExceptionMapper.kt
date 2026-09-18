@@ -16,7 +16,7 @@ class AuthExceptionMapper : ExceptionMapper<IllegalArgumentException> {
             message == "User not found" -> Response.Status.NOT_FOUND
             message.startsWith("Invalid refresh token") ||
                 message.startsWith("Refresh token") -> Response.Status.UNAUTHORIZED
-            else -> Response.Status.BAD_REQUEST
+            else -> throw exception
         }
 
         return Response.status(status)
