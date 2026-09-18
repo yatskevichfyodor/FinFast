@@ -5,6 +5,13 @@ plugins {
     id("io.quarkus")
 }
 
+group = "org.example.finfast"
+version = "1.0.0"
+
+base {
+    archivesName = "auth-service"
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)

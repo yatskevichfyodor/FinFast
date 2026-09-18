@@ -1,0 +1,31 @@
+{
+  "reflection": [
+    {
+      "type": "java.util.UUID[]"
+    },
+    {
+      "type": "com.google.api.client.googleapis.auth.oauth2.GoogleIdToken",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "com.google.api.client.googleapis.auth.oauth2.GoogleIdToken$Header",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "com.google.api.client.googleapis.auth.oauth2.GoogleIdToken$Payload",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "com.google.api.client.json.webtoken.JsonWebToken$Payload",
+      "allDeclaredConstructors": true,
+      "allDeclaredFields": true,
+      "allDeclaredMethods": true
+    }
+  ]
+}
