@@ -49,7 +49,7 @@ export async function linkGoogleAccount(credential: string): Promise<UserRespons
 }
 
 export async function unlinkGoogleAccount(): Promise<UserResponse> {
-  const { data } = await authApi.delete<UserResponse>('/auth/google/link')
+  const { data } = await authApi.delete<UserResponse>('/auth/me/google')
   return data
 }
 
