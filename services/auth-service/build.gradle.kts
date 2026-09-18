@@ -38,6 +38,7 @@ dependencies {
     implementation("io.quarkus:quarkus-arc")
     implementation("io.quarkus:quarkus-kotlin")
     implementation("io.quarkus:quarkus-elytron-security-common")
+    implementation("io.quarkus:quarkus-security")
     implementation("io.quarkus:quarkus-messaging-kafka")
     implementation("io.quarkus:quarkus-scheduler")
     implementation("com.nimbusds:nimbus-jose-jwt:10.9.1")

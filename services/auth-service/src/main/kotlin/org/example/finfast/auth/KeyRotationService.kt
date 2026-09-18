@@ -213,8 +213,11 @@ class KeyRotationService(
             kid = storedKey.keyId,
             use = "sig",
             alg = "RS256",
-            n = Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.modulus.toByteArray()),
-            e = Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.publicExponent.toByteArray())
+            n = encodeUnsigned(publicKey.modulus.toByteArray()),
+            e = encodeUnsigned(publicKey.publicExponent.toByteArray())
         )
     }
+
+    private fun encodeUnsigned(value: ByteArray): String =
+        Base64.getUrlEncoder().withoutPadding().encodeToString(value.dropWhile { it == 0.toByte() }.toByteArray())
 }
