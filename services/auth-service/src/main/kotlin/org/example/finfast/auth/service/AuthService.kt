@@ -1,15 +1,15 @@
-package org.example.finfast.auth
+package org.example.finfast.auth.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.quarkus.elytron.security.common.BcryptUtil
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.transaction.Transactional
 import jakarta.ws.rs.WebApplicationException
 import org.eclipse.microprofile.config.inject.ConfigProperty
+import org.example.finfast.auth.GoogleTokenVerifier
+import org.example.finfast.auth.JwtService
 import org.example.finfast.auth.dto.*
 import org.example.finfast.auth.entity.RefreshToken
 import org.example.finfast.auth.entity.User
-import org.example.finfast.auth.outbox.OutboxEventPublisher
 import org.example.finfast.auth.repository.RefreshTokenRepository
 import org.example.finfast.auth.repository.UserRepository
 import java.nio.charset.StandardCharsets
@@ -25,8 +25,6 @@ class AuthService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val jwtService: JwtService,
     private val googleTokenVerifier: GoogleTokenVerifier,
-    private val outboxEventPublisher: OutboxEventPublisher,
-    private val objectMapper: ObjectMapper,
     @ConfigProperty(name = "finfast.jwt.access-token-lifetime-seconds") private val accessTokenLifetimeSeconds: Long
 ) {
     private val random = SecureRandom()
@@ -41,7 +39,7 @@ class AuthService(
         val user = userRepository.save(
             User(UUID.randomUUID(), username, BcryptUtil.bcryptHash(request.password))
         )
-        return user.toResponse()
+        return UserResponse.fromUser(user)
     }
 
     @Transactional
@@ -54,80 +52,11 @@ class AuthService(
     }
 
     @Transactional
-    fun currentUser(userId: UUID): UserResponse {
-        val user = userRepository.findById(userId).orElseThrow {
-            IllegalArgumentException("User not found")
-        }
-        return user.toResponse()
-    }
-
-    @Transactional
     fun loginWithGoogle(request: GoogleIdTokenRequest): TokenResponse {
         val identity = googleTokenVerifier.verify(request.credential)
         val user = userRepository.findByGoogleSubject(identity.subject)
             ?: userRepository.save(User(UUID.randomUUID(), uniqueGoogleUsername(identity.email), null, identity.subject, identity.email))
         return issueTokens(user)
-    }
-
-    @Transactional
-    fun linkGoogleAccount(userId: UUID, request: GoogleIdTokenRequest): UserResponse {
-        val identity = googleTokenVerifier.verify(request.credential)
-        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
-        val linkedUser = userRepository.findByGoogleSubject(identity.subject)
-        if (linkedUser != null && linkedUser.id != user.id) {
-            throw WebApplicationException("Этот аккаунт Google уже привязан к другому пользователю", 409)
-        }
-        user.googleSubject = identity.subject
-        user.googleEmail = identity.email
-        userRepository.save(user)
-        return user.toResponse()
-    }
-
-    @Transactional
-    fun unlinkGoogleAccount(userId: UUID): UserResponse {
-        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
-        require(user.passwordHash != null) { "Нельзя отвязать Google: задайте пароль для аккаунта" }
-        user.googleSubject = null
-        user.googleEmail = null
-        return user.toResponse()
-    }
-
-    @Transactional
-    fun updateProfile(userId: UUID, request: UpdateProfileRequest): UserResponse {
-        val username = request.username.trim()
-        require(username.isNotBlank()) { "Имя пользователя не должно быть пустым" }
-        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
-        val existingUser = userRepository.findByUsername(username)
-        require(existingUser == null || existingUser.id == user.id) { "Это имя пользователя уже занято" }
-        user.username = username
-        return user.toResponse()
-    }
-
-    @Transactional
-    fun setPassword(userId: UUID, request: SetPasswordRequest): UserResponse {
-        require(request.password.length >= 8) { "Пароль должен содержать не менее 8 символов" }
-        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
-        user.passwordHash = BcryptUtil.bcryptHash(request.password)
-        return user.toResponse()
-    }
-
-    @Transactional
-    fun deleteAccount(userId: UUID) {
-        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
-        
-        // Create outbox event before deleting user
-        val eventPayload = mapOf(
-            "eventId" to UUID.randomUUID(),
-            "eventType" to "USER_DELETED",
-            "userId" to user.id,
-            "timestamp" to Instant.now()
-        )
-        val payloadJson = objectMapper.writeValueAsString(eventPayload)
-        outboxEventPublisher.createOutboxEvent("USER_DELETED", user.id, payloadJson)
-        
-        // Delete user data in the same transaction
-        refreshTokenRepository.deleteAllByUserId(user.id)
-        userRepository.delete(user)
     }
 
     @Transactional
@@ -180,8 +109,6 @@ class AuthService(
         }
         return candidate
     }
-
-    private fun User.toResponse() = UserResponse(id, username, googleEmail, googleSubject != null, passwordHash != null)
 
     private fun hash(value: String): String =
         MessageDigest.getInstance("SHA-256")
