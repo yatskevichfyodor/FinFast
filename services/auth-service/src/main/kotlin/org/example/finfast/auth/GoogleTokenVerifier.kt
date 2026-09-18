@@ -23,16 +23,11 @@ class GoogleTokenVerifier(
     }
 
     fun verify(credential: String): GoogleIdentity {
-        val configuredVerifier = verifier
-            ?: throw WebApplicationException("Вход через Google пока не настроен", 503)
-        val payload = try {
-            configuredVerifier.verify(credential)?.payload
-        } catch (_: Exception) {
-            null
-        } ?: throw WebApplicationException("Не удалось подтвердить аккаунт Google", 401)
-
+        val configuredVerifier = verifier ?: throw RuntimeException("Вход через Google пока не настроен")
+        val payload = configuredVerifier.verify(credential)?.payload
+            ?: throw WebApplicationException("Google id token verification failed", 401)
         val subject = payload.subject?.takeIf { it.isNotBlank() }
-            ?: throw WebApplicationException("Google не передал идентификатор аккаунта", 401)
+            ?: throw WebApplicationException("Google id token is blank", 401)
         return GoogleIdentity(subject, payload["email"] as? String)
     }
 }

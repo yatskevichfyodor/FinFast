@@ -4,6 +4,7 @@ import jakarta.ws.rs.ext.ExceptionMapper
 import jakarta.ws.rs.ext.Provider
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
+import jakarta.ws.rs.WebApplicationException
 
 data class ErrorResponse(val message: String)
 
@@ -17,6 +18,19 @@ class AuthExceptionMapper : ExceptionMapper<IllegalArgumentException> {
                 message.startsWith("Refresh token") -> Response.Status.UNAUTHORIZED
             else -> Response.Status.BAD_REQUEST
         }
+
+        return Response.status(status)
+            .type(MediaType.APPLICATION_JSON)
+            .entity(ErrorResponse(message))
+            .build()
+    }
+}
+
+@Provider
+class WebApplicationExceptionMapper : ExceptionMapper<WebApplicationException> {
+    override fun toResponse(exception: WebApplicationException): Response {
+        val status = exception.response.status
+        val message = exception.message ?: "Request failed"
 
         return Response.status(status)
             .type(MediaType.APPLICATION_JSON)
