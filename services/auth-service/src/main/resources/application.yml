@@ -5,7 +5,6 @@ quarkus:
     output-name: auth-service
 
   http:
-    port: 8082
     cors:
       enabled: true
       methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
@@ -23,8 +22,6 @@ quarkus:
     table: auth_flyway_schema_history
 
 kafka:
-  bootstrap:
-    servers: ${KAFKA_BOOTSTRAP_SERVERS}
   sasl:
     mechanism: PLAIN
   devservices:
