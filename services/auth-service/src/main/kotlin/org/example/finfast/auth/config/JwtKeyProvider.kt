@@ -7,7 +7,7 @@ import java.security.KeyPair
 
 @ApplicationScoped
 class JwtKeyProvider(
-    @Inject private val keyRotationService: KeyRotationService
+    private val keyRotationService: KeyRotationService
 ) {
     val keyPair: KeyPair
         get() = keyRotationService.getActiveKey().keyPair

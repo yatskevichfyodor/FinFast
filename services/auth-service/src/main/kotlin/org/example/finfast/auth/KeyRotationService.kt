@@ -23,7 +23,7 @@ import java.util.UUID
 
 @ApplicationScoped
 class KeyRotationService(
-    @Inject private val rsaKeyRepository: RsaKeyRepository,
+    private val rsaKeyRepository: RsaKeyRepository,
     @ConfigProperty(name = "finfast.jwt.key-ttl-minutes") private val keyTtlMinutes: Long,
     @ConfigProperty(name = "finfast.jwt.rotation-interval") private val rotationInterval: Duration
 ) {

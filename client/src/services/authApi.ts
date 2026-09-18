@@ -44,7 +44,7 @@ export async function loginWithGoogle(credential: string): Promise<TokenResponse
 }
 
 export async function linkGoogleAccount(credential: string): Promise<UserResponse> {
-  const { data } = await authApi.post<UserResponse>('/auth/google/link', { credential })
+  const { data } = await authApi.post<UserResponse>('/auth/me/google', { credential })
   return data
 }
 
