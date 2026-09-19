@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => ({
         ],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: false,
+        skipWaiting: true,
       }
     })
   ],

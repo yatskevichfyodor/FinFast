@@ -2,9 +2,9 @@ import { ref } from 'vue'
 import { registerSW } from 'virtual:pwa-register'
 
 const updateAvailable = ref(false)
-const isUpdating = ref(false)
-let updateSW: ((reloadPage?: boolean) => Promise<void>) | null = null
+
 let initialized = false
+let hasController = !!navigator.serviceWorker.controller
 
 export function initializePwaUpdate() {
   if (initialized || !('serviceWorker' in navigator)) {
@@ -12,27 +12,22 @@ export function initializePwaUpdate() {
   }
 
   initialized = true
-  updateSW = registerSW({
-    immediate: true,
-    onNeedRefresh() {
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hasController) {
       updateAvailable.value = true
     }
+
+    hasController = true
+  })
+
+  registerSW({
+    immediate: true
   })
 }
 
-export async function updatePwa() {
-  if (!updateSW || isUpdating.value) {
-    return
-  }
-
-  isUpdating.value = true
-
-  try {
-    await updateSW(true)
-    updateAvailable.value = false
-  } catch {
-    isUpdating.value = false
-  }
+export function updatePwa() {
+  window.location.reload()
 }
 
-export { isUpdating, updateAvailable }
+export { updateAvailable }

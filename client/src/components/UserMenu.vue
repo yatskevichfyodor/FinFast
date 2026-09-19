@@ -7,7 +7,7 @@ import ExportDialog from '@/components/ExportDialog.vue'
 import ImportDialog from '@/components/ImportDialog.vue'
 import LogoutConfirmationDialog from '@/components/LogoutConfirmationDialog.vue'
 import AccountDialog from '@/components/AccountDialog.vue'
-import { isUpdating, updateAvailable, updatePwa } from '@/services/pwaUpdate'
+import { updateAvailable, updatePwa } from '@/services/pwaUpdate'
 import { format } from 'date-fns/format'
 
 const props = defineProps<{ modelValue: boolean }>()
@@ -130,8 +130,6 @@ function handleBackdropClick(event: MouseEvent) {
                   color="error"
                   variant="tonal"
                   size="small"
-                  :loading="isUpdating"
-                  :disabled="isUpdating"
                   @click="updateApplication"
                 >
                   Обновить
