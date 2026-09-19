@@ -73,15 +73,9 @@ export const useExpenseStore = defineStore('expense', () => {
   }
 
   watch(() => authStore.userId, () => {
-    void loadExpenses()
-      .then(() => {
-        if (navigator.onLine && authStore.isAuthenticated && !authStore.isAnonymous) {
-          return refreshExpenses()
-        }
-      })
-      .catch(error => {
-        console.error('Failed to load expenses:', error)
-      })
+    void loadExpenses().catch(error => {
+      console.error('Failed to load expenses:', error)
+    })
   }, { immediate: true })
 
   let syncPromise: Promise<void> | null = null
