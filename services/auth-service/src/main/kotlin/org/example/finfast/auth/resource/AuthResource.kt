@@ -5,7 +5,7 @@ import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import org.example.finfast.auth.service.AuthService
-import org.example.finfast.auth.service.KeyRotationService
+import org.example.finfast.auth.service.RsaKeyProvider
 import org.example.finfast.auth.dto.GoogleIdTokenRequest
 import org.example.finfast.auth.dto.JwksResponse
 import org.example.finfast.auth.dto.LoginRequest
@@ -18,7 +18,7 @@ import org.example.finfast.auth.dto.RegisterRequest
 @Consumes(MediaType.APPLICATION_JSON)
 class AuthResource @Inject constructor(
     private val authService: AuthService,
-    private val keyRotationService: KeyRotationService
+    private val rsaKeyProvider: RsaKeyProvider
 ) {
     @POST
     @Path("/register")
@@ -47,8 +47,8 @@ class AuthResource @Inject constructor(
     @GET
     @Path("/.well-known/jwks.json")
     fun getJwks(): JwksResponse {
-        val keys = keyRotationService.getAllKeys()
-            .map { keyRotationService.convertToJwk(it) }
+        val keys = rsaKeyProvider.getAllKeys()
+            .map { rsaKeyProvider.convertToJwk(it) }
         return JwksResponse(keys)
     }
 }

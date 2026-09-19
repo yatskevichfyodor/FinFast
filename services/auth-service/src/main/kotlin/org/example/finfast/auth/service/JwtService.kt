@@ -16,16 +16,14 @@ import java.util.*
 
 @ApplicationScoped
 class JwtService(
-    private val keyProvider: JwtKeyProvider,
-    private val keyRotationService: KeyRotationService,
+    private val rsaKeyProvider: RsaKeyProvider,
     @ConfigProperty(name = "finfast.jwt.issuer") private val issuer: String,
     @ConfigProperty(name = "finfast.jwt.access-token-lifetime-seconds") private val accessTokenLifetimeSeconds: Long
 ) {
 
     fun createAccessToken(userId: UUID): String {
         val now = Instant.now()
-        val keyPair = keyProvider.keyPair
-        val keyId = keyProvider.currentKeyId
+        val activeKey = rsaKeyProvider.getActiveKey()
         
         val claims = JWTClaimsSet.Builder()
             .issuer(issuer)
@@ -35,9 +33,9 @@ class JwtService(
             .jwtID(UUID.randomUUID().toString())
             .build()
         
-        val header = JWSHeader.Builder(JWSAlgorithm.RS256).keyID(keyId).build()
+        val header = JWSHeader.Builder(JWSAlgorithm.RS256).keyID(activeKey.keyId).build()
         val signed = SignedJWT(header, claims)
-        signed.sign(RSASSASigner(keyPair.private))
+        signed.sign(RSASSASigner(activeKey.keyPair.private))
         return signed.serialize()
     }
 
@@ -46,7 +44,7 @@ class JwtService(
         val signed = SignedJWT.parse(token)
         val keyId = signed.header.keyID ?: throw WebApplicationException("Token missing key ID", 401)
 
-        val storedKey = keyRotationService.getKeyById(keyId)
+        val storedKey = rsaKeyProvider.getKeyById(keyId)
             ?: throw WebApplicationException("Unknown key ID: $keyId", 401)
         
         val verifier = RSASSAVerifier(storedKey.keyPair.public as RSAPublicKey)
