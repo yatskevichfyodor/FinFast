@@ -1,8 +1,6 @@
-package org.example.finfast.auth.config
+package org.example.finfast.auth.service
 
 import jakarta.enterprise.context.ApplicationScoped
-import jakarta.inject.Inject
-import org.example.finfast.auth.KeyRotationService
 import java.security.KeyPair
 
 @ApplicationScoped

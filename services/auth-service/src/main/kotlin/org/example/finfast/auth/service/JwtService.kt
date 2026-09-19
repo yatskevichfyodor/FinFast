@@ -1,4 +1,4 @@
-package org.example.finfast.auth
+package org.example.finfast.auth.service
 
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
@@ -10,7 +10,6 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.transaction.Transactional
 import jakarta.ws.rs.WebApplicationException
 import org.eclipse.microprofile.config.inject.ConfigProperty
-import org.example.finfast.auth.config.JwtKeyProvider
 import java.security.interfaces.RSAPublicKey
 import java.time.Instant
 import java.util.*

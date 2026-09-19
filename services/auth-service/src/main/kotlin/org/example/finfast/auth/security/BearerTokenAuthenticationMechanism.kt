@@ -10,7 +10,7 @@ import io.smallrye.mutiny.Uni
 import io.smallrye.mutiny.infrastructure.Infrastructure
 import io.vertx.ext.web.RoutingContext
 import jakarta.enterprise.context.ApplicationScoped
-import org.example.finfast.auth.JwtService
+import org.example.finfast.auth.service.JwtService
 import org.slf4j.LoggerFactory
 import java.security.Principal
 

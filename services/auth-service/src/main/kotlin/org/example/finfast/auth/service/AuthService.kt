@@ -5,8 +5,6 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.transaction.Transactional
 import jakarta.ws.rs.WebApplicationException
 import org.eclipse.microprofile.config.inject.ConfigProperty
-import org.example.finfast.auth.GoogleTokenVerifier
-import org.example.finfast.auth.JwtService
 import org.example.finfast.auth.dto.*
 import org.example.finfast.auth.entity.RefreshToken
 import org.example.finfast.auth.entity.User

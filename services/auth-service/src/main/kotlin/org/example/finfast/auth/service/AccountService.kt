@@ -5,7 +5,6 @@ import io.quarkus.elytron.security.common.BcryptUtil
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.transaction.Transactional
 import jakarta.ws.rs.WebApplicationException
-import org.example.finfast.auth.GoogleTokenVerifier
 import org.example.finfast.auth.dto.GoogleIdTokenRequest
 import org.example.finfast.auth.dto.SetPasswordRequest
 import org.example.finfast.auth.dto.UpdateProfileRequest

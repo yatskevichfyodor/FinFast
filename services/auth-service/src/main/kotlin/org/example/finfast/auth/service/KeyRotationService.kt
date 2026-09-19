@@ -1,11 +1,11 @@
-package org.example.finfast.auth
+package org.example.finfast.auth.service
 
 import io.quarkus.runtime.StartupEvent
 import io.quarkus.scheduler.Scheduled
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.event.Observes
-import jakarta.inject.Inject
 import org.eclipse.microprofile.config.inject.ConfigProperty
+import org.example.finfast.auth.dto.Jwk
 import org.example.finfast.auth.entity.RsaKey
 import org.example.finfast.auth.repository.RsaKeyRepository
 import org.slf4j.LoggerFactory
@@ -89,7 +89,7 @@ class KeyRotationService(
             logger.info("Rotation interval has passed, performing rotation")
             rotateKeys()
         } else {
-            val minutesUntilRotation = java.time.Duration.between(now, rotationThreshold).toMinutes()
+            val minutesUntilRotation = Duration.between(now, rotationThreshold).toMinutes()
             logger.info("Next rotation in $minutesUntilRotation minutes")
         }
     }
@@ -140,8 +140,8 @@ class KeyRotationService(
         logger.info("Key rotation completed. New active key kid: $newKeyId, total keys: $totalKeys")
     }
 
-    fun cleanupExpiredKeys() {
-        val retentionThreshold = Instant.now().minus(java.time.Duration.ofMinutes(keyTtlMinutes))
+    private fun cleanupExpiredKeys() {
+        val retentionThreshold = Instant.now().minus(Duration.ofMinutes(keyTtlMinutes))
         val expiredKeys = rsaKeyRepository.findInactiveKeysOlderThan(retentionThreshold)
         
         expiredKeys.forEach { key ->
@@ -206,9 +206,9 @@ class KeyRotationService(
         return keyGen.generateKeyPair()
     }
     
-    fun convertToJwk(storedKey: StoredKey): org.example.finfast.auth.dto.Jwk {
+    fun convertToJwk(storedKey: StoredKey): Jwk {
         val publicKey = storedKey.keyPair.public as RSAPublicKey
-        return org.example.finfast.auth.dto.Jwk(
+        return Jwk(
             kty = "RSA",
             kid = storedKey.keyId,
             use = "sig",

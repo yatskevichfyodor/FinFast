@@ -5,7 +5,7 @@ import jakarta.ws.rs.*
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import org.example.finfast.auth.service.AuthService
-import org.example.finfast.auth.KeyRotationService
+import org.example.finfast.auth.service.KeyRotationService
 import org.example.finfast.auth.dto.GoogleIdTokenRequest
 import org.example.finfast.auth.dto.JwksResponse
 import org.example.finfast.auth.dto.LoginRequest
