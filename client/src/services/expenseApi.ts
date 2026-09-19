@@ -36,6 +36,29 @@ export interface SyncExpensesRequest {
   delete?: string[]
 }
 
+function normalizeInstant(value: string | undefined): string | undefined {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value
+  }
+
+  return `${value}T00:00:00.000Z`
+}
+
+function normalizeCreateExpense(expense: CreateExpensePayload): CreateExpensePayload {
+  return {
+    ...expense,
+    createdAt: normalizeInstant(expense.createdAt)!,
+    paymentDate: normalizeInstant(expense.paymentDate)
+  }
+}
+
+function normalizeUpdateExpense<T extends UpdateExpenseRequest>(expense: T): T {
+  return {
+    ...expense,
+    paymentDate: normalizeInstant(expense.paymentDate)
+  }
+}
+
 export async function getExpense(id: string): Promise<ExpenseApiBody | undefined> {
   try {
     const { data } = await expenseApi.get<ExpenseApiBody>(`/expenses/${id}`)
@@ -74,7 +97,7 @@ export async function getExpenses(): Promise<ExpenseApiBody[]> {
 }
 
 export async function createExpense(expense: CreateExpensePayload): Promise<void> {
-  await expenseApi.post('/expenses', expense)
+  await expenseApi.post('/expenses', normalizeCreateExpense(expense))
 }
 
 export async function createExpensesBatch(expenses: CreateExpensePayload[]): Promise<void> {
@@ -82,15 +105,19 @@ export async function createExpensesBatch(expenses: CreateExpensePayload[]): Pro
     return
   }
 
-  await expenseApi.post('/expenses/batch', expenses)
+  await expenseApi.post('/expenses/batch', expenses.map(normalizeCreateExpense))
 }
 
 export async function syncExpenses(request: SyncExpensesRequest): Promise<void> {
-  await expenseApi.post('/expenses/sync', request)
+  await expenseApi.post('/expenses/sync', {
+    ...request,
+    create: request.create?.map(normalizeCreateExpense),
+    update: request.update?.map(normalizeUpdateExpense)
+  })
 }
 
 export async function updateExpense(id: string, updates: UpdateExpenseRequest): Promise<void> {
-  await expenseApi.patch(`/expenses/${id}`, updates)
+  await expenseApi.patch(`/expenses/${id}`, normalizeUpdateExpense(updates))
 }
 
 export async function updateExpensesBatch(
@@ -100,7 +127,7 @@ export async function updateExpensesBatch(
     return
   }
 
-  await expenseApi.patch('/expenses/batch', updates)
+  await expenseApi.patch('/expenses/batch', updates.map(normalizeUpdateExpense))
 }
 
 export async function deleteExpense(id: string): Promise<void> {
