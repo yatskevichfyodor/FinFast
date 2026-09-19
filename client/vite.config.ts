@@ -50,18 +50,6 @@ export default defineConfig(({ mode }) => ({
         globPatterns: [
           '**/*.{js,css,html,ico,png,webp,svg}'
         ],
-        runtimeCaching: [
-          {
-            urlPattern: /^https?.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'offline-cache',
-              expiration: {
-                maxEntries: 200,
-              },
-            },
-          },
-        ],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
