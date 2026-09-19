@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import AppNavigation from '@/components/AppNavigation.vue'
 import UserMenu from '@/components/UserMenu.vue'
+import { updateAvailable } from '@/services/pwaUpdate'
 
 const route = useRoute()
 const showNavigation = computed(() => route.meta.requiresAuth === true)
@@ -15,10 +16,22 @@ const showUserMenu = ref(false)
     <template v-if="showNavigation">
       <AppNavigation />
       <div class="menu-button-container">
+        <v-badge v-if="updateAvailable" dot color="error" location="top right">
+          <v-btn
+            icon="mdi-menu"
+            variant="text"
+            size="x-small"
+            class="menu-button"
+            title="Меню пользователя"
+            aria-label="Меню пользователя"
+            @click="showUserMenu = !showUserMenu"
+          />
+        </v-badge>
         <v-btn
+          v-else
           icon="mdi-menu"
           variant="text"
-          size="large"
+          size="x-small"
           class="menu-button"
           title="Меню пользователя"
           aria-label="Меню пользователя"
@@ -35,7 +48,7 @@ const showUserMenu = ref(false)
 .menu-button-container {
   position: fixed;
   right: 16px;
-  top: 8px;
+  top: 16px;
   z-index: 2001;
 }
 

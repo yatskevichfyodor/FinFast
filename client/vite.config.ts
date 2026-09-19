@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
     ...(mode === 'development' ? [vueDevTools()] : []),
     vuetify({ autoImport: true }),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
 
       includeAssets: [
         'favicon.png',
@@ -64,7 +64,7 @@ export default defineConfig(({ mode }) => ({
         ],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: true,
+        skipWaiting: false,
       }
     })
   ],

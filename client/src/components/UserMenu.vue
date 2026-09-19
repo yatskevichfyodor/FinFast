@@ -7,6 +7,7 @@ import ExportDialog from '@/components/ExportDialog.vue'
 import ImportDialog from '@/components/ImportDialog.vue'
 import LogoutConfirmationDialog from '@/components/LogoutConfirmationDialog.vue'
 import AccountDialog from '@/components/AccountDialog.vue'
+import { isUpdating, updateAvailable, updatePwa } from '@/services/pwaUpdate'
 import { format } from 'date-fns/format'
 
 const props = defineProps<{ modelValue: boolean }>()
@@ -89,6 +90,10 @@ function openAccountDialog() {
   showAccountDialog.value = true
 }
 
+async function updateApplication() {
+  await updatePwa()
+}
+
 function handleBackdropClick(event: MouseEvent) {
   if (event.target === event.currentTarget) {
     closeMenu()
@@ -116,6 +121,24 @@ function handleBackdropClick(event: MouseEvent) {
             </div>
 
             <div class="menu-content">
+              <div v-if="updateAvailable" class="update-menu-item">
+                <div class="update-menu-label">
+                  <v-icon class="menu-icon update-menu-icon">mdi-update</v-icon>
+                  <span>Доступна новая версия</span>
+                </div>
+                <v-btn
+                  color="error"
+                  variant="tonal"
+                  size="small"
+                  :loading="isUpdating"
+                  :disabled="isUpdating"
+                  @click="updateApplication"
+                >
+                  Обновить
+                </v-btn>
+                <v-divider class="my-2" />
+              </div>
+
               <template v-if="authStore.isAuthenticated && !authStore.isAnonymous">
                 <v-btn
                   variant="text"
@@ -281,6 +304,27 @@ function handleBackdropClick(event: MouseEvent) {
 
 .menu-icon-export {
   color: #2e7d32;
+}
+
+.update-menu-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0;
+  color: #c62828;
+}
+
+.update-menu-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 32px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.update-menu-icon {
+  color: #c62828;
 }
 
 .menu-icon-login {
