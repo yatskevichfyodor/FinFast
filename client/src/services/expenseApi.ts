@@ -37,11 +37,27 @@ export interface SyncExpensesRequest {
 }
 
 function normalizeInstant(value: string | undefined): string | undefined {
-  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  if (!value) {
     return value
   }
 
-  return `${value}T00:00:00.000Z`
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return `${value}T00:00:00.000Z`
+  }
+
+  const parsedValue = new Date(value)
+  if (!Number.isNaN(parsedValue.getTime())) {
+    return parsedValue.toISOString()
+  }
+
+  const legacyDateValue = value
+    .replace(/T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/, '')
+    .replace(/\s+\([^)]*\)$/, '')
+  const parsedLegacyValue = new Date(legacyDateValue)
+
+  return Number.isNaN(parsedLegacyValue.getTime())
+    ? value
+    : parsedLegacyValue.toISOString()
 }
 
 function normalizeCreateExpense(expense: CreateExpensePayload): CreateExpensePayload {
