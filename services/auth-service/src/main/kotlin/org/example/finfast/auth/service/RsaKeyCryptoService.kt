@@ -39,7 +39,7 @@ class RsaKeyCryptoService {
         )
     }
 
-    fun convertToJwk(storedKey: RsaKeyProvider.StoredKey): Jwk {
+    fun convertToJwk(storedKey: StoredKey): Jwk {
         val publicKey = storedKey.keyPair.public as RSAPublicKey
         return Jwk(
             kty = "RSA",

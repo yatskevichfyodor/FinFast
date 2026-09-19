@@ -47,8 +47,6 @@ class AuthResource @Inject constructor(
     @GET
     @Path("/.well-known/jwks.json")
     fun getJwks(): JwksResponse {
-        val keys = rsaKeyProvider.getAllKeys()
-            .map { rsaKeyProvider.convertToJwk(it) }
-        return JwksResponse(keys)
+        return JwksResponse(rsaKeyProvider.getJwks())
     }
 }

@@ -30,9 +30,9 @@ class RsaKeyProvider(
         return rsaKeyCryptoService.convertToStoredKey(dbKey)
     }
 
+    fun getJwks(): List<Jwk> =
+        getAllKeys().map { rsaKeyCryptoService.convertToJwk(it) }
+
     fun getAllKeys(): List<StoredKey> =
         rsaKeyRepository.findAll().map { rsaKeyCryptoService.convertToStoredKey(it) }
-
-    fun convertToJwk(storedKey: StoredKey): Jwk =
-        rsaKeyCryptoService.convertToJwk(storedKey)
 }
