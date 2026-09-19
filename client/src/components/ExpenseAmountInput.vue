@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue'
 const props = defineProps<{
   expenseId?: string,
   amount?: number,
-  showKeypad?: boolean,
+  isInputMode?: boolean,
   showHeader?: boolean
 }>()
 
@@ -17,7 +17,7 @@ const emit = defineEmits<{
 const amount = ref('')
 
 const isEditing = computed(() => props.expenseId !== undefined)
-const showKeypad = computed(() => props.showKeypad !== false)
+const isInputMode = computed(() => props.isInputMode !== false)
 const showHeader = computed(() => props.showHeader !== false)
 
 const formattedAmount = computed(() => {
@@ -145,14 +145,16 @@ watch(
           </span>
         </div>
 
-        <div class="summary-label">
-          Введите сумму расхода
-        </div>
+        <template v-if="isInputMode">
+          <div class="summary-label">
+            Введите сумму расхода
+          </div>
+        </template>
       </v-card-text>
     </v-card>
 
     <v-card
-      v-if="showKeypad"
+      v-if="isInputMode"
       rounded="xl"
       elevation="0"
       class="keypad-card"

@@ -1,275 +1,283 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
-import CategoryPicker from '@/components/CategoryPicker.vue'
-import ExpenseAmountInput from '@/components/ExpenseAmountInput.vue'
+import CategoryPicker from "@/components/CategoryPicker.vue";
+import ExpenseAmountInput from "@/components/ExpenseAmountInput.vue";
+import { useExpenseStore, type ExpensePayload } from "@/stores/expense";
 import {
-  useExpenseStore,
-  type ExpensePayload
-} from '@/stores/expense'
-import { convertDashFormatToDotFormat, convertDotFormatToDashFormat } from '@/utils/dateHelpers'
+  convertDashFormatToDotFormat,
+  convertDotFormatToDashFormat,
+} from "@/utils/dateHelpers";
 
-const router = useRouter()
-const route = useRoute()
+const router = useRouter();
+const route = useRoute();
 
 const emit = defineEmits<{
-  saved: []
-  cancel: []
-}>()
+  saved: [];
+  cancel: [];
+}>();
 
-const expenseStore = useExpenseStore()
+const expenseStore = useExpenseStore();
 
 // Breakpoint for mobile/desktop mode
-const MOBILE_BREAKPOINT = 960
+const MOBILE_BREAKPOINT = 960;
 
 // Responsive state
-const isMobile = ref(true)
-const windowWidth = ref(window.innerWidth)
+const isMobile = ref(true);
+const windowWidth = ref(window.innerWidth);
 
 function updateScreenWidth() {
-  windowWidth.value = window.innerWidth
-  isMobile.value = windowWidth.value <= MOBILE_BREAKPOINT
+  windowWidth.value = window.innerWidth;
+  isMobile.value = windowWidth.value <= MOBILE_BREAKPOINT;
 }
 
 onMounted(() => {
-  updateScreenWidth()
-  window.addEventListener('resize', updateScreenWidth)
-})
+  updateScreenWidth();
+  window.addEventListener("resize", updateScreenWidth);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('resize', updateScreenWidth)
-})
+  window.removeEventListener("resize", updateScreenWidth);
+});
 
 // Form state
-const isEditing = computed(() => route.query.id !== undefined)
+const isEditing = computed(() => route.query.id !== undefined);
 const editingExpenseId = computed(() => {
-  const expenseId = route.query.id
-  return typeof expenseId === 'string' ? expenseId : undefined
-})
+  const expenseId = route.query.id;
+  return typeof expenseId === "string" ? expenseId : undefined;
+});
 
-const description = ref('')
-const selectedCategoryId = ref<string | null>(null)
-const paymentDate = ref<string | null>(null)
-const currentAmount = ref<number | null>(null)
-const canSubmitAmount = ref(false)
+const description = ref("");
+const selectedCategoryId = ref<string | null>(null);
+const paymentDate = ref<string | null>(null);
+const currentAmount = ref<number | null>(null);
+const canSubmitAmount = ref(false);
 
 // Mobile step state
-const mobileStep = ref(1)
-const createdExpenseId = ref<string | null>(null)
+const mobileStep = ref(1);
+const createdExpenseId = ref<string | null>(null);
 
 // Initial values for comparison (mobile step 2)
-const initialCategoryId = ref<string | null>(null)
-const initialDescription = ref<string>('')
-const initialPaymentDate = ref<string | null>(null)
+const initialCategoryId = ref<string | null>(null);
+const initialDescription = ref<string>("");
+const initialPaymentDate = ref<string | null>(null);
 
 const initialAmount = computed(() => {
   // When editing, load from existing expense instead of query parameter
   if (isEditing.value && editingExpenseId.value) {
-    const expense = expenseStore.getExpenseById(editingExpenseId.value)
-    return expense?.amount
+    const expense = expenseStore.getExpenseById(editingExpenseId.value);
+    return expense?.amount;
   }
-  
+
   // For new expenses, load from query parameter
-  const value = route.query.amount
-  return value !== undefined ? Number(value) : undefined
-})
+  const value = route.query.amount;
+  return value !== undefined ? Number(value) : undefined;
+});
 
 const getButtonText = computed(() => {
   if (isEditing.value) {
-    return 'Сохранить изменения'
+    return "Сохранить изменения";
   }
-  
+
   if (isMobile.value) {
-    return mobileStep.value === 1 ? 'Ввод' : 'Готово'
+    return mobileStep.value === 1 ? "Ввод" : "Готово";
   }
-  
-  return 'Готово'
-})
+
+  return "Готово";
+});
 
 function handleAmountChange(amountValue: number, valid: boolean) {
-  currentAmount.value = amountValue
-  canSubmitAmount.value = valid
+  currentAmount.value = amountValue;
+  canSubmitAmount.value = valid;
 }
 
 function formatPaymentDate(dateValue: string | null): string | undefined {
   if (!dateValue) {
-    return undefined
+    return undefined;
   }
-  
-  if (typeof dateValue === 'string') {
-    return convertDotFormatToDashFormat(dateValue)
+
+  if (typeof dateValue === "string") {
+    return convertDotFormatToDashFormat(dateValue);
   } else {
     // Handle if v-date-input returns a Date object
-    const dateObj = dateValue as any
+    const dateObj = dateValue as any;
     if (dateObj instanceof Date) {
-      const year = dateObj.getFullYear()
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0')
-      const day = String(dateObj.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const day = String(dateObj.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
     }
   }
-  
-  return undefined
+
+  return undefined;
 }
 
 // Mobile step 1: Create expense with amount only
 function handleMobileStep1Submit() {
   if (!canSubmitAmount.value || currentAmount.value === null) {
-    return
+    return;
   }
 
-  const amountValue = currentAmount.value
+  const amountValue = currentAmount.value;
   if (amountValue <= 0) {
-    return
+    return;
   }
 
-  const paymentDateFormatted = formatPaymentDate(paymentDate.value)
+  const paymentDateFormatted = formatPaymentDate(paymentDate.value);
 
   const payload: ExpensePayload = {
     amount: amountValue,
     categoryId: selectedCategoryId.value || undefined,
     description: description.value || undefined,
-    paymentDate: paymentDateFormatted
-  }
+    paymentDate: paymentDateFormatted,
+  };
 
-  const newExpenseId = expenseStore.addExpense(payload)
-  createdExpenseId.value = newExpenseId
+  const newExpenseId = expenseStore.addExpense(payload);
+  createdExpenseId.value = newExpenseId;
 
   // Store initial values for step 2 comparison
-  initialCategoryId.value = selectedCategoryId.value
-  initialDescription.value = description.value
-  initialPaymentDate.value = paymentDate.value
+  initialCategoryId.value = selectedCategoryId.value;
+  initialDescription.value = description.value;
+  initialPaymentDate.value = paymentDate.value;
 
   // Move to step 2
-  mobileStep.value = 2
+  mobileStep.value = 2;
 }
 
 // Mobile step 2: Update expense if values changed
 function handleMobileStep2Submit() {
   if (!createdExpenseId.value) {
-    return
+    return;
   }
 
-  const hasChanges = 
+  const hasChanges =
     selectedCategoryId.value !== initialCategoryId.value ||
     description.value !== initialDescription.value ||
-    paymentDate.value !== initialPaymentDate.value
+    paymentDate.value !== initialPaymentDate.value;
 
   if (hasChanges) {
-    const paymentDateFormatted = formatPaymentDate(paymentDate.value)
+    const paymentDateFormatted = formatPaymentDate(paymentDate.value);
 
     const updatePayload: ExpensePayload = {
       id: createdExpenseId.value,
       amount: currentAmount.value || 0,
-      categoryId: selectedCategoryId.value !== null ? selectedCategoryId.value : undefined,
+      categoryId:
+        selectedCategoryId.value !== null
+          ? selectedCategoryId.value
+          : undefined,
       description: description.value || undefined,
-      paymentDate: paymentDateFormatted
-    }
-    expenseStore.updateExpense(updatePayload)
+      paymentDate: paymentDateFormatted,
+    };
+    expenseStore.updateExpense(updatePayload);
   }
 
   router.push({
-    name: 'expense-history'
-  })
+    name: "expense-history",
+  });
 }
 
 // Desktop single-step: Create expense with all data
 function handleDesktopSubmit() {
   if (!canSubmitAmount.value || currentAmount.value === null) {
-    return
+    return;
   }
 
-  const amountValue = currentAmount.value
+  const amountValue = currentAmount.value;
   if (amountValue <= 0) {
-    return
+    return;
   }
 
-  const paymentDateFormatted = formatPaymentDate(paymentDate.value)
+  const paymentDateFormatted = formatPaymentDate(paymentDate.value);
 
   if (isEditing.value) {
-    const expenseId = editingExpenseId.value
+    const expenseId = editingExpenseId.value;
     if (!expenseId) {
-      return
+      return;
     }
 
-    const expense = expenseStore.getExpenseById(expenseId)
+    const expense = expenseStore.getExpenseById(expenseId);
 
     if (expense) {
       const updatePayload: ExpensePayload = {
         id: expenseId,
         amount: amountValue,
-        categoryId: selectedCategoryId.value !== null ? selectedCategoryId.value : expense.categoryId,
+        categoryId:
+          selectedCategoryId.value !== null
+            ? selectedCategoryId.value
+            : expense.categoryId,
         description: description.value || undefined,
-        paymentDate: paymentDateFormatted
-      }
-      expenseStore.updateExpense(updatePayload)
+        paymentDate: paymentDateFormatted,
+      };
+      expenseStore.updateExpense(updatePayload);
     }
 
     router.push({
-      name: 'expense-history'
-    })
+      name: "expense-history",
+    });
   } else {
     const payload: ExpensePayload = {
       amount: amountValue,
       categoryId: selectedCategoryId.value || undefined,
       description: description.value || undefined,
-      paymentDate: paymentDateFormatted
-    }
-    expenseStore.addExpense(payload)
+      paymentDate: paymentDateFormatted,
+    };
+    expenseStore.addExpense(payload);
     router.push({
-      name: 'expense-history'
-    })
+      name: "expense-history",
+    });
   }
 }
 
 function handleSubmit() {
   if (isEditing.value) {
-    handleDesktopSubmit()
+    handleDesktopSubmit();
   } else if (isMobile.value) {
     if (mobileStep.value === 1) {
-      handleMobileStep1Submit()
+      handleMobileStep1Submit();
     } else {
-      handleMobileStep2Submit()
+      handleMobileStep2Submit();
     }
   } else {
-    handleDesktopSubmit()
+    handleDesktopSubmit();
   }
 }
 
 function handleCancel() {
-  emit('cancel')
+  emit("cancel");
 }
 
 const watchCategoryId = () => {
   if (route.query.categoryId !== undefined) {
-    selectedCategoryId.value = route.query.categoryId as string
+    selectedCategoryId.value = route.query.categoryId as string;
   }
-}
+};
 
 const loadExistingExpense = () => {
-  const expenseId = editingExpenseId.value
+  const expenseId = editingExpenseId.value;
   if (isEditing.value && expenseId) {
-    const expense = expenseStore.getExpenseById(expenseId)
+    const expense = expenseStore.getExpenseById(expenseId);
     if (expense) {
-      initialDescription.value = expense.description || ''
+      initialDescription.value = expense.description || "";
       // Convert YYYY-MM-DD to YYYY.MM.DD format for v-date-input
-      initialPaymentDate.value = expense.paymentDate ? convertDashFormatToDotFormat(expense.paymentDate) : null
-      description.value = initialDescription.value
-      paymentDate.value = initialPaymentDate.value
-      selectedCategoryId.value = expense.categoryId || null
+      initialPaymentDate.value = expense.paymentDate
+        ? convertDashFormatToDotFormat(expense.paymentDate)
+        : null;
+      description.value = initialDescription.value;
+      paymentDate.value = initialPaymentDate.value;
+      selectedCategoryId.value = expense.categoryId || null;
     }
   } else if (route.query.paymentDate !== undefined) {
     // Load payment date from query parameter and convert to YYYY.MM.DD format
-    const queryDate = route.query.paymentDate as string
-    const convertedDate = convertDashFormatToDotFormat(queryDate)
-    paymentDate.value = convertedDate
-    initialPaymentDate.value = convertedDate
+    const queryDate = route.query.paymentDate as string;
+    const convertedDate = convertDashFormatToDotFormat(queryDate);
+    paymentDate.value = convertedDate;
+    initialPaymentDate.value = convertedDate;
   }
-}
+};
 
-loadExistingExpense()
-watchCategoryId()
+loadExistingExpense();
+watchCategoryId();
 </script>
 
 <template>
@@ -280,9 +288,7 @@ watchCategoryId()
         <div v-if="!isMobile && !isEditing" class="desktop-wrapper">
           <!-- Centered header -->
           <div class="desktop-header">
-            <div class="text-h5 font-weight-bold text-center">
-              Новый расход
-            </div>
+            <div class="text-h5 font-weight-bold text-center">Новый расход</div>
             <div class="text-body-2 text-medium-emphasis text-center mt-1">
               Сколько вы потратили?
             </div>
@@ -295,7 +301,7 @@ watchCategoryId()
                 :expense-id="editingExpenseId"
                 :amount="initialAmount"
                 :show-header="false"
-                :show-keypad="true"
+                :isInputMode="true"
                 @submit="handleSubmit"
                 @cancel="handleCancel"
                 @amount-change="handleAmountChange"
@@ -304,11 +310,7 @@ watchCategoryId()
 
             <!-- Desktop: Show additional fields (right side) -->
             <div class="additional-section">
-              <v-card
-                rounded="xl"
-                elevation="0"
-                class="additional-fields-card"
-              >
+              <v-card rounded="xl" elevation="0" class="additional-fields-card">
                 <v-card-text class="pa-4">
                   <div class="text-subtitle-1 font-weight-medium mb-4">
                     Дополнительно
@@ -331,9 +333,9 @@ watchCategoryId()
                       prepend-inner-icon="mdi-text"
                     >
                       <template #append-inner>
-                        <v-icon 
-                          v-if="!description" 
-                          color="grey-lighten-1" 
+                        <v-icon
+                          v-if="!description"
+                          color="grey-lighten-1"
                           size="20"
                         >
                           mdi-pencil-outline
@@ -371,7 +373,7 @@ watchCategoryId()
               :expense-id="editingExpenseId"
               :amount="initialAmount"
               :show-header="true"
-              :show-keypad="isMobile ? mobileStep === 1 : true"
+              :isInputMode="isMobile ? mobileStep === 1 : true"
               @submit="handleSubmit"
               @cancel="handleCancel"
               @amount-change="handleAmountChange"
@@ -379,46 +381,21 @@ watchCategoryId()
           </div>
 
           <!-- Mobile Step 2: Show additional fields after creating expense -->
-          <div v-if="isMobile && mobileStep === 2 && !isEditing" class="additional-section">
-            <v-card
-              rounded="xl"
-              elevation="0"
-              class="additional-fields-card"
-            >
+          <div
+            v-if="isMobile && mobileStep === 2 && !isEditing"
+            class="additional-section"
+          >
+            <v-card rounded="xl" elevation="0" class="additional-fields-card">
               <v-card-text class="pa-4">
-                <div class="text-subtitle-1 font-weight-medium mb-4">
+                <div class="text-subtitle-1 font-weight-medium mb-2">
                   Дополнительно
                 </div>
 
-                <CategoryPicker
-                  v-model:selectedCategoryId="selectedCategoryId"
-                />
+                <div class="d-flex flex-column ga-4">
+                  <CategoryPicker
+                    v-model:selectedCategoryId="selectedCategoryId"
+                  />
 
-                <div class="field-group mt-4">
-                  <v-text-field
-                    v-model="description"
-                    label="Описание"
-                    placeholder="Например: продукты, обед, бензин"
-                    variant="outlined"
-                    density="comfortable"
-                    clearable
-                    class="custom-text-field"
-                    color="primary"
-                    prepend-inner-icon="mdi-text"
-                  >
-                    <template #append-inner>
-                      <v-icon 
-                        v-if="!description" 
-                        color="grey-lighten-1" 
-                        size="20"
-                      >
-                        mdi-pencil-outline
-                      </v-icon>
-                    </template>
-                  </v-text-field>
-                </div>
-
-                <div class="field-group">
                   <v-date-input
                     v-model="paymentDate"
                     label="Дата платежа"
@@ -426,12 +403,34 @@ watchCategoryId()
                     density="comfortable"
                     clearable
                     hide-actions
+                    hide-details
                     input-format="yyyy.mm.dd"
-                    persistent-hint
                     class="custom-text-field"
                     color="primary"
                     prepend-icon="mdi-calendar"
                   />
+
+                  <v-text-field
+                    v-model="description"
+                    label="Описание"
+                    placeholder="Например: продукты, обед, бензин"
+                    variant="outlined"
+                    density="comfortable"
+                    clearable
+                    class="custom-text-field"
+                    color="primary"
+                    prepend-inner-icon="mdi-text"
+                  >
+                    <template #append-inner>
+                      <v-icon
+                        v-if="!description"
+                        color="grey-lighten-1"
+                        size="20"
+                      >
+                        mdi-pencil-outline
+                      </v-icon>
+                    </template>
+                  </v-text-field>
                 </div>
               </v-card-text>
             </v-card>
@@ -439,11 +438,7 @@ watchCategoryId()
 
           <!-- Editing mode: Show additional fields on both mobile and desktop -->
           <div v-if="isEditing" class="additional-section">
-            <v-card
-              rounded="xl"
-              elevation="0"
-              class="additional-fields-card"
-            >
+            <v-card rounded="xl" elevation="0" class="additional-fields-card">
               <v-card-text class="pa-4">
                 <div class="text-subtitle-1 font-weight-medium mb-4">
                   Дополнительно
@@ -466,9 +461,9 @@ watchCategoryId()
                     prepend-inner-icon="mdi-text"
                   >
                     <template #append-inner>
-                      <v-icon 
-                        v-if="!description" 
-                        color="grey-lighten-1" 
+                      <v-icon
+                        v-if="!description"
+                        color="grey-lighten-1"
                         size="20"
                       >
                         mdi-pencil-outline
@@ -499,7 +494,10 @@ watchCategoryId()
       </div>
 
       <div class="fixed-bottom-panel">
-        <v-container class="pa-0" :max-width="!isMobile && !isEditing ? '1200' : undefined">
+        <v-container
+          class="pa-0"
+          :max-width="!isMobile && !isEditing ? '1200' : undefined"
+        >
           <div class="button-container">
             <v-btn
               block
@@ -548,7 +546,11 @@ watchCategoryId()
   right: 0;
   bottom: 56px;
   left: 0;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.8) 100%
+  );
   backdrop-filter: blur(10px);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   padding: 16px 0;
