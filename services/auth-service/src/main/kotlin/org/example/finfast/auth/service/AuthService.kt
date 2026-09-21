@@ -72,7 +72,7 @@ class AuthService(
 
         old.revokedAt = Instant.now() // todo: delete too old tokens
         refreshTokenRepository.save(old)
-        return issueTokens(userRepository.findById(old.userId).orElseThrow())
+        return issueTokens(userRepository.findByIdOptional(old.userId).orElseThrow())
     }
 
     @Transactional

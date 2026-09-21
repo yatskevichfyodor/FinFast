@@ -32,6 +32,7 @@ dependencies {
     implementation("io.quarkus:quarkus-rest")
     implementation("io.quarkus:quarkus-rest-jackson")
     implementation("io.quarkus:quarkus-hibernate-orm")
+    implementation("io.quarkus:quarkus-hibernate-orm-panache-kotlin")
     implementation("io.quarkus:quarkus-flyway")
     implementation("io.quarkus:quarkus-config-yaml")
     implementation("io.quarkus:quarkus-jdbc-postgresql")

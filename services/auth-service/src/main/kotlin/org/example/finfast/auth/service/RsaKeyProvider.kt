@@ -2,7 +2,6 @@ package org.example.finfast.auth.service
 
 import jakarta.enterprise.context.ApplicationScoped
 import org.example.finfast.auth.dto.Jwk
-import org.example.finfast.auth.entity.RsaKey
 import org.example.finfast.auth.repository.RsaKeyRepository
 import java.security.KeyPair
 import java.time.Instant
@@ -34,5 +33,5 @@ class RsaKeyProvider(
         getAllKeys().map { rsaKeyCryptoService.convertToJwk(it) }
 
     fun getAllKeys(): List<StoredKey> =
-        rsaKeyRepository.findAll().map { rsaKeyCryptoService.convertToStoredKey(it) }
+        rsaKeyRepository.findAllKeys().map { rsaKeyCryptoService.convertToStoredKey(it) }
 }

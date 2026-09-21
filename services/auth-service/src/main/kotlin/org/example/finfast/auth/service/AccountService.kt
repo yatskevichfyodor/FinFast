@@ -25,7 +25,7 @@ class AccountService(
 ) {
     @Transactional
     fun currentUser(userId: UUID): UserResponse {
-        val user = userRepository.findById(userId).orElseThrow {
+        val user = userRepository.findByIdOptional(userId).orElseThrow {
             IllegalArgumentException("User not found")
         }
         return UserResponse.fromUser(user)
@@ -34,7 +34,7 @@ class AccountService(
     @Transactional
     fun linkGoogleAccount(userId: UUID, request: GoogleIdTokenRequest): UserResponse {
         val identity = googleTokenVerifier.verify(request.credential)
-        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+        val user = userRepository.findByIdOptional(userId).orElseThrow { IllegalArgumentException("User not found") }
         val linkedUser = userRepository.findByGoogleSubject(identity.subject)
         if (linkedUser != null && linkedUser.id != user.id) {
             throw WebApplicationException("Этот аккаунт Google уже привязан к другому пользователю", 409)
@@ -47,7 +47,7 @@ class AccountService(
 
     @Transactional
     fun unlinkGoogleAccount(userId: UUID): UserResponse {
-        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+        val user = userRepository.findByIdOptional(userId).orElseThrow { IllegalArgumentException("User not found") }
         require(user.passwordHash != null) { "Нельзя отвязать Google: задайте пароль для аккаунта" }
         user.googleSubject = null
         user.googleEmail = null
@@ -58,7 +58,7 @@ class AccountService(
     fun updateProfile(userId: UUID, request: UpdateProfileRequest): UserResponse {
         val username = request.username.trim()
         require(username.isNotBlank()) { "Имя пользователя не должно быть пустым" }
-        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+        val user = userRepository.findByIdOptional(userId).orElseThrow { IllegalArgumentException("User not found") }
         val existingUser = userRepository.findByUsername(username)
         require(existingUser == null || existingUser.id == user.id) { "Это имя пользователя уже занято" }
         user.username = username
@@ -68,14 +68,14 @@ class AccountService(
     @Transactional
     fun setPassword(userId: UUID, request: SetPasswordRequest): UserResponse {
         require(request.password.length >= 8) { "Пароль должен содержать не менее 8 символов" }
-        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+        val user = userRepository.findByIdOptional(userId).orElseThrow { IllegalArgumentException("User not found") }
         user.passwordHash = BcryptUtil.bcryptHash(request.password)
         return UserResponse.fromUser(user)
     }
 
     @Transactional
     fun deleteAccount(userId: UUID) {
-        val user = userRepository.findById(userId).orElseThrow { IllegalArgumentException("User not found") }
+        val user = userRepository.findByIdOptional(userId).orElseThrow { IllegalArgumentException("User not found") }
 
         val eventPayload = mapOf(
             "eventId" to UUID.randomUUID(),

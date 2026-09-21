@@ -1,29 +1,18 @@
 package org.example.finfast.auth.repository
 
 import jakarta.enterprise.context.ApplicationScoped
-import jakarta.inject.Inject
-import jakarta.persistence.EntityManager
-import jakarta.transaction.Transactional
+import io.quarkus.hibernate.orm.panache.kotlin.PanacheRepositoryBase
 import org.example.finfast.auth.entity.RefreshToken
+import java.util.UUID
 
 @ApplicationScoped
-class RefreshTokenRepository @Inject constructor(private val em: EntityManager) {
-    fun findByTokenHash(tokenHash: String): RefreshToken? {
-        val q = em.createQuery("SELECT r FROM RefreshToken r WHERE r.tokenHash = :h", RefreshToken::class.java)
-        q.setParameter("h", tokenHash)
-        return q.resultList.firstOrNull()
-    }
+class RefreshTokenRepository : PanacheRepositoryBase<RefreshToken, UUID> {
+    fun findByTokenHash(tokenHash: String): RefreshToken? = find("tokenHash", tokenHash).firstResult()
 
-    @Transactional
     fun save(token: RefreshToken): RefreshToken {
-        em.persist(token)
+        persist(token)
         return token
     }
 
-    @Transactional
-    fun deleteAllByUserId(userId: java.util.UUID) {
-        em.createQuery("DELETE FROM RefreshToken r WHERE r.userId = :userId")
-            .setParameter("userId", userId)
-            .executeUpdate()
-    }
+    fun deleteAllByUserId(userId: UUID) = delete("userId", userId)
 }

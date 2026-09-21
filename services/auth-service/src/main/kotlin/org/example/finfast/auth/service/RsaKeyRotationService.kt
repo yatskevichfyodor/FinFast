@@ -1,6 +1,7 @@
 package org.example.finfast.auth.service
 
 import jakarta.enterprise.context.ApplicationScoped
+import jakarta.transaction.Transactional
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.example.finfast.auth.entity.RsaKey
 import org.example.finfast.auth.repository.RsaKeyRepository
@@ -17,8 +18,9 @@ class RsaKeyRotationService(
 ) {
     private val logger = LoggerFactory.getLogger(RsaKeyRotationService::class.java)
 
+    @Transactional
     fun initializeKeys() {
-        val dbKeys = rsaKeyRepository.findAll()
+        val dbKeys = rsaKeyRepository.findAllKeys()
         logger.info("Found {} keys in database", dbKeys.size)
 
         if (dbKeys.isEmpty()) {
@@ -30,6 +32,7 @@ class RsaKeyRotationService(
         }
     }
 
+    @Transactional
     fun checkAndPerformRotationIfNeeded() {
         val activeKey = rsaKeyRepository.findActiveKey()
         if (activeKey == null) {
@@ -49,6 +52,7 @@ class RsaKeyRotationService(
         }
     }
 
+    @Transactional
     fun rotateKeys() {
         logger.info("Starting scheduled key rotation")
         deactivateCurrentKey()
@@ -58,7 +62,7 @@ class RsaKeyRotationService(
         logger.info("Created new active key with kid: {}", newRsaKey.keyId)
 
         cleanupExpiredKeys()
-        val totalKeys = rsaKeyRepository.findAll().size
+        val totalKeys = rsaKeyRepository.findAllKeys().size
         logger.info("Key rotation completed. New active key kid: {}, total keys: {}", newRsaKey.keyId, totalKeys)
     }
 
@@ -87,7 +91,7 @@ class RsaKeyRotationService(
         }
 
         if (expiredKeys.isNotEmpty()) {
-            val remainingKeys = rsaKeyRepository.findAll().size
+            val remainingKeys = rsaKeyRepository.findAllKeys().size
             logger.info("Cleaned up {} expired keys. Remaining keys: {}", expiredKeys.size, remainingKeys)
         }
     }

@@ -1,36 +1,26 @@
 package org.example.finfast.auth.repository
 
 import jakarta.enterprise.context.ApplicationScoped
-import jakarta.inject.Inject
-import jakarta.persistence.EntityManager
-import jakarta.transaction.Transactional
+import io.quarkus.hibernate.orm.panache.kotlin.PanacheRepositoryBase
 import org.example.finfast.auth.entity.User
 import java.util.Optional
 import java.util.UUID
 
 @ApplicationScoped
-class UserRepository @Inject constructor(private val em: EntityManager) {
-    fun findByUsername(username: String): User? {
-        val q = em.createQuery("SELECT u FROM User u WHERE u.username = :u", User::class.java)
-        q.setParameter("u", username)
-        return q.resultList.firstOrNull()
-    }
+class UserRepository : PanacheRepositoryBase<User, UUID> {
+    fun findByUsername(username: String): User? = find("username", username).firstResult()
 
-    fun findByGoogleSubject(subject: String): User? {
-        val q = em.createQuery("SELECT u FROM User u WHERE u.googleSubject = :subject", User::class.java)
-        q.setParameter("subject", subject)
-        return q.resultList.firstOrNull()
-    }
+    fun findByGoogleSubject(subject: String): User? = find("googleSubject", subject).firstResult()
 
-    @Transactional
-    fun save(user: User): User {
-        return if (em.contains(user)) user else em.merge(user)
-    }
+    fun save(user: User): User =
+        if (findById(user.id) == null) {
+            persist(user)
+            user
+        } else {
+            getEntityManager().merge(user)
+        }
 
-    fun findById(id: UUID): Optional<User> = Optional.ofNullable(em.find(User::class.java, id))
+    fun findByIdOptional(id: UUID): Optional<User> = Optional.ofNullable(findById(id))
 
-    @Transactional
-    fun delete(user: User) {
-        em.remove(if (em.contains(user)) user else em.merge(user))
-    }
+    fun deleteUser(user: User) = delete(user)
 }
