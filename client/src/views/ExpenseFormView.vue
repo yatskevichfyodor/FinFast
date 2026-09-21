@@ -638,6 +638,10 @@ watchCategoryId();
     align-items: start;
   }
 
+  .additional-section {
+    margin-top: 0;
+  }
+
   .scrollable-content {
     padding-bottom: 100px;
   }
