@@ -13,6 +13,10 @@ data class ErrorResponse(val message: String)
 
 @RestControllerAdvice
 class ApiExceptionHandler {
+    @ExceptionHandler(InvalidCategoryException::class)
+    fun handleInvalidCategory(exception: InvalidCategoryException): ResponseEntity<ErrorResponse> =
+        response(HttpStatus.BAD_REQUEST, exception.message ?: "Invalid category")
+
     @ExceptionHandler(ExpenseNotFoundException::class)
     fun handleExpenseNotFound(exception: ExpenseNotFoundException): ResponseEntity<ErrorResponse> =
         response(HttpStatus.NOT_FOUND, exception.message ?: "Expense not found")

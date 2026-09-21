@@ -3,6 +3,7 @@ import ExpenseFormView from '@/views/ExpenseFormView.vue'
 import ExpenseHistoryView from '@/views/ExpenseHistoryView.vue'
 import StatisticsView from '@/views/StatisticsView.vue'
 import AuthView from '@/views/AuthView.vue'
+import CategoryEditorView from '@/views/CategoryEditorView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,6 +36,12 @@ const router = createRouter({
       name: 'StatisticsView',
       path: '/statistics',
       component: StatisticsView,
+      meta: { requiresAuth: true }
+    },
+    {
+      name: 'categories',
+      path: '/categories',
+      component: CategoryEditorView,
       meta: { requiresAuth: true }
     },
     {

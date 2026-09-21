@@ -1,25 +1,36 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { CATEGORIES, type Category } from '@/constants/categories'
-import { buildPopularCategoryOrder } from '@/services/categoryPopularity'
-import { useExpenseStore } from '@/stores/expense'
+import { computed } from 'vue'
+import type { Category } from '@/types/category'
+import { useCategoryStore } from '@/stores/category'
 
 const props = defineProps<{
   selectedCategoryId: string | null
+  selectedCustomCategoryId: string | null
 }>()
 
 const emit = defineEmits<{
   'update:selectedCategoryId': [value: string | null]
+  'update:selectedCustomCategoryId': [value: string | null]
 }>()
 
-const expenseStore = useExpenseStore()
-const orderedCategories = ref<Category[]>(buildPopularCategoryOrder(expenseStore.expenses))
+const categoryStore = useCategoryStore()
 
-const displayedCategories = computed(() => orderedCategories.value)
+const displayedCategories = computed(() => categoryStore.availableCategories)
 
-function selectCategory(categoryId: string) {
-  const nextCategoryId = props.selectedCategoryId === categoryId ? null : categoryId
-  emit('update:selectedCategoryId', nextCategoryId)
+function selectCategory(category: Category) {
+  const selected = category.system
+    ? props.selectedCategoryId === category.id
+    : props.selectedCustomCategoryId === category.id
+  if (selected) {
+    emit('update:selectedCategoryId', null)
+    emit('update:selectedCustomCategoryId', null)
+  } else if (category.system) {
+    emit('update:selectedCategoryId', category.id)
+    emit('update:selectedCustomCategoryId', null)
+  } else {
+    emit('update:selectedCategoryId', null)
+    emit('update:selectedCustomCategoryId', category.id)
+  }
 }
 </script>
 
@@ -39,16 +50,16 @@ function selectCategory(categoryId: string) {
           v-for="category in displayedCategories"
           :key="category.id"
           class="category-card"
-          :class="{ selected: selectedCategoryId === category.id }"
+          :class="{ selected: selectedCategoryId === category.id || selectedCustomCategoryId === category.id }"
           :style="{ '--category-color': category.color }"
           rounded="xl"
           elevation="0"
-          @click="selectCategory(category.id)"
+          @click="selectCategory(category)"
         >
           <v-card-text class="category-content">
             <div
               class="category-icon"
-              :class="{ selected: selectedCategoryId === category.id }"
+              :class="{ selected: selectedCategoryId === category.id || selectedCustomCategoryId === category.id }"
               :style="{ '--category-color': category.color }"
             >
               <v-icon :icon="category.icon" size="26" />
@@ -59,7 +70,7 @@ function selectCategory(categoryId: string) {
             </div>
 
             <v-icon
-              v-if="selectedCategoryId === category.id"
+              v-if="selectedCategoryId === category.id || selectedCustomCategoryId === category.id"
               icon="mdi-check-circle"
               class="check-icon"
               size="18"

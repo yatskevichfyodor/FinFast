@@ -9,6 +9,7 @@ data class ExpenseDto(
     val id: UUID,
     val amount: BigDecimal,
     val categoryId: String?,
+    val customCategoryId: UUID?,
     val createdAt: Instant,
     val description: String?,
     val paymentDate: Instant?
@@ -19,6 +20,7 @@ fun Expense.toDto() =
         id = id,
         amount = amount,
         categoryId = categoryId,
+        customCategoryId = customCategoryId,
         createdAt = createdAt,
         description = description,
         paymentDate = paymentDate

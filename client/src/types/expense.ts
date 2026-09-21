@@ -2,6 +2,9 @@ export interface Expense {
   id: string
   amount: number
   categoryId?: string
+  customCategoryId?: string
+  /** Explicitly removes both system and custom category assignments during update. */
+  clearCategory?: boolean
   createdAt: string
   description?: string
   paymentDate?: string
@@ -17,6 +20,9 @@ export interface ExpensePayload {
   id?: string
   amount: number
   categoryId?: string
+  customCategoryId?: string
+  /** Explicitly removes both system and custom category assignments during update. */
+  clearCategory?: boolean
   description?: string
   paymentDate?: string
 }

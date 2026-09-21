@@ -119,6 +119,7 @@ export const useExpenseStore = defineStore('expense', () => {
           id: expense.id,
           amount: expense.amount ?? 0,
           categoryId: expense.categoryId,
+          customCategoryId: expense.customCategoryId,
           createdAt: expense.createdAt,
           description: expense.description,
           paymentDate: expense.paymentDate,
@@ -168,6 +169,8 @@ export const useExpenseStore = defineStore('expense', () => {
           id: expense.id,
           amount: expense.amount,
           categoryId: expense.categoryId,
+          customCategoryId: expense.customCategoryId,
+          clearCategory: expense.clearCategory,
           createdAt: expense.createdAt,
           description: expense.description,
           paymentDate: expense.paymentDate
@@ -179,6 +182,8 @@ export const useExpenseStore = defineStore('expense', () => {
           id: expense.id,
           amount: expense.amount,
           categoryId: expense.categoryId,
+          customCategoryId: expense.customCategoryId,
+          clearCategory: expense.clearCategory,
           description: expense.description,
           paymentDate: expense.paymentDate
         }))
@@ -279,6 +284,7 @@ export const useExpenseStore = defineStore('expense', () => {
         id: expense.id,
         amount: expense.amount,
         categoryId: expense.categoryId,
+        customCategoryId: expense.customCategoryId,
         createdAt: expense.createdAt,
         description: expense.description,
         paymentDate: expense.paymentDate
@@ -297,6 +303,7 @@ export const useExpenseStore = defineStore('expense', () => {
           id: expense.id,
           amount: expense.amount,
           categoryId: expense.categoryId,
+          customCategoryId: expense.customCategoryId,
           createdAt: expense.createdAt,
           description: expense.description,
           paymentDate: expense.paymentDate
@@ -306,6 +313,8 @@ export const useExpenseStore = defineStore('expense', () => {
         await expenseApi.updateExpense(expense.id, {
           amount: expense.amount,
           categoryId: expense.categoryId,
+          customCategoryId: expense.customCategoryId,
+          clearCategory: expense.clearCategory,
           description: expense.description,
           paymentDate: expense.paymentDate
         })
@@ -347,6 +356,7 @@ export const useExpenseStore = defineStore('expense', () => {
       id: newExpenseId,
       amount: payload.amount,
       categoryId: payload.categoryId,
+      customCategoryId: payload.customCategoryId,
       createdAt: new Date().toISOString(),
       description: payload.description,
       paymentDate: payload.paymentDate,
@@ -398,6 +408,8 @@ export const useExpenseStore = defineStore('expense', () => {
       ...expenses.value[index]!,
       amount: payload.amount,
       categoryId: payload.categoryId,
+      customCategoryId: payload.customCategoryId,
+      clearCategory: payload.clearCategory,
       description: payload.description,
       paymentDate: payload.paymentDate,
       isSynced: false

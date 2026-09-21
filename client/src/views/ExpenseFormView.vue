@@ -50,6 +50,7 @@ const editingExpenseId = computed(() => {
 
 const description = ref("");
 const selectedCategoryId = ref<string | null>(null);
+const selectedCustomCategoryId = ref<string | null>(null);
 const paymentDate = ref<string | null>(null);
 const currentAmount = ref<number | null>(null);
 const canSubmitAmount = ref(false);
@@ -129,6 +130,7 @@ function handleMobileStep1Submit() {
   const payload: ExpensePayload = {
     amount: amountValue,
     categoryId: selectedCategoryId.value || undefined,
+    customCategoryId: selectedCustomCategoryId.value || undefined,
     description: description.value || undefined,
     paymentDate: paymentDateFormatted,
   };
@@ -166,6 +168,8 @@ function handleMobileStep2Submit() {
         selectedCategoryId.value !== null
           ? selectedCategoryId.value
           : undefined,
+      customCategoryId: selectedCustomCategoryId.value || undefined,
+      clearCategory: selectedCategoryId.value === null && selectedCustomCategoryId.value === null,
       description: description.value || undefined,
       paymentDate: paymentDateFormatted,
     };
@@ -205,7 +209,9 @@ function handleDesktopSubmit() {
         categoryId:
           selectedCategoryId.value !== null
             ? selectedCategoryId.value
-            : expense.categoryId,
+            : undefined,
+        customCategoryId: selectedCustomCategoryId.value || undefined,
+        clearCategory: selectedCategoryId.value === null && selectedCustomCategoryId.value === null,
         description: description.value || undefined,
         paymentDate: paymentDateFormatted,
       };
@@ -219,6 +225,7 @@ function handleDesktopSubmit() {
     const payload: ExpensePayload = {
       amount: amountValue,
       categoryId: selectedCategoryId.value || undefined,
+      customCategoryId: selectedCustomCategoryId.value || undefined,
       description: description.value || undefined,
       paymentDate: paymentDateFormatted,
     };
@@ -266,6 +273,7 @@ const loadExistingExpense = () => {
       description.value = initialDescription.value;
       paymentDate.value = initialPaymentDate.value;
       selectedCategoryId.value = expense.categoryId || null;
+      selectedCustomCategoryId.value = expense.customCategoryId || null;
     }
   } else if (route.query.paymentDate !== undefined) {
     // Load payment date from query parameter and convert to YYYY.MM.DD format
@@ -318,6 +326,7 @@ watchCategoryId();
 
                   <CategoryPicker
                     v-model:selectedCategoryId="selectedCategoryId"
+                    v-model:selectedCustomCategoryId="selectedCustomCategoryId"
                   />
 
                   <div class="field-group mt-4">
@@ -394,6 +403,7 @@ watchCategoryId();
                 <div class="d-flex flex-column ga-4">
                   <CategoryPicker
                     v-model:selectedCategoryId="selectedCategoryId"
+                    v-model:selectedCustomCategoryId="selectedCustomCategoryId"
                   />
 
                   <v-date-input
@@ -446,6 +456,7 @@ watchCategoryId();
 
                 <CategoryPicker
                   v-model:selectedCategoryId="selectedCategoryId"
+                  v-model:selectedCustomCategoryId="selectedCustomCategoryId"
                 />
 
                 <div class="field-group mt-4">

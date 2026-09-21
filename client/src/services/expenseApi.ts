@@ -5,6 +5,7 @@ export interface ExpenseApiBody {
   id: string
   amount?: number
   categoryId?: string
+  customCategoryId?: string
   createdAt: string
   description?: string
   paymentDate?: string
@@ -14,6 +15,7 @@ export interface CreateExpensePayload {
   id: string
   amount: number
   categoryId?: string,
+  customCategoryId?: string,
   createdAt: string,
   description?: string
   paymentDate?: string
@@ -22,6 +24,8 @@ export interface CreateExpensePayload {
 export interface UpdateExpenseRequest {
   amount?: number
   categoryId?: string
+  customCategoryId?: string
+  clearCategory?: boolean
   description?: string
   paymentDate?: string
 }

@@ -90,6 +90,11 @@ function openAccountDialog() {
   showAccountDialog.value = true
 }
 
+async function openCategories() {
+  closeMenu()
+  await router.push({ name: 'categories' })
+}
+
 async function updateApplication() {
   await updatePwa()
 }
@@ -151,6 +156,18 @@ function handleBackdropClick(event: MouseEvent) {
 
                 <v-divider class="my-2" />
               </template>
+
+              <v-btn
+                variant="text"
+                class="menu-button"
+                @click="openCategories"
+              >
+                <template #prepend>
+                    <v-icon class="menu-icon" color="teal-darken-1">mdi-tag-multiple</v-icon>
+                </template>
+                Категории
+              </v-btn>
+              <v-divider class="my-2" />
 
               <v-btn
                 variant="text"

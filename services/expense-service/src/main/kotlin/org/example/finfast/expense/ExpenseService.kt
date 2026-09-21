@@ -13,7 +13,8 @@ import java.util.UUID
 
 @Service
 class ExpenseService(
-    private val expenseRepository: ExpenseRepository
+    private val expenseRepository: ExpenseRepository,
+    private val customUserCategoryRepository: CustomUserCategoryRepository
 ) {
 
     @Transactional(readOnly = true)
@@ -40,10 +41,12 @@ class ExpenseService(
     @Transactional
     fun create(dto: ExpenseDto) {
         val userId = currentUserId()
+        validateCategory(userId, dto.categoryId, dto.customCategoryId)
         val expense = Expense(
             expenseId = ExpenseId(userId, dto.id),
             amount = dto.amount,
-            categoryId = dto.categoryId,
+            categoryId = dto.categoryId?.let(SystemCategory::normalize),
+            customCategoryId = dto.customCategoryId,
             createdAt = dto.createdAt,
             description = dto.description,
             paymentDate = dto.paymentDate
@@ -55,11 +58,13 @@ class ExpenseService(
     @Transactional
     fun createBatch(dtos: List<ExpenseDto>) {
         val userId = currentUserId()
+        dtos.forEach { validateCategory(userId, it.categoryId, it.customCategoryId) }
         val expenses = dtos.map { dto ->
             Expense(
                 expenseId = ExpenseId(userId, dto.id),
                 amount = dto.amount,
-                categoryId = dto.categoryId,
+                categoryId = dto.categoryId?.let(SystemCategory::normalize),
+                customCategoryId = dto.customCategoryId,
                 createdAt = dto.createdAt,
                 description = dto.description,
                 paymentDate = dto.paymentDate
@@ -84,7 +89,7 @@ class ExpenseService(
         val expense = expenseRepository.findById(ExpenseId(currentUserId(), id))
             .orElseThrow { ExpenseNotFoundException(id) }
 
-        updateExpense(expense, dto)
+        updateExpense(expense, dto, currentUserId())
 
         expenseRepository.save(expense)
     }
@@ -96,7 +101,7 @@ class ExpenseService(
             val expense = expenseRepository.findById(ExpenseId(userId, batchUpdateDto.id))
                 .orElseThrow { ExpenseNotFoundException(batchUpdateDto.id) }
 
-            updateExpense(expense, batchUpdateDto.toUpdateDto())
+            updateExpense(expense, batchUpdateDto.toUpdateDto(), userId)
 
             expense
         }
@@ -128,14 +133,20 @@ class ExpenseService(
 
     private fun updateExpense(
         expense: Expense,
-        dto: UpdateExpenseDto
+        dto: UpdateExpenseDto,
+        userId: UUID
     ) {
         dto.amount?.let {
             expense.amount = it
         }
 
-        dto.categoryId?.let {
-            expense.categoryId = it
+        if (dto.clearCategory) {
+            expense.categoryId = null
+            expense.customCategoryId = null
+        } else if (dto.customCategoryId != null || dto.categoryId != null) {
+            validateCategory(userId, dto.categoryId, dto.customCategoryId)
+            expense.categoryId = dto.categoryId?.let(SystemCategory::normalize)
+            expense.customCategoryId = dto.customCategoryId
         }
 
         dto.description?.let {
@@ -144,6 +155,18 @@ class ExpenseService(
 
         dto.paymentDate?.let {
             expense.paymentDate = it
+        }
+    }
+
+    private fun validateCategory(userId: UUID, categoryId: String?, customCategoryId: UUID?) {
+        if (categoryId != null && !SystemCategory.isValid(categoryId)) {
+            throw InvalidCategoryException("Unknown system category: $categoryId")
+        }
+
+        if (customCategoryId != null &&
+            !customUserCategoryRepository.existsByIdAndUserIdAndDeletedAtIsNull(customCategoryId, userId)
+        ) {
+            throw InvalidCategoryException("Custom category is not available")
         }
     }
 

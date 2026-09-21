@@ -13,6 +13,7 @@
     "copy-404": "node scripts/copy-404.mjs"
   },
   "dependencies": {
+    "@iconify/vue": "^5.0.3",
     "@mdi/font": "^7.4.47",
     "@vueuse/core": "^14.4.0",
     "axios": "^1.19.0",

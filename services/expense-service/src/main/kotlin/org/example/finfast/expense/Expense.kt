@@ -26,6 +26,9 @@ class Expense(
     @Column(name = "category")
     var categoryId: String? = null,
 
+    @Column(name = "custom_category_id")
+    var customCategoryId: UUID? = null,
+
     @Column(nullable = false, updatable = false)
     val createdAt: Instant,
 
