@@ -1,4 +1,4 @@
-package org.example.finfast.expense
+package org.example.finfast.expenseservice
 
 class ExpenseNotFoundException(id: Any) : RuntimeException("Expense not found: $id")
 

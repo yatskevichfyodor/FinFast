@@ -1,4 +1,4 @@
-package org.example.finfast.expense
+package org.example.finfast.expenseservice
 
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service

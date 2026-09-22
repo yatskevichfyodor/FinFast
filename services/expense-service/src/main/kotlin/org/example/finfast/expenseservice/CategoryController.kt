@@ -1,4 +1,4 @@
-package org.example.finfast.expense
+package org.example.finfast.expenseservice
 
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*

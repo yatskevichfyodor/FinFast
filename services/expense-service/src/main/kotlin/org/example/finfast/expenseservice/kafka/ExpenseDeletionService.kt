@@ -1,6 +1,6 @@
-package org.example.finfast.expense.kafka
+package org.example.finfast.expenseservice.kafka
 
-import org.example.finfast.expense.ExpenseRepository
+import org.example.finfast.expenseservice.ExpenseRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

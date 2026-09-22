@@ -1,9 +1,9 @@
-package org.example.finfast.expense
+package org.example.finfast.expenseservice
 
-import org.example.finfast.expense.dto.BatchUpdateExpenseDto
-import org.example.finfast.expense.dto.ExpenseDto
-import org.example.finfast.expense.dto.SyncExpensesDto
-import org.example.finfast.expense.dto.UpdateExpenseDto
+import org.example.finfast.expenseservice.dto.BatchUpdateExpenseDto
+import org.example.finfast.expenseservice.dto.ExpenseDto
+import org.example.finfast.expenseservice.dto.SyncExpensesDto
+import org.example.finfast.expenseservice.dto.UpdateExpenseDto
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.util.UUID

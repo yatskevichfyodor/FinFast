@@ -1,4 +1,4 @@
-package org.example.finfast.expense.kafka
+package org.example.finfast.expenseservice.kafka
 
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener

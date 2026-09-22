@@ -1,4 +1,4 @@
-package org.example.finfast.expense
+package org.example.finfast.expenseservice
 
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus

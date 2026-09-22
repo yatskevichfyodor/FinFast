@@ -1,4 +1,4 @@
-package org.example.finfast.expense
+package org.example.finfast.expenseservice
 
 import jakarta.persistence.*
 import java.math.BigDecimal

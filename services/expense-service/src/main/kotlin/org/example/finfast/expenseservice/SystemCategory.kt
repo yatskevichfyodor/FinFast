@@ -1,4 +1,4 @@
-package org.example.finfast.expense
+package org.example.finfast.expenseservice
 
 enum class SystemCategory(val id: String, val displayName: String, val icon: String, val color: String) {
     FOOD("food", "Еда", "mdi-food", "#FF7043"),

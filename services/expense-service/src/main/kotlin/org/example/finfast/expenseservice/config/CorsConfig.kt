@@ -1,4 +1,4 @@
-package org.example.finfast.expense.config
+package org.example.finfast.expenseservice.config
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean

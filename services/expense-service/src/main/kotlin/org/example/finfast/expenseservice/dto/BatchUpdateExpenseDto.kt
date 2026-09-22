@@ -1,4 +1,4 @@
-package org.example.finfast.expense.dto
+package org.example.finfast.expenseservice.dto
 
 import java.math.BigDecimal
 import java.time.Instant
