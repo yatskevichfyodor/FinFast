@@ -644,13 +644,23 @@ watchCategoryId();
 
   .desktop-content {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 24px;
     align-items: start;
   }
 
+  .amount-section,
   .additional-section {
-    margin-top: 0;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .additional-fields-card {
+    min-width: 0;
+  }
+
+  .additional-fields-card :deep(.v-card-text) {
+    min-width: 0;
   }
 
   .scrollable-content {

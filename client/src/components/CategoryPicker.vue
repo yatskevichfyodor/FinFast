@@ -156,39 +156,30 @@ watch(displayedCategories, async () => {
 .category-picker {
   position: relative;
   width: 100%;
-  max-width: 440px;
-  margin: 0 auto;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .category-scroll {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 6px 18px 8px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+
+  padding: 6px 0 8px;
+
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
-}
 
-.category-scroll::-webkit-scrollbar {
-  display: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .category-grid {
   display: grid;
 
-  /*
-   * Две строки.
-   *
-   * grid-auto-flow: column означает:
-   *
-   * 1  3  5  7
-   * 2  4  6  8
-   *
-   * Поэтому первые две категории находятся в первом столбце,
-   * следующие две — во втором и т.д.
-   */
   grid-template-rows: repeat(2, 110px);
   grid-auto-flow: column;
   grid-auto-columns: 118px;
@@ -196,7 +187,6 @@ watch(displayedCategories, async () => {
   gap: 10px;
 
   width: max-content;
-  min-width: 100%;
 }
 
 .category-card {
@@ -204,8 +194,10 @@ watch(displayedCategories, async () => {
   width: 118px;
   min-width: 118px;
   cursor: pointer;
+
   background: #ffffff;
   border: 2px solid #edf0f3;
+
   scroll-snap-align: start;
 
   transition:
@@ -232,10 +224,12 @@ watch(displayedCategories, async () => {
 
 .category-content {
   height: 100%;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
   padding: 10px 8px !important;
 }
 
@@ -251,6 +245,7 @@ watch(displayedCategories, async () => {
   border-radius: 14px;
 
   color: var(--category-color);
+
   background: color-mix(
     in srgb,
     var(--category-color) 10%,
@@ -320,5 +315,35 @@ watch(displayedCategories, async () => {
     rgba(255, 255, 255, 0.98),
     rgba(255, 255, 255, 0)
   );
+}
+
+/*
+ * На компьютере показываем стандартную полосу
+ * горизонтальной прокрутки.
+ */
+@media (min-width: 961px) {
+  .category-scroll {
+    scrollbar-width: auto;
+    -ms-overflow-style: auto;
+  }
+
+  .category-scroll::-webkit-scrollbar {
+    display: block;
+    height: 8px;
+  }
+
+  .category-scroll::-webkit-scrollbar-track {
+    background: #f1f3f5;
+    border-radius: 999px;
+  }
+
+  .category-scroll::-webkit-scrollbar-thumb {
+    background: #c5cbd1;
+    border-radius: 999px;
+  }
+
+  .category-scroll::-webkit-scrollbar-thumb:hover {
+    background: #aeb5bc;
+  }
 }
 </style>
