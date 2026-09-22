@@ -1,4 +1,4 @@
-package org.example.finfast.expenseservice
+package org.example.finfast.expenseservice.category
 
 import java.time.Instant
 import java.util.UUID

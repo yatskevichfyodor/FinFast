@@ -1,4 +1,4 @@
-package org.example.finfast.expenseservice
+package org.example.finfast.expenseservice.category
 
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable

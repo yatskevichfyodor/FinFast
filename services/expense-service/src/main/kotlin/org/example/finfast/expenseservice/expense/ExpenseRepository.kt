@@ -1,4 +1,4 @@
-package org.example.finfast.expenseservice
+package org.example.finfast.expenseservice.expense
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying

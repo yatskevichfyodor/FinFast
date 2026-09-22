@@ -1,4 +1,4 @@
-package org.example.finfast.expenseservice.dto
+package org.example.finfast.expenseservice.expense.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.util.UUID

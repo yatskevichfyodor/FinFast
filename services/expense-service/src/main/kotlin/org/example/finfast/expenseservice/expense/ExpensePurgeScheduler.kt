@@ -1,4 +1,4 @@
-package org.example.finfast.expenseservice
+package org.example.finfast.expenseservice.expense
 
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled

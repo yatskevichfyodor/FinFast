@@ -1,4 +1,6 @@
-package org.example.finfast.expenseservice
+package org.example.finfast.expenseservice.category
+
+import org.example.finfast.expenseservice.InvalidCategoryException
 
 enum class SystemCategory(val id: String, val displayName: String, val icon: String, val color: String) {
     FOOD("food", "Еда", "mdi-food", "#FF7043"),

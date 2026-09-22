@@ -1,5 +1,7 @@
-package org.example.finfast.expenseservice
+package org.example.finfast.expenseservice.category
 
+import org.example.finfast.expenseservice.AuthenticationRequiredException
+import org.example.finfast.expenseservice.InvalidCategoryException
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -28,7 +30,16 @@ class CategoryService(
     fun getAllForEditor(): List<CategoryDto> {
         val userId = currentUserId()
         val hidden = hiddenRepository.findAllByIdUserId(userId).map { it.id.categoryId }.toSet()
-        val system = SystemCategory.entries.map { CategoryDto(it.id, it.displayName, it.icon, it.color, true, it.id in hidden) }
+        val system = SystemCategory.entries.map {
+            CategoryDto(
+                it.id,
+                it.displayName,
+                it.icon,
+                it.color,
+                true,
+                it.id in hidden
+            )
+        }
         val custom = customRepository.findAllByUserIdOrderByCreatedAtAsc(userId).map {
             CategoryDto(it.id.toString(), it.name, it.icon, it.color, false, deleted = it.deletedAt != null)
         }
@@ -38,7 +49,14 @@ class CategoryService(
     @Transactional
     fun create(input: CategoryInputDto): CustomCategoryDto {
         validateInput(input)
-        val category = CustomUserCategory(input.id ?: UUID.randomUUID(), currentUserId(), input.name.trim(), input.icon, input.color, Instant.now())
+        val category = CustomUserCategory(
+            input.id ?: UUID.randomUUID(),
+            currentUserId(),
+            input.name.trim(),
+            input.icon,
+            input.color,
+            Instant.now()
+        )
         return category.toDto(customRepository.save(category))
     }
 
