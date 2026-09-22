@@ -9,14 +9,14 @@ const dialog = ref(false)
 const editingId = ref<string | null>(null)
 const form = ref<CategoryInput>({ name: '', icon: 'mdi-tag-outline', color: '#607D8B' })
 const iconOptions = [
-  'mdi-tag-outline', 'mdi-tag', 'mdi-label', 'mdi-food',
+  'mdi-tag-outline', 'mdi-tag', 'mdi-label', 'mdi-tshirt-crew', 'mdi-food',
   'mdi-food-apple', 'mdi-food-drumstick', 'mdi-silverware-fork-knife', 'mdi-coffee', 'mdi-cake',
   'mdi-cart', 'mdi-basket', 'mdi-car', 'mdi-bus', 'mdi-train',
   'mdi-bike', 'mdi-scooter', 'mdi-airplane', 'mdi-taxi', 'mdi-fuel',
   'mdi-home', 'mdi-office-building', 'mdi-city', 'mdi-bed', 'mdi-sofa',
   'mdi-lightbulb', 'mdi-water', 'mdi-tools', 'mdi-hammer', 'mdi-wrench',
   'mdi-faucet', 'mdi-hammer-wrench', 'mdi-toolbox', 'mdi-ladder',
-  'mdi-format-paint', 'mdi-spray', 'mdi-package-variant', 'mdi-truck',
+  'mdi-format-paint', 'mdi-spray', 'mdi-truck',
   'mdi-shopping', 'mdi-gift', 'mdi-cash', 'mdi-credit-card', 'mdi-bank',
   'mdi-bitcoin', 'mdi-chart-line', 'mdi-briefcase', 'mdi-school',
   'mdi-school-outline', 'mdi-calculator', 'mdi-laptop', 'mdi-cellphone', 'mdi-monitor',
