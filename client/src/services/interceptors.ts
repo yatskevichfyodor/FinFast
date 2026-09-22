@@ -1,6 +1,6 @@
-import { authApi, expenseApi } from '@/services/http'
+import { authApi, expenseApi } from '@/services/api/http'
 import router from '@/router'
-import { refresh as refreshAuthTokens, type TokenResponse } from '@/services/authApi'
+import { refresh as refreshAuthTokens, type TokenResponse } from '@/services/api/authApi'
 
 const ACCESS_TOKEN_KEY = 'finfast-access-token'
 const REFRESH_TOKEN_KEY = 'finfast-refresh-token'

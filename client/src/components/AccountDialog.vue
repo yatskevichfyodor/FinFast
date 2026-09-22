@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useExpenseStore } from '@/stores/expense'
 import { isAxiosError } from 'axios'
-import * as expenseApi from '@/services/expenseApi'
-import * as authApi from '@/services/authApi'
+import * as expenseApi from '@/services/api/expenseApi'
+import * as authApi from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 
 const props = defineProps<{ modelValue: boolean }>()

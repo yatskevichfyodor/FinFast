@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import * as authApi from '@/services/authApi'
+import * as authApi from '@/services/api/authApi'
 
 const ACCESS_TOKEN_KEY = 'finfast-access-token'
 const REFRESH_TOKEN_KEY = 'finfast-refresh-token'

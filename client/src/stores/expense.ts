@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import * as expenseApi from '@/services/expenseApi'
+import * as expenseApi from '@/services/api/expenseApi'
 import { loadExpenses as loadStoredExpenses, saveExpenses as saveStoredExpenses } from '@/services/expenseStorage'
 import { useAuthStore } from '@/stores/auth'
 import type { Expense, ExpensePayload } from '@/types/expense'

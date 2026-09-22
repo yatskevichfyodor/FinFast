@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useExpenseStore } from '@/stores/expense'
 import { loadExpenses as loadStoredExpenses } from '@/services/expenseStorage'
-import * as authApi from '@/services/authApi'
+import * as authApi from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 
 const route = useRoute()

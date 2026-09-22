@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import * as categoryApi from '@/services/categoryApi'
+import * as categoryApi from '@/services/api/categoryApi'
 import { CATEGORIES } from '@/constants/categories'
 import { useAuthStore } from '@/stores/auth'
 import type { Category, CategoryInput } from '@/types/category'

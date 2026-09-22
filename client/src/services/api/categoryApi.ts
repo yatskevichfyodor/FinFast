@@ -1,4 +1,4 @@
-import { expenseApi } from '@/services/http'
+import { expenseApi } from '@/services/api/http'
 import type { Category, CategoryInput } from '@/types/category'
 
 export async function getAvailableCategories() {

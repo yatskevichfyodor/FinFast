@@ -1,4 +1,4 @@
-import { authApi } from '@/services/http'
+import { authApi } from '@/services/api/http'
 
 export interface RegisterRequest {
   username: string
