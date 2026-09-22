@@ -167,6 +167,7 @@ function handleBackdropClick(event: MouseEvent) {
                 </template>
                 Категории
               </v-btn>
+
               <v-divider class="my-2" />
 
               <v-btn

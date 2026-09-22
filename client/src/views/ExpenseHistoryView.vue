@@ -6,6 +6,7 @@ import {
   useExpenseStore,
   type Expense
 } from '@/stores/expense'
+import { isExpenseActive } from '@/types/expense'
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { formatDate, parseDate } from '@/utils/dateHelpers'
 
@@ -20,7 +21,7 @@ const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)
 
 const activeExpenses = computed(() =>
-  expenseStore.expenses.filter(expense => !expense.isDeleted)
+  expenseStore.expenses.filter(isExpenseActive)
 )
 
 const groupedExpenses = computed(() => {

@@ -9,6 +9,7 @@ import org.example.finfast.expense.dto.toUpdateDto
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.security.core.context.SecurityContextHolder
+import java.time.Instant
 import java.util.UUID
 
 @Service
@@ -22,6 +23,10 @@ class ExpenseService(
         val expense = expenseRepository.findById(ExpenseId(currentUserId(), id))
             .orElseThrow { ExpenseNotFoundException(id) }
 
+        if (expense.deletedAt != null) {
+            throw ExpenseNotFoundException(id)
+        }
+
         return expense.toDto()
     }
 
@@ -34,6 +39,12 @@ class ExpenseService(
 
     @Transactional(readOnly = true)
     fun getAll(): List<ExpenseDto> {
+        return expenseRepository.findAllByExpenseId_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(currentUserId())
+            .map { it.toDto() }
+    }
+
+    @Transactional(readOnly = true)
+    fun getAllForSync(): List<ExpenseDto> {
         return expenseRepository.findAllByExpenseId_UserIdOrderByCreatedAtDesc(currentUserId())
             .map { it.toDto() }
     }
@@ -86,8 +97,7 @@ class ExpenseService(
         id: UUID,
         dto: UpdateExpenseDto
     ) {
-        val expense = expenseRepository.findById(ExpenseId(currentUserId(), id))
-            .orElseThrow { ExpenseNotFoundException(id) }
+        val expense = activeExpense(id)
 
         updateExpense(expense, dto, currentUserId())
 
@@ -98,8 +108,7 @@ class ExpenseService(
     fun updateBatch(dtos: List<BatchUpdateExpenseDto>) {
         val userId = currentUserId()
         val expenses = dtos.map { batchUpdateDto ->
-            val expense = expenseRepository.findById(ExpenseId(userId, batchUpdateDto.id))
-                .orElseThrow { ExpenseNotFoundException(batchUpdateDto.id) }
+            val expense = activeExpense(batchUpdateDto.id)
 
             updateExpense(expense, batchUpdateDto.toUpdateDto(), userId)
 
@@ -112,23 +121,51 @@ class ExpenseService(
     @Transactional
     fun delete(id: UUID): Boolean {
         val expenseId = ExpenseId(currentUserId(), id)
-        if (!expenseRepository.existsById(expenseId)) {
-            return false
+        val expense = expenseRepository.findById(expenseId).orElse(null) ?: return false
+
+        if (expense.deletedAt != null) {
+            return true
         }
 
-        expenseRepository.deleteById(expenseId)
+        expense.deletedAt = Instant.now()
+        expenseRepository.save(expense)
         return true
     }
 
     @Transactional
     fun deleteBatch(ids: List<UUID>) {
         val userId = currentUserId()
-        expenseRepository.deleteAllById(ids.map { ExpenseId(userId, it) })
+        val now = Instant.now()
+        val expenses = expenseRepository.findAllById(ids.map { ExpenseId(userId, it) })
+
+        expenses.forEach { expense ->
+            if (expense.deletedAt == null) {
+                expense.deletedAt = now
+            }
+        }
+
+        expenseRepository.saveAll(expenses)
     }
 
     @Transactional
     fun deleteAllForCurrentUser() {
         expenseRepository.deleteAllByExpenseId_UserId(currentUserId())
+    }
+
+    private fun activeExpense(id: UUID): Expense {
+        val expense = expenseRepository.findById(ExpenseId(currentUserId(), id))
+            .orElseThrow { ExpenseNotFoundException(id) }
+
+        if (expense.deletedAt != null) {
+            throw ExpenseNotFoundException(id)
+        }
+
+        return expense
+    }
+
+    @Transactional
+    fun purgeExpiredDeleted(before: Instant): Int {
+        return expenseRepository.deleteAllByDeletedAtBefore(before)
     }
 
     private fun updateExpense(

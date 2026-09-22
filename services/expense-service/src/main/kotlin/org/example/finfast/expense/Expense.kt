@@ -36,7 +36,10 @@ class Expense(
     var description: String? = null,
 
     @Column(name = "payment_date")
-    var paymentDate: Instant? = null
+    var paymentDate: Instant? = null,
+
+    @Column(name = "deleted_at")
+    var deletedAt: Instant? = null
 ) {
     val id: UUID
         get() = expenseId.expenseId

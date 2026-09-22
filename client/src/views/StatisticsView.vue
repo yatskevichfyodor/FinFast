@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useExpenseStore, type Expense } from '@/stores/expense'
+import { isExpenseActive } from '@/types/expense'
 import { useAuthStore } from '@/stores/auth'
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { formatMonthName } from '@/utils/dateHelpers'
@@ -35,7 +36,7 @@ watch(() => authStore.userId, userId => {
 }, { immediate: true })
 
 const activeExpenses = computed(() =>
-  expenseStore.expenses.filter((expense: Expense) => !expense.isDeleted)
+  expenseStore.expenses.filter(isExpenseActive)
 )
 
 const months = computed<MonthStat[]>(() => {

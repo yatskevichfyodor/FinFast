@@ -4,6 +4,7 @@ import * as expenseApi from '@/services/expenseApi'
 import { loadExpenses as loadStoredExpenses, saveExpenses as saveStoredExpenses } from '@/services/expenseStorage'
 import { useAuthStore } from '@/stores/auth'
 import type { Expense, ExpensePayload } from '@/types/expense'
+import { isExpenseActive, normalizeExpense } from '@/types/expense'
 
 export type { Expense, ExpensePayload } from '@/types/expense'
 
@@ -15,6 +16,22 @@ export const useExpenseStore = defineStore('expense', () => {
   const syncError = ref<string | null>(null)
   let loadedUserId: string | null = null
   let loadVersion = 0
+
+  function mapApiExpenseToLocal(apiExpense: expenseApi.ExpenseApiBody): Expense {
+    return {
+      id: apiExpense.id,
+      amount: apiExpense.amount ?? 0,
+      categoryId: apiExpense.categoryId,
+      customCategoryId: apiExpense.customCategoryId,
+      createdAt: apiExpense.createdAt,
+      description: apiExpense.description,
+      paymentDate: apiExpense.paymentDate,
+      deletedAt: apiExpense.deletedAt,
+      isSynced: true,
+      isDeleted: false,
+      isCreatedLocally: false
+    }
+  }
 
   async function loadExpenses() {
     const userId = authStore.userId
@@ -34,7 +51,7 @@ export const useExpenseStore = defineStore('expense', () => {
       return
     }
 
-    const storedExpenses = await loadStoredExpenses(userId)
+    const storedExpenses = (await loadStoredExpenses(userId)).map(normalizeExpense)
     if (currentLoadVersion !== loadVersion || authStore.userId !== userId) {
       return
     }
@@ -50,10 +67,7 @@ export const useExpenseStore = defineStore('expense', () => {
       return
     }
 
-    // Очищаем кэш для текущего пользователя
     expensesByUser.delete(userId)
-
-    // Перезагружаем данные из IndexedDB
     await loadExpenses()
   }
 
@@ -91,12 +105,11 @@ export const useExpenseStore = defineStore('expense', () => {
     syncPromise = (async () => {
       while (syncRequested) {
         syncRequested = false
-
         await syncExpensesWithApi()
       }
     })().finally(() => {
-        syncPromise = null
-      })
+      syncPromise = null
+    })
 
     return syncPromise
   }
@@ -111,27 +124,40 @@ export const useExpenseStore = defineStore('expense', () => {
 
     try {
       await queueExpensesSyncWithApi()
-      const apiExpenses = await expenseApi.getExpenses()
-      const localExpenseIds = new Set(expenses.value.map(expense => expense.id))
-      const missingExpenses = apiExpenses
-        .filter(expense => !localExpenseIds.has(expense.id))
-        .map(expense => ({
-          id: expense.id,
-          amount: expense.amount ?? 0,
-          categoryId: expense.categoryId,
-          customCategoryId: expense.customCategoryId,
-          createdAt: expense.createdAt,
-          description: expense.description,
-          paymentDate: expense.paymentDate,
-          isSynced: true,
-          isDeleted: false,
-          isCreatedLocally: false
-        }))
+      const apiExpenses = await expenseApi.getExpensesForSync()
+      const apiById = new Map(apiExpenses.map(expense => [expense.id, expense]))
+      const serverIds = new Set(apiExpenses.map(expense => expense.id))
+      const pendingIds = new Set(getPendingExpenses().map(expense => expense.id))
 
-      if (missingExpenses.length > 0) {
-        expenses.value.push(...missingExpenses)
-        persistExpenses()
+      expenses.value = expenses.value.filter(expense => {
+        if (pendingIds.has(expense.id)) {
+          return true
+        }
+        if (expense.isCreatedLocally) {
+          return true
+        }
+        if (!expense.isSynced) {
+          return true
+        }
+        return serverIds.has(expense.id)
+      })
+
+      const localById = new Map(expenses.value.map(expense => [expense.id, expense]))
+      for (const apiExpense of apiExpenses) {
+        const local = localById.get(apiExpense.id)
+        if (local && !local.isSynced) {
+          continue
+        }
+
+        const mapped = mapApiExpenseToLocal(apiExpense)
+        if (local) {
+          Object.assign(local, mapped)
+        } else {
+          expenses.value.push(mapped)
+        }
       }
+
+      persistExpenses()
     } catch (error) {
       console.error('Failed to refresh expenses:', error)
     }
@@ -143,7 +169,6 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     const pendingExpenses = getPendingExpenses()
-
     if (pendingExpenses.length === 0) {
       return
     }
@@ -152,16 +177,17 @@ export const useExpenseStore = defineStore('expense', () => {
     syncError.value = null
 
     try {
-      const apiExpenses = await expenseApi.getExpensesByIds(pendingExpenses.map(expense => expense.id))
-    const apiExpenseIds = new Set(apiExpenses.map(apiExpense => apiExpense.id))
+      const apiExpenses = pendingExpenses.length > 0
+        ? await expenseApi.getExpensesByIds(pendingExpenses.map(expense => expense.id))
+        : []
 
-    const { deleted, locallyDeleted, toUpdate, toCreate } = splitPendingExpenses(
-      pendingExpenses,
-      apiExpenseIds
-    )
-    const deletedExpenseIds = deleted.map(expense => expense.id)
+      const {
+        softDelete,
+        toUpdate,
+        toCreate,
+        locallyDeleted
+      } = splitPendingExpenses(pendingExpenses, apiExpenses)
 
-    if (deletedExpenseIds.length > 0 || toUpdate.length > 0 || toCreate.length > 0) {
       const syncRequest: expenseApi.SyncExpensesRequest = {}
 
       if (toCreate.length > 0) {
@@ -189,11 +215,17 @@ export const useExpenseStore = defineStore('expense', () => {
         }))
       }
 
-      if (deletedExpenseIds.length > 0) {
-        syncRequest.delete = deletedExpenseIds
+      if (softDelete.length > 0) {
+        syncRequest.delete = softDelete.map(expense => expense.id)
       }
 
-      await expenseApi.syncExpenses(syncRequest)
+      if (
+        syncRequest.create?.length ||
+        syncRequest.update?.length ||
+        syncRequest.delete?.length
+      ) {
+        await expenseApi.syncExpenses(syncRequest)
+      }
 
       toUpdate.forEach(expense => {
         expense.isSynced = true
@@ -202,14 +234,11 @@ export const useExpenseStore = defineStore('expense', () => {
         expense.isSynced = true
         expense.isCreatedLocally = false
       })
-    }
-
-    removeDeletedExpenses(
-      new Set([
-        ...deletedExpenseIds,
-        ...locallyDeleted.map(expense => expense.id)
-      ])
-    )
+      softDelete.forEach(expense => {
+        expense.isSynced = true
+        expense.isDeleted = false
+      })
+      removeExpensesLocally(locallyDeleted.map(expense => expense.id))
 
       persistExpenses()
     } catch (error) {
@@ -234,32 +263,35 @@ export const useExpenseStore = defineStore('expense', () => {
 
   function splitPendingExpenses(
     pendingExpenses: Expense[],
-    apiExpenseIds: Set<string>
+    apiExpenses: expenseApi.ExpenseApiBody[]
   ) {
+    const apiById = new Map(apiExpenses.map(expense => [expense.id, expense]))
+
     return {
-      deleted: pendingExpenses.filter(
-        expense => expense.isDeleted && apiExpenseIds.has(expense.id)
-      ),
-      locallyDeleted: pendingExpenses.filter(
-        expense => expense.isDeleted && !apiExpenseIds.has(expense.id)
-      ),
-      toUpdate: pendingExpenses.filter(
-        expense => !expense.isDeleted && apiExpenseIds.has(expense.id)
-      ),
-      toCreate: pendingExpenses.filter(
-        expense => !expense.isDeleted && !apiExpenseIds.has(expense.id)
-      )
+      softDelete: pendingExpenses.filter(expense => {
+        const apiExpense = apiById.get(expense.id)
+        return !!expense.deletedAt && !!apiExpense && !apiExpense.deletedAt
+      }),
+      toUpdate: pendingExpenses.filter(expense => {
+        const apiExpense = apiById.get(expense.id)
+        return isExpenseActive(expense) && !!apiExpense && !apiExpense.deletedAt
+      }),
+      toCreate: pendingExpenses.filter(expense => {
+        return isExpenseActive(expense) && !apiById.has(expense.id)
+      }),
+      locallyDeleted: pendingExpenses.filter(expense => {
+        return !!expense.deletedAt && expense.isCreatedLocally && !apiById.has(expense.id)
+      })
     }
   }
 
-  function removeDeletedExpenses(deletedExpenseIds: Set<string>) {
-    if (deletedExpenseIds.size === 0) {
+  function removeExpensesLocally(expenseIds: string[]) {
+    if (expenseIds.length === 0) {
       return
     }
 
-    expenses.value = expenses.value.filter(
-      expense => !deletedExpenseIds.has(expense.id)
-    )
+    const ids = new Set(expenseIds)
+    expenses.value = expenses.value.filter(expense => !ids.has(expense.id))
   }
 
   function saveExpenses() {
@@ -326,19 +358,18 @@ export const useExpenseStore = defineStore('expense', () => {
     }
   }
 
-  async function deleteExpenseDirectly(
-    expense: Expense,
-    shouldDeleteOnApi: boolean
-  ) {
+  async function deleteExpenseDirectly(expense: Expense, shouldDeleteOnApi: boolean) {
     if (!shouldDeleteOnApi) {
-      removeDeletedExpenses(new Set([expense.id]))
+      removeExpensesLocally([expense.id])
       persistExpenses()
       return
     }
 
     try {
       await expenseApi.deleteExpense(expense.id)
-      removeDeletedExpenses(new Set([expense.id]))
+      expense.deletedAt = expense.deletedAt ?? new Date().toISOString()
+      expense.isSynced = true
+      expense.isDeleted = false
       persistExpenses()
     } catch (error) {
       console.error('Failed to delete expense:', error)
@@ -351,7 +382,7 @@ export const useExpenseStore = defineStore('expense', () => {
 
   function addExpense(payload: ExpensePayload): string {
     const hasPendingExpenses = getPendingExpenses().length > 0
-    const newExpenseId = crypto.randomUUID();
+    const newExpenseId = crypto.randomUUID()
     const expense: Expense = {
       id: newExpenseId,
       amount: payload.amount,
@@ -369,23 +400,19 @@ export const useExpenseStore = defineStore('expense', () => {
     persistExpenses()
 
     if (hasPendingExpenses) {
-      // Sync in background without blocking
       void queueExpensesSyncWithApi().catch(error => {
         console.error('Failed to sync expenses:', error)
       })
     } else {
-      // Create directly when there are no other pending expenses
-      // Mark as syncing to prevent duplicate sync requests
       expense.isSynced = true
       persistExpenses()
-      createExpenseDirectly(expense).catch(error => {
-        // If direct creation fails, mark as pending for sync
+      createExpenseDirectly(expense).catch(() => {
         expense.isSynced = false
         persistExpenses()
       })
     }
 
-    return newExpenseId;
+    return newExpenseId
   }
 
   function updateExpense(payload: ExpensePayload) {
@@ -395,10 +422,7 @@ export const useExpenseStore = defineStore('expense', () => {
 
     const expenseId = payload.id
     const hasPendingExpenses = hasOtherPendingExpenses(expenseId)
-
-    const index = expenses.value.findIndex(
-      expense => expense.id === expenseId
-    )
+    const index = expenses.value.findIndex(expense => expense.id === expenseId)
 
     if (index === -1) {
       return
@@ -426,14 +450,9 @@ export const useExpenseStore = defineStore('expense', () => {
     }
   }
 
-  function updateExpenseCategory(
-    expenseId: string,
-    categoryId?: string
-  ) {
+  function updateExpenseCategory(expenseId: string, categoryId?: string) {
     const hasPendingExpenses = hasOtherPendingExpenses(expenseId)
-    const expense = expenses.value.find(
-      expense => expense.id === expenseId
-    )
+    const expense = expenses.value.find(item => item.id === expenseId)
 
     if (!expense) {
       return
@@ -441,7 +460,6 @@ export const useExpenseStore = defineStore('expense', () => {
 
     expense.categoryId = categoryId
     expense.isSynced = false
-
     persistExpenses()
 
     if (hasPendingExpenses) {
@@ -453,14 +471,9 @@ export const useExpenseStore = defineStore('expense', () => {
     }
   }
 
-  function updateExpenseAmount(
-    expenseId: string,
-    amount: number
-  ) {
+  function updateExpenseAmount(expenseId: string, amount: number) {
     const hasPendingExpenses = hasOtherPendingExpenses(expenseId)
-    const expense = expenses.value.find(
-      expense => expense.id === expenseId
-    )
+    const expense = expenses.value.find(item => item.id === expenseId)
 
     if (!expense) {
       return
@@ -468,7 +481,6 @@ export const useExpenseStore = defineStore('expense', () => {
 
     expense.amount = amount
     expense.isSynced = false
-
     persistExpenses()
 
     if (hasPendingExpenses) {
@@ -482,31 +494,30 @@ export const useExpenseStore = defineStore('expense', () => {
 
   function deleteExpense(id: string) {
     const hasPendingExpenses = hasOtherPendingExpenses(id)
-    const expense = expenses.value.find(expense => expense.id === id)
+    const expense = expenses.value.find(item => item.id === id)
 
     if (!expense) {
       return
     }
 
-    const shouldDeleteOnApi = !expense.isCreatedLocally
-    expense.isDeleted = true
+    expense.deletedAt = new Date().toISOString()
+    expense.isDeleted = false
     expense.isSynced = false
-
     persistExpenses()
 
     if (hasPendingExpenses) {
       void queueExpensesSyncWithApi().catch(error => {
         console.error('Failed to sync expenses:', error)
       })
+    } else if (!expense.isCreatedLocally) {
+      deleteExpenseDirectly(expense, true)
     } else {
-      deleteExpenseDirectly(expense, shouldDeleteOnApi)
+      deleteExpenseDirectly(expense, false)
     }
   }
 
   function getExpenseById(id: string) {
-    return expenses.value.find(
-      expense => expense.id === id
-    )
+    return expenses.value.find(expense => expense.id === id)
   }
 
   async function syncUnsyncedExpenses() {
@@ -524,12 +535,12 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     const anonymousUserId = `anonymous:${anonymousProfile}`
-    const anonymousExpenses = await loadStoredExpenses(anonymousUserId)
+    const anonymousExpenses = (await loadStoredExpenses(anonymousUserId)).map(normalizeExpense)
     if (anonymousExpenses.length === 0) {
       return 0
     }
 
-    const currentExpenses = await loadStoredExpenses(authStore.userId)
+    const currentExpenses = (await loadStoredExpenses(authStore.userId)).map(normalizeExpense)
     const existingIds = new Set(currentExpenses.map(expense => expense.id))
     const transferredExpenses = anonymousExpenses.filter(expense => !existingIds.has(expense.id))
     await saveStoredExpenses(authStore.userId, [...currentExpenses, ...transferredExpenses])

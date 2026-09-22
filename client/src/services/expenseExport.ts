@@ -22,7 +22,7 @@ interface JsonExport {
 
 function toExportRows(expenses: Expense[]): ExportRow[] {
   return expenses
-    .filter(expense => !expense.isDeleted)
+    .filter(expense => !expense.deletedAt)
     .map(expense => ({
       expenseId: expense.id,
       amount: expense.amount,

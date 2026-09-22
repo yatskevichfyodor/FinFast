@@ -12,7 +12,8 @@ data class ExpenseDto(
     val customCategoryId: UUID?,
     val createdAt: Instant,
     val description: String?,
-    val paymentDate: Instant?
+    val paymentDate: Instant?,
+    val deletedAt: Instant? = null
 )
 
 fun Expense.toDto() =
@@ -23,5 +24,6 @@ fun Expense.toDto() =
         customCategoryId = customCategoryId,
         createdAt = createdAt,
         description = description,
-        paymentDate = paymentDate
+        paymentDate = paymentDate,
+        deletedAt = deletedAt
     )

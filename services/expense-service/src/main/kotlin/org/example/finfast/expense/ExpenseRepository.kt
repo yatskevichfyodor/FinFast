@@ -1,9 +1,19 @@
 package org.example.finfast.expense
 
 import org.springframework.data.jpa.repository.JpaRepository
-import java.util.UUID
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import java.time.Instant
+import java.util.*
 
 interface ExpenseRepository : JpaRepository<Expense, ExpenseId> {
+    fun findAllByExpenseId_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId: UUID): List<Expense>
+
     fun findAllByExpenseId_UserIdOrderByCreatedAtDesc(userId: UUID): List<Expense>
+
     fun deleteAllByExpenseId_UserId(userId: UUID): Long
+
+    @Modifying
+    @Query("DELETE FROM Expense e WHERE e.deletedAt IS NOT NULL AND e.deletedAt < :before")
+    fun deleteAllByDeletedAtBefore(before: Instant): Int
 }

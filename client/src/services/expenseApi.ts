@@ -9,6 +9,7 @@ export interface ExpenseApiBody {
   createdAt: string
   description?: string
   paymentDate?: string
+  deletedAt?: string
 }
 
 export interface CreateExpensePayload {
@@ -113,6 +114,11 @@ export async function getExpensesByIds(ids: string[]): Promise<ExpenseApiBody[]>
 
 export async function getExpenses(): Promise<ExpenseApiBody[]> {
   const { data } = await expenseApi.get<ExpenseApiBody[]>('/expenses')
+  return data
+}
+
+export async function getExpensesForSync(): Promise<ExpenseApiBody[]> {
+  const { data } = await expenseApi.get<ExpenseApiBody[]>('/expenses/sync')
   return data
 }
 

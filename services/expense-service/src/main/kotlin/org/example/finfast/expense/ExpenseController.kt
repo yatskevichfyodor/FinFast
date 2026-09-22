@@ -13,6 +13,11 @@ import java.util.UUID
 class ExpenseController(
     private val expenseService: ExpenseService
 ) {
+    @GetMapping("/sync")
+    fun getForSync(): ResponseEntity<List<ExpenseDto>> {
+        return ResponseEntity.ok(expenseService.getAllForSync())
+    }
+
     @GetMapping("/{id}")
     fun get(
         @PathVariable id: UUID
