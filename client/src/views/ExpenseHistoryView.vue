@@ -61,13 +61,14 @@ const groupedExpenses = computed(() => {
     })
     // sort by date descending (date is key in the map)
     .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
-    .map(([date, dayExpenses]) => [
-      parse(date, 'yyyy-MM-dd', new Date()).toLocaleDateString(undefined,{
+    .map(([date, dayExpenses]) => ({
+      date,
+      dayExpenses,
+      displayDate: parse(date, 'yyyy-MM-dd', new Date()).toLocaleDateString(undefined,{
         day: 'numeric',
         month: 'long'
-      }), 
-      dayExpenses
-    ])
+      }),
+    }))
 })
 
 function openDeleteDialog(expense: Expense) {
@@ -130,10 +131,10 @@ function editExpense(expense: Expense) {
       </div>
 
       <div v-else>
-        <div v-for="[date, dayExpenses] in groupedExpenses" :key="date" class="day-group mb-5">
+        <div v-for="{ date, displayDate, dayExpenses } in groupedExpenses" :key="date" class="day-group mb-5">
           <div class="day-header">
             <div class="day-date">
-              {{ date }}
+              {{ displayDate }}
             </div>
 
             <div class="day-total">
