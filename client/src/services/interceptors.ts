@@ -1,33 +1,16 @@
 import { authApi, expenseApi } from '@/services/api/http'
 import router from '@/router'
 import { refresh as refreshAuthTokens, type TokenResponse } from '@/services/api/authApi'
-
-const ACCESS_TOKEN_KEY = 'finfast-access-token'
-const REFRESH_TOKEN_KEY = 'finfast-refresh-token'
+import tokenStorage from '@/stores/tokenStorage'
+import type { AxiosInstance } from 'axios'
 
 const clients = [authApi, expenseApi]
-
-clients.forEach(client => {
-  client.interceptors.request.use(config => {
-    if (isPublicAuthRequest(config.url ?? '')) {
-      return config
-    }
-
-    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY)
-
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`
-    }
-
-    return config
-  })
-})
 
 
 let refreshPromise: Promise<TokenResponse> | null = null
 
 async function refreshTokens(): Promise<TokenResponse> {
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+  const refreshToken = tokenStorage.getRefreshToken()
 
   if (!refreshToken) {
     throw new Error('Refresh token is missing')
@@ -36,8 +19,7 @@ async function refreshTokens(): Promise<TokenResponse> {
   if (!refreshPromise) {
     refreshPromise = refreshAuthTokens(refreshToken)
       .then(tokens => {
-        localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken)
-        localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken)
+        tokenStorage.save(tokens.accessToken, tokens.refreshToken)
 
         return tokens
       })
@@ -49,13 +31,19 @@ async function refreshTokens(): Promise<TokenResponse> {
   return refreshPromise
 }
 
+const PUBLIC_AUTH_REQUESTS = new Set([
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/google'
+])
+
 function isPublicAuthRequest(url: string): boolean {
-  return url === '/auth/login' || url === '/auth/register' || url === '/auth/refresh' || url === '/auth/google'
+  return PUBLIC_AUTH_REQUESTS.has(url)
 }
 
 function redirectToLogin() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY)
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  tokenStorage.clear()
 
   void router.replace({
     name: 'login',
@@ -65,7 +53,23 @@ function redirectToLogin() {
   })
 }
 
-clients.forEach(client => {
+function setupRequestInterceptor(client: AxiosInstance) {
+  client.interceptors.request.use(config => {
+    if (isPublicAuthRequest(config.url ?? '')) {
+      return config
+    }
+
+    const accessToken = tokenStorage.getAccessToken()
+
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`
+    }
+
+    return config
+  })
+}
+
+function setupResponseInterceptor(client: AxiosInstance) {
   client.interceptors.response.use(
     response => response,
 
@@ -81,7 +85,7 @@ clients.forEach(client => {
         return Promise.reject(error)
       }
 
-      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+      const refreshToken = tokenStorage.getRefreshToken()
 
       if (!refreshToken) {
         redirectToLogin()
@@ -101,6 +105,10 @@ clients.forEach(client => {
       }
     }
   )
-})
+}
 
+clients.forEach(client => {
+  setupRequestInterceptor(client)
+  setupResponseInterceptor(client)
+})
 console.log('API INTERCEPTORS INITIALIZED')
