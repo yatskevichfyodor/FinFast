@@ -49,29 +49,11 @@ class ExpenseController(
         return ResponseEntity.status(201).build()
     }
 
-    @PostMapping("/batch")
-    fun createBatch(
-        @RequestBody dtos: List<ExpenseDto>
-    ): ResponseEntity<Void> {
-        expenseService.createBatch(dtos)
-
-        return ResponseEntity.status(201).build()
-    }
-
     @PostMapping("/sync")
     fun sync(
         @RequestBody dto: SyncExpensesDto
     ): ResponseEntity<Void> {
         expenseService.sync(dto)
-
-        return ResponseEntity.ok().build()
-    }
-
-    @PatchMapping("/batch")
-    fun updateBatch(
-        @RequestBody dtos: List<BatchUpdateExpenseDto>
-    ): ResponseEntity<Void> {
-        expenseService.updateBatch(dtos)
 
         return ResponseEntity.ok().build()
     }
@@ -95,20 +77,5 @@ class ExpenseController(
         } else {
             ResponseEntity.notFound().build()
         }
-    }
-
-    @DeleteMapping("/batch")
-    fun deleteBatch(
-        @RequestBody ids: List<UUID>
-    ): ResponseEntity<Void> {
-        expenseService.deleteBatch(ids)
-
-        return ResponseEntity.noContent().build()
-    }
-
-    @DeleteMapping
-    fun deleteAll(): ResponseEntity<Void> {
-        expenseService.deleteAllForCurrentUser()
-        return ResponseEntity.noContent().build()
     }
 }

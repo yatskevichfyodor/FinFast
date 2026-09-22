@@ -126,14 +126,6 @@ export async function createExpense(expense: CreateExpensePayload): Promise<void
   await expenseApi.post('/expenses', normalizeCreateExpense(expense))
 }
 
-export async function createExpensesBatch(expenses: CreateExpensePayload[]): Promise<void> {
-  if (expenses.length === 0) {
-    return
-  }
-
-  await expenseApi.post('/expenses/batch', expenses.map(normalizeCreateExpense))
-}
-
 export async function syncExpenses(request: SyncExpensesRequest): Promise<void> {
   await expenseApi.post('/expenses/sync', {
     ...request,
@@ -146,16 +138,6 @@ export async function updateExpense(id: string, updates: UpdateExpenseRequest): 
   await expenseApi.patch(`/expenses/${id}`, normalizeUpdateExpense(updates))
 }
 
-export async function updateExpensesBatch(
-  updates: BatchUpdateExpenseRequest[]
-): Promise<void> {
-  if (updates.length === 0) {
-    return
-  }
-
-  await expenseApi.patch('/expenses/batch', updates.map(normalizeUpdateExpense))
-}
-
 export async function deleteExpense(id: string): Promise<void> {
   try {
     await expenseApi.delete(`/expenses/${id}`)
@@ -166,16 +148,4 @@ export async function deleteExpense(id: string): Promise<void> {
 
     throw error
   }
-}
-
-export async function deleteExpensesBatch(ids: string[]): Promise<void> {
-  if (ids.length === 0) {
-    return
-  }
-
-  await expenseApi.delete('/expenses/batch', { data: ids })
-}
-
-export async function deleteAllExpenses(): Promise<void> {
-  await expenseApi.delete('/expenses')
 }
