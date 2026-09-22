@@ -4,7 +4,7 @@ import { isAxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useExpenseStore } from '@/stores/expense'
-import { loadExpenses as loadStoredExpenses } from '@/services/expenseStorage'
+import { expenseStorage } from '@/services/expenseStorage'
 import * as authApi from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 
@@ -153,7 +153,7 @@ function handleGoogleError(message: string) {
 async function continueAfterLogin() {
   const profileId = localStorage.getItem('finfast-anonymous-profile')
   if (profileId) {
-    anonymousExpensesCount.value = (await loadStoredExpenses(`anonymous:${profileId}`)).length
+    anonymousExpensesCount.value = (await expenseStorage.loadExpenses(`anonymous:${profileId}`)).length
   }
 
   if (anonymousExpensesCount.value > 0) {

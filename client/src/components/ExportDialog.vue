@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 
 import { createCsvExport, createJsonExport, downloadExport, type ExportFormat } from '@/services/expenseExport'
-import { loadExpenses } from '@/services/expenseStorage'
+import { expenseStorage } from '@/services/expenseStorage'
 import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps<{ modelValue: boolean }>()
@@ -32,7 +32,7 @@ async function doExport() {
   exportError.value = false
 
   try {
-    const expenses = await loadExpenses(authStore.userId)
+    const expenses = await expenseStorage.loadExpenses(authStore.userId)
     const content = selectedFormat.value === 'json'
       ? createJsonExport(expenses)
       : createCsvExport(expenses)

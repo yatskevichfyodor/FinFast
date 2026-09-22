@@ -1,7 +1,7 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import * as expenseApi from '@/services/api/expenseApi'
-import { loadExpenses as loadStoredExpenses, saveExpenses as saveStoredExpenses } from '@/services/expenseStorage'
+import { expenseStorage } from '@/services/expenseStorage'
 import { useAuthStore } from '@/stores/auth'
 import type { Expense, ExpensePayload } from '@/types/expense'
 import { isExpenseActive, normalizeExpense } from '@/types/expense'
@@ -51,7 +51,7 @@ export const useExpenseStore = defineStore('expense', () => {
       return
     }
 
-    const storedExpenses = (await loadStoredExpenses(userId)).map(normalizeExpense)
+    const storedExpenses = (await expenseStorage.loadExpenses(userId)).map(normalizeExpense)
     if (currentLoadVersion !== loadVersion || authStore.userId !== userId) {
       return
     }
@@ -83,7 +83,7 @@ export const useExpenseStore = defineStore('expense', () => {
       loadedUserId = null
       expenses.value = []
     }
-    await saveStoredExpenses(userId, [])
+    await expenseStorage.saveExpenses(userId, [])
   }
 
   watch(() => authStore.userId, () => {
@@ -301,7 +301,7 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     expensesByUser.set(userId, expenses.value)
-    return saveStoredExpenses(userId, expenses.value)
+    return expenseStorage.saveExpenses(userId, expenses.value)
   }
 
   function persistExpenses() {
@@ -535,18 +535,18 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     const anonymousUserId = `anonymous:${anonymousProfile}`
-    const anonymousExpenses = (await loadStoredExpenses(anonymousUserId)).map(normalizeExpense)
+    const anonymousExpenses = (await expenseStorage.loadExpenses(anonymousUserId)).map(normalizeExpense)
     if (anonymousExpenses.length === 0) {
       return 0
     }
 
-    const currentExpenses = (await loadStoredExpenses(authStore.userId)).map(normalizeExpense)
+    const currentExpenses = (await expenseStorage.loadExpenses(authStore.userId)).map(normalizeExpense)
     const existingIds = new Set(currentExpenses.map(expense => expense.id))
     const transferredExpenses = anonymousExpenses.filter(expense => !existingIds.has(expense.id))
-    await saveStoredExpenses(authStore.userId, [...currentExpenses, ...transferredExpenses])
+    await expenseStorage.saveExpenses(authStore.userId, [...currentExpenses, ...transferredExpenses])
     await loadExpenses()
     await syncUnsyncedExpenses()
-    await saveStoredExpenses(anonymousUserId, [])
+    await expenseStorage.saveExpenses(anonymousUserId, [])
     localStorage.removeItem('finfast-anonymous-profile')
     return transferredExpenses.length
   }

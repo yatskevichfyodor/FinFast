@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useDropZone } from '@vueuse/core'
 import { useAuthStore } from '@/stores/auth'
 import { useExpenseStore } from '@/stores/expense'
-import { loadExpenses as loadStoredExpenses, saveExpenses } from '@/services/expenseStorage'
+import { expenseStorage } from '@/services/expenseStorage'
 import { validateJson, mergeExpenses, type ImportFileData } from '@/services/expenseImport'
 
 const props = defineProps<{ modelValue: boolean }>()
@@ -129,13 +129,13 @@ async function processFile(file: File) {
     const userId = authStore.userId || 'anonymous'
 
     // Загружаем существующие расходы
-    const existingExpenses = await loadStoredExpenses(userId)
+    const existingExpenses = await expenseStorage.loadExpenses(userId)
 
     // Объединяем данные
     const { merged, added, updated } = mergeExpenses(existingExpenses, importedData.expenses)
 
     // Сохраняем объединённые данные
-    await saveExpenses(userId, merged)
+    await expenseStorage.saveExpenses(userId, merged)
 
     // Обновляем store напрямую, чтобы сразу отобразить импортированные данные
     // Используем forceReloadExpenses для обновления кэша и загрузки свежих данных
