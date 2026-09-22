@@ -9,7 +9,7 @@ import {
 import { isExpenseActive } from '@/types/expense'
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { parseDate } from '@/utils/dateHelpers'
-import { format } from 'date-fns'
+import { format, parse } from 'date-fns'
 
 const router = useRouter()
 const expenseStore = useExpenseStore()
@@ -29,12 +29,12 @@ const groupedExpenses = computed(() => {
   const groups: Record<string, Expense[]> = {}
 
   activeExpenses.value.forEach((expense: Expense) => {
-    const expensePaymentDateOrCreatedAtString = expense.paymentDate || expense.createdAt
-    if (!expensePaymentDateOrCreatedAtString) {
+    const expenseEffectiveDateString = expense.paymentDate ?? expense.createdAt
+    if (!expenseEffectiveDateString) {
       return
     }
     
-    const expenseEffectiveDate = parseDate(expensePaymentDateOrCreatedAtString)
+    const expenseEffectiveDate = parseDate(expenseEffectiveDateString)
     
     // Skip invalid dates
     if (isNaN(expenseEffectiveDate.getTime())) {
@@ -47,7 +47,7 @@ const groupedExpenses = computed(() => {
       groups[dateKey] = []
     }
 
-    groups[dateKey]!.push(expense)
+    groups[dateKey].push(expense)
   })
 
   return Object.entries(groups)
@@ -61,6 +61,13 @@ const groupedExpenses = computed(() => {
     })
     // sort by date descending (date is key in the map)
     .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+    .map(([date, dayExpenses]) => [
+      parse(date, 'yyyy-MM-dd', new Date()).toLocaleDateString(undefined,{
+        day: 'numeric',
+        month: 'long'
+      }), 
+      dayExpenses
+    ])
 })
 
 function openDeleteDialog(expense: Expense) {
