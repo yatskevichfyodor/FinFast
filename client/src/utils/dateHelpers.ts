@@ -1,24 +1,4 @@
-export function formatDate(dateString: string | undefined | null): string {
-  if (!dateString) {
-    return ''
-  }
-  const date = parseDate(dateString)
-  return date.toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long'
-  })
-}
-
-export function formatTime(dateString: string | undefined | null): string {
-  if (!dateString) {
-    return ''
-  }
-  const date = parseDate(dateString)
-  return date.toLocaleTimeString('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+import { isValid, parse } from "date-fns"
 
 export function formatMonthName(year: number, month: number): string {
   return new Intl.DateTimeFormat('ru-RU', {
@@ -34,18 +14,13 @@ export function parseDate(dateString: string | undefined | null): Date {
     return new Date()
   }
   
-  // Check if it's YYYY-MM-DD format without timezone
-  const isoDateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString)
-  if (isoDateMatch) {
-    const [, year, month, day] = isoDateMatch
-
-    if (year && month && day) {
-      return new Date(Number(year), Number(month) - 1, Number(day))
-    }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return parse(dateString, 'yyyy-MM-dd', new Date())
   }
   
   // Default to regular Date parsing for ISO format
-  return new Date(dateString)
+  const date = new Date(dateString)
+  return isValid(date) ? date : new Date(NaN)
 }
 
 // Convert YYYY.MM.DD to YYYY-MM-DD format

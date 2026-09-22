@@ -8,7 +8,8 @@ import {
 } from '@/stores/expense'
 import { isExpenseActive } from '@/types/expense'
 import { getCategoryDisplay } from '@/utils/categoryHelpers'
-import { formatDate, parseDate } from '@/utils/dateHelpers'
+import { parseDate } from '@/utils/dateHelpers'
+import { format } from 'date-fns'
 
 const router = useRouter()
 const expenseStore = useExpenseStore()
@@ -20,7 +21,7 @@ onMounted(() => {
 const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)
 
-const activeExpenses = computed(() =>
+const activeExpenses = computed<Expense[]>(() =>
   expenseStore.expenses.filter(isExpenseActive)
 )
 
@@ -28,19 +29,19 @@ const groupedExpenses = computed(() => {
   const groups: Record<string, Expense[]> = {}
 
   activeExpenses.value.forEach((expense: Expense) => {
-    const dateForGrouping = expense.paymentDate || expense.createdAt
-    if (!dateForGrouping) {
+    const expensePaymentDateOrCreatedAtString = expense.paymentDate || expense.createdAt
+    if (!expensePaymentDateOrCreatedAtString) {
       return
     }
     
-    const date = parseDate(dateForGrouping)
+    const expenseEffectiveDate = parseDate(expensePaymentDateOrCreatedAtString)
     
     // Skip invalid dates
-    if (isNaN(date.getTime())) {
+    if (isNaN(expenseEffectiveDate.getTime())) {
       return
     }
     
-    const dateKey = formatDate(dateForGrouping)
+    const dateKey = format(expenseEffectiveDate, 'yyyy-MM-dd')
 
     if (!groups[dateKey]) {
       groups[dateKey] = []
@@ -50,22 +51,16 @@ const groupedExpenses = computed(() => {
   })
 
   return Object.entries(groups)
+    // sort expenses within each day by createdAt descending
     .map(([date, dayExpenses]) => {
-      const sortedDayExpenses = [...dayExpenses].sort(
-        (a, b) => {
-          const dateA = parseDate(a.paymentDate || a.createdAt)
-          const dateB = parseDate(b.paymentDate || b.createdAt)
-          return dateB.getTime() - dateA.getTime()
-        }
+      const sortedDayExpenses = [...dayExpenses].sort((a, b) => 
+        parseDate(b.createdAt).getTime() - parseDate(a.createdAt).getTime()
       )
 
       return [date, sortedDayExpenses] as const
     })
-    .sort((a, b) => {
-      const dateA = parseDate(a[1][0]?.paymentDate || a[1][0]?.createdAt || '')
-      const dateB = parseDate(b[1][0]?.paymentDate || b[1][0]?.createdAt || '')
-      return dateB.getTime() - dateA.getTime()
-    })
+    // sort by date descending (date is key in the map)
+    .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
 })
 
 function openDeleteDialog(expense: Expense) {
