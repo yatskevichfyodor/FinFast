@@ -22,29 +22,3 @@ export function parseDate(dateString: string | undefined | null): Date {
   const date = new Date(dateString)
   return isValid(date) ? date : new Date(NaN)
 }
-
-// Convert YYYY.MM.DD to YYYY-MM-DD format
-export function convertDotFormatToDashFormat(dotDate: string | null | undefined): string | undefined {
-  if (!dotDate || typeof dotDate !== 'string') {
-    return undefined
-  }
-  const parts = dotDate.split('.')
-  if (parts.length === 3) {
-    const [year, month, day] = parts
-    return `${year}-${month}-${day}`
-  }
-  return dotDate
-}
-
-// Convert YYYY-MM-DD to YYYY.MM.DD format
-export function convertDashFormatToDotFormat(dashDate: string | null | undefined): string | null {
-  if (!dashDate || typeof dashDate !== 'string') {
-    return null
-  }
-  const parts = dashDate.split('-')
-  if (parts.length === 3) {
-    const [year, month, day] = parts
-    return `${year}.${month}.${day}`
-  }
-  return dashDate
-}

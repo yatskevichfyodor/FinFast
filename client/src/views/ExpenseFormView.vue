@@ -5,10 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import CategoryPicker from "@/components/CategoryPicker.vue";
 import ExpenseAmountInput from "@/components/ExpenseAmountInput.vue";
 import { useExpenseStore, type ExpensePayload } from "@/stores/expense";
-import {
-  convertDashFormatToDotFormat,
-  convertDotFormatToDashFormat,
-} from "@/utils/dateHelpers";
+import { format, parse } from "date-fns";
 
 const router = useRouter();
 const route = useRoute();
@@ -51,18 +48,13 @@ const editingExpenseId = computed(() => {
 const description = ref("");
 const selectedCategoryId = ref<string | null>(null);
 const selectedCustomCategoryId = ref<string | null>(null);
-const paymentDate = ref<string | null>(null);
+const paymentDate = ref<Date | null>(null);
 const currentAmount = ref<number | null>(null);
 const canSubmitAmount = ref(false);
 
 // Mobile step state
 const mobileStep = ref(1);
 const createdExpenseId = ref<string | null>(null);
-
-// Initial values for comparison (mobile step 2)
-const initialCategoryId = ref<string | null>(null);
-const initialDescription = ref<string>("");
-const initialPaymentDate = ref<string | null>(null);
 
 const initialAmount = computed(() => {
   // When editing, load from existing expense instead of query parameter
@@ -93,27 +85,6 @@ function handleAmountChange(amountValue: number, valid: boolean) {
   canSubmitAmount.value = valid;
 }
 
-function formatPaymentDate(dateValue: string | null): string | undefined {
-  if (!dateValue) {
-    return undefined;
-  }
-
-  if (typeof dateValue === "string") {
-    return convertDotFormatToDashFormat(dateValue);
-  } else {
-    // Handle if v-date-input returns a Date object
-    const dateObj = dateValue as any;
-    if (dateObj instanceof Date) {
-      const year = dateObj.getFullYear();
-      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-      const day = String(dateObj.getDate()).padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    }
-  }
-
-  return undefined;
-}
-
 // Mobile step 1: Create expense with amount only
 function handleMobileStep1Submit() {
   if (!canSubmitAmount.value || currentAmount.value === null) {
@@ -125,23 +96,15 @@ function handleMobileStep1Submit() {
     return;
   }
 
-  const paymentDateFormatted = formatPaymentDate(paymentDate.value);
-
   const payload: ExpensePayload = {
     amount: amountValue,
     categoryId: selectedCategoryId.value || undefined,
     customCategoryId: selectedCustomCategoryId.value || undefined,
     description: description.value || undefined,
-    paymentDate: paymentDateFormatted,
   };
 
   const newExpenseId = expenseStore.addExpense(payload);
   createdExpenseId.value = newExpenseId;
-
-  // Store initial values for step 2 comparison
-  initialCategoryId.value = selectedCategoryId.value;
-  initialDescription.value = description.value;
-  initialPaymentDate.value = paymentDate.value;
 
   // Move to step 2
   mobileStep.value = 2;
@@ -153,14 +116,9 @@ function handleMobileStep2Submit() {
     return;
   }
 
-  const hasChanges =
-    selectedCategoryId.value !== initialCategoryId.value ||
-    description.value !== initialDescription.value ||
-    paymentDate.value !== initialPaymentDate.value;
+  const hasChanges = selectedCategoryId.value && description.value && paymentDate.value;
 
   if (hasChanges) {
-    const paymentDateFormatted = formatPaymentDate(paymentDate.value);
-
     const updatePayload: ExpensePayload = {
       id: createdExpenseId.value,
       amount: currentAmount.value || 0,
@@ -171,7 +129,7 @@ function handleMobileStep2Submit() {
       customCategoryId: selectedCustomCategoryId.value || undefined,
       clearCategory: selectedCategoryId.value === null && selectedCustomCategoryId.value === null,
       description: description.value || undefined,
-      paymentDate: paymentDateFormatted,
+      paymentDate: paymentDate.value ? format(paymentDate.value, 'yyyy-MM-dd') : undefined,
     };
     expenseStore.updateExpense(updatePayload);
   }
@@ -192,7 +150,7 @@ function handleDesktopSubmit() {
     return;
   }
 
-  const paymentDateFormatted = formatPaymentDate(paymentDate.value);
+  const paymentDateFormatted = paymentDate.value ? format(paymentDate.value, 'yyyy-MM-dd') : undefined;
 
   if (isEditing.value) {
     const expenseId = editingExpenseId.value;
@@ -265,22 +223,11 @@ const loadExistingExpense = () => {
   if (isEditing.value && expenseId) {
     const expense = expenseStore.getExpenseById(expenseId);
     if (expense) {
-      initialDescription.value = expense.description || "";
-      // Convert YYYY-MM-DD to YYYY.MM.DD format for v-date-input
-      initialPaymentDate.value = expense.paymentDate
-        ? convertDashFormatToDotFormat(expense.paymentDate)
-        : null;
-      description.value = initialDescription.value;
-      paymentDate.value = initialPaymentDate.value;
+      description.value = expense.description || "";
+      paymentDate.value = expense.paymentDate ? parse(expense.paymentDate, 'yyyy-MM-dd', new Date()) : null;
       selectedCategoryId.value = expense.categoryId || null;
       selectedCustomCategoryId.value = expense.customCategoryId || null;
     }
-  } else if (route.query.paymentDate !== undefined) {
-    // Load payment date from query parameter and convert to YYYY.MM.DD format
-    const queryDate = route.query.paymentDate as string;
-    const convertedDate = convertDashFormatToDotFormat(queryDate);
-    paymentDate.value = convertedDate;
-    initialPaymentDate.value = convertedDate;
   }
 };
 

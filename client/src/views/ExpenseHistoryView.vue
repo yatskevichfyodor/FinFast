@@ -41,7 +41,7 @@ const groupedExpenses = computed(() => {
       return
     }
     
-    const dateKey = format(expenseEffectiveDate, 'yyyy-MM-dd')
+    const dateKey: string = format(expenseEffectiveDate, 'yyyy-MM-dd')
 
     if (!groups[dateKey]) {
       groups[dateKey] = []
