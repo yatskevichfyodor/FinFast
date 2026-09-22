@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue'
 
 import { createCsvExport, createJsonExport, downloadExport, type ExportFormat } from '@/services/expenseExport'
-import { expenseStorage } from '@/services/expenseStorage'
+import { expenseStorage } from '@/stores/expenseStorage/expenseStorage'
 import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps<{ modelValue: boolean }>()

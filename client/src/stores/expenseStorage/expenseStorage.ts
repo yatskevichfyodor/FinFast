@@ -1,8 +1,9 @@
 import { toRaw } from 'vue'
 import type { Expense } from '@/types/expense'
+import { migrateToV4 } from './migrations/v4'
 
 const DATABASE_NAME = 'finfast'
-const DATABASE_VERSION = 3
+const DATABASE_VERSION = 4
 const STORE_NAME = 'expenses'
 
 interface ExpenseRecord {
@@ -18,12 +19,23 @@ export const expenseStorage = {
 
       request.onupgradeneeded = (event) => {
         const database = request.result
+        const transaction = request.transaction
+        const oldVersion = event.oldVersion
 
         if (!database.objectStoreNames.contains(STORE_NAME)) {
           database.createObjectStore(STORE_NAME, {
             keyPath: ['userId', 'expenseId']
           })
         }
+
+        if (oldVersion < 4 && transaction) {
+          migrateToV4(transaction)
+        }
+
+        // add future migrations here like this:
+        // if (oldVersion < 5) {
+        //     migrateToV5(transaction)
+        // }
       }
 
       request.onsuccess = () => resolve(request.result)

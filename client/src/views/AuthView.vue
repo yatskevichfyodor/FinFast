@@ -4,7 +4,7 @@ import { isAxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useExpenseStore } from '@/stores/expense'
-import { expenseStorage } from '@/services/expenseStorage'
+import { expenseStorage } from '@/stores/expenseStorage/expenseStorage'
 import * as authApi from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 
