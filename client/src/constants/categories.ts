@@ -47,11 +47,5 @@ export const CATEGORIES: Category[] = [
     name: 'Подписки',
     icon: 'mdi-calendar-check',
     color: '#FFCA28'
-  },
-  {
-    id: 'other',
-    name: 'Другое',
-    icon: 'mdi-dots-horizontal-circle',
-    color: '#78909C'
   }
 ]
