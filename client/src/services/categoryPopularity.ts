@@ -1,6 +1,6 @@
 import { CATEGORIES } from '@/constants/categories'
 import type { Expense } from '@/types/expense'
-import { readStoredCategoryOrder, writeStoredCategoryOrder, CATEGORY_ORDER_REFRESH_INTERVAL_MS } from '@/services/categoryOrderStorage'
+import { categoryOrderStorage, CATEGORY_ORDER_REFRESH_INTERVAL_MS } from '@/stores/categoryOrderStorage'
 
 export function sortCategoriesByOrder(categoryIds: string[]) {
   const orderMap = new Map<string, number>()
@@ -51,7 +51,7 @@ export function calculatePopularCategoryOrder(expenses: Expense[]) {
 }
 
 export function buildPopularCategoryOrder(expenses: Expense[]) {
-  const storedOrder = readStoredCategoryOrder()
+  const storedOrder = categoryOrderStorage.readStoredCategoryOrder()
   const now = Date.now()
 
   if (storedOrder && now - storedOrder.updatedAt < CATEGORY_ORDER_REFRESH_INTERVAL_MS) {
@@ -59,6 +59,6 @@ export function buildPopularCategoryOrder(expenses: Expense[]) {
   }
 
   const categoryIds = calculatePopularCategoryOrder(expenses)
-  writeStoredCategoryOrder(categoryIds)
+  categoryOrderStorage.writeStoredCategoryOrder(categoryIds)
   return sortCategoriesByOrder(categoryIds)
 }
