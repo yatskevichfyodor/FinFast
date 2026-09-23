@@ -3,7 +3,7 @@ package org.example.finfast.expenseservice.category
 import org.example.finfast.expenseservice.InvalidCategoryException
 
 enum class SystemCategory(val id: String, val displayName: String, val icon: String, val color: String) {
-    FOOD("food", "Еда", "mdi-food", "#FF7043"),
+    FOOD("food", "Еда", "mdi-silverware-fork-knife", "#FF7043"),
     TRANSPORT("transport", "Транспорт", "mdi-car", "#42A5F5"),
     HOME("home", "Дом", "mdi-home", "#AB47BC"),
     SHOPPING("shopping", "Покупки", "mdi-shopping", "#EC407A"),
