@@ -7,7 +7,6 @@ import java.time.Instant
 import java.util.*
 
 interface ExpenseRepository : JpaRepository<Expense, ExpenseId> {
-    fun findAllByExpenseId_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId: UUID): List<Expense>
 
     fun findAllByExpenseId_UserIdOrderByCreatedAtDesc(userId: UUID): List<Expense>
 

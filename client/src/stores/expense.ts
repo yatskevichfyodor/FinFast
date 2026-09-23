@@ -124,8 +124,7 @@ export const useExpenseStore = defineStore('expense', () => {
 
     try {
       await queueExpensesSyncWithApi()
-      const apiExpenses = await expenseApi.getExpensesForSync()
-      const apiById = new Map(apiExpenses.map(expense => [expense.id, expense]))
+      const apiExpenses = await expenseApi.getExpenses()
       const serverIds = new Set(apiExpenses.map(expense => expense.id))
       const pendingIds = new Set(getPendingExpenses().map(expense => expense.id))
 

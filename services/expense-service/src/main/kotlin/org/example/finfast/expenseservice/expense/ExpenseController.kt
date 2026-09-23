@@ -1,6 +1,5 @@
 package org.example.finfast.expenseservice.expense
 
-import org.example.finfast.expenseservice.expense.dto.BatchUpdateExpenseDto
 import org.example.finfast.expenseservice.expense.dto.ExpenseDto
 import org.example.finfast.expenseservice.expense.dto.SyncExpensesDto
 import org.example.finfast.expenseservice.expense.dto.UpdateExpenseDto
@@ -13,11 +12,6 @@ import java.util.UUID
 class ExpenseController(
     private val expenseService: ExpenseService
 ) {
-    @GetMapping("/sync")
-    fun getForSync(): ResponseEntity<List<ExpenseDto>> {
-        return ResponseEntity.ok(expenseService.getAllForSync())
-    }
-
     @GetMapping("/{id}")
     fun get(
         @PathVariable id: UUID
@@ -27,6 +21,11 @@ class ExpenseController(
         )
     }
 
+    /**
+     * Returns a list of expenses. If `ids` query parameter is provided, it returns only the expenses with those IDs.
+     * If `ids` is not provided, it returns all expenses for the current user.
+     * Expenses marked for deletion are also returned.
+     */
     @GetMapping
     fun getByIds(
         @RequestParam(required = false) ids: List<UUID>?

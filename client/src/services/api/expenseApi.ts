@@ -117,11 +117,6 @@ export async function getExpenses(): Promise<ExpenseApiBody[]> {
   return data
 }
 
-export async function getExpensesForSync(): Promise<ExpenseApiBody[]> {
-  const { data } = await expenseApi.get<ExpenseApiBody[]>('/expenses/sync')
-  return data
-}
-
 export async function createExpense(expense: CreateExpensePayload): Promise<void> {
   await expenseApi.post('/expenses', normalizeCreateExpense(expense))
 }

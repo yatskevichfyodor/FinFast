@@ -44,12 +44,6 @@ class ExpenseService(
 
     @Transactional(readOnly = true)
     fun getAll(): List<ExpenseDto> {
-        return expenseRepository.findAllByExpenseId_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(currentUserId())
-            .map { it.toDto() }
-    }
-
-    @Transactional(readOnly = true)
-    fun getAllForSync(): List<ExpenseDto> {
         return expenseRepository.findAllByExpenseId_UserIdOrderByCreatedAtDesc(currentUserId())
             .map { it.toDto() }
     }
