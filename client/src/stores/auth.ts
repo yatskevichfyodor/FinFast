@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import * as authApi from '@/services/api/authApi'
+import { authApi, type TokenResponse, type UserResponse } from '@/services/api/authApi'
 
 const ACCESS_TOKEN_KEY = 'finfast-access-token'
 const REFRESH_TOKEN_KEY = 'finfast-refresh-token'
@@ -99,7 +99,7 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value !== null || (isOffline.value && userId.value !== null)
   )
 
-  function saveTokens(tokens: authApi.TokenResponse) {
+  function saveTokens(tokens: TokenResponse) {
     accessToken.value = tokens.accessToken
     refreshToken.value = tokens.refreshToken
     isOffline.value = false
@@ -133,7 +133,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function updateProfile(username: string) { applyUser(await authApi.updateProfile(username)) }
   async function setPassword(password: string) { applyUser(await authApi.setPassword(password)) }
 
-  function applyUser(user: authApi.UserResponse) {
+  function applyUser(user: UserResponse) {
     userId.value = user.id
     username.value = user.username
     email.value = user.email || null

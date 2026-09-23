@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-import * as expenseApi from '@/services/api/expenseApi'
+import { expenseApi, type ExpenseApiBody, type SyncExpensesRequest } from '@/services/api/expenseApi'
 import { expenseStorage } from '@/stores/expenseStorage/expenseStorage'
 import { useAuthStore } from '@/stores/auth'
 import type { Expense, ExpensePayload } from '@/types/expense'
@@ -17,7 +17,7 @@ export const useExpenseStore = defineStore('expense', () => {
   let loadedUserId: string | null = null
   let loadVersion = 0
 
-  function mapApiExpenseToLocal(apiExpense: expenseApi.ExpenseApiBody): Expense {
+  function mapApiExpenseToLocal(apiExpense: ExpenseApiBody): Expense {
     return {
       id: apiExpense.id,
       amount: apiExpense.amount ?? 0,
@@ -187,7 +187,7 @@ export const useExpenseStore = defineStore('expense', () => {
         locallyDeleted
       } = splitPendingExpenses(pendingExpenses, apiExpenses)
 
-      const syncRequest: expenseApi.SyncExpensesRequest = {}
+      const syncRequest: SyncExpensesRequest = {}
 
       if (toCreate.length > 0) {
         syncRequest.create = toCreate.map(expense => ({
@@ -262,7 +262,7 @@ export const useExpenseStore = defineStore('expense', () => {
 
   function splitPendingExpenses(
     pendingExpenses: Expense[],
-    apiExpenses: expenseApi.ExpenseApiBody[]
+    apiExpenses: ExpenseApiBody[]
   ) {
     const apiById = new Map(apiExpenses.map(expense => [expense.id, expense]))
 

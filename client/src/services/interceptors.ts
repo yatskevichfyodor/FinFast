@@ -1,10 +1,10 @@
-import { authApi, expenseApi } from '@/services/api/http'
+import { authClient, expenseClient } from '@/services/api/http'
 import router from '@/router'
-import { refresh as refreshAuthTokens, type TokenResponse } from '@/services/api/authApi'
+import { authApi, type TokenResponse } from '@/services/api/authApi'
 import tokenStorage from '@/stores/tokenStorage'
 import type { AxiosInstance } from 'axios'
 
-const clients = [authApi, expenseApi]
+const clients = [authClient, expenseClient]
 
 
 let refreshPromise: Promise<TokenResponse> | null = null
@@ -17,7 +17,7 @@ async function refreshTokens(): Promise<TokenResponse> {
   }
 
   if (!refreshPromise) {
-    refreshPromise = refreshAuthTokens(refreshToken)
+    refreshPromise = authApi.refresh(refreshToken)
       .then(tokens => {
         tokenStorage.save(tokens.accessToken, tokens.refreshToken)
 

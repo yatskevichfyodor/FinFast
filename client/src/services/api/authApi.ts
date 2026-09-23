@@ -1,4 +1,4 @@
-import { authApi } from '@/services/api/http'
+import { authClient } from '@/services/api/http'
 
 export interface RegisterRequest {
   username: string
@@ -25,67 +25,69 @@ export interface TokenResponse {
   expiresIn: number
 }
 
-export async function register(request: RegisterRequest): Promise<UserResponse> {
-  const { data } = await authApi.post<UserResponse>('/auth/register', request)
-  return data
-}
+export const authApi = {
+  async register(request: RegisterRequest): Promise<UserResponse> {
+    const { data } = await authClient.post<UserResponse>('/auth/register', request)
+    return data
+  },
 
-export async function login(request: LoginRequest, signal?: AbortSignal): Promise<TokenResponse> {
-  const { data } = await authApi.post<TokenResponse>('/auth/login', request, {
-    signal,
-    timeout: 65000
-  })
-  return data
-}
+  async login(request: LoginRequest, signal?: AbortSignal): Promise<TokenResponse> {
+    const { data } = await authClient.post<TokenResponse>('/auth/login', request, {
+      signal,
+      timeout: 65000
+    })
+    return data
+  },
 
-export async function loginWithGoogle(credential: string): Promise<TokenResponse> {
-  const { data } = await authApi.post<TokenResponse>('/auth/google', { credential })
-  return data
-}
+  async loginWithGoogle(credential: string): Promise<TokenResponse> {
+    const { data } = await authClient.post<TokenResponse>('/auth/google', { credential })
+    return data
+  },
 
-export async function linkGoogleAccount(credential: string): Promise<UserResponse> {
-  const { data } = await authApi.post<UserResponse>('/auth/me/google', { credential })
-  return data
-}
+  async linkGoogleAccount(credential: string): Promise<UserResponse> {
+    const { data } = await authClient.post<UserResponse>('/auth/me/google', { credential })
+    return data
+  },
 
-export async function unlinkGoogleAccount(): Promise<UserResponse> {
-  const { data } = await authApi.delete<UserResponse>('/auth/me/google')
-  return data
-}
+  async unlinkGoogleAccount(): Promise<UserResponse> {
+    const { data } = await authClient.delete<UserResponse>('/auth/me/google')
+    return data
+  },
 
-export async function updateProfile(username: string): Promise<UserResponse> {
-  const { data } = await authApi.patch<UserResponse>('/auth/me', { username })
-  return data
-}
+  async updateProfile(username: string): Promise<UserResponse> {
+    const { data } = await authClient.patch<UserResponse>('/auth/me', { username })
+    return data
+  },
 
-export async function setPassword(password: string): Promise<UserResponse> {
-  const { data } = await authApi.put<UserResponse>('/auth/me/password', { password })
-  return data
-}
+  async setPassword(password: string): Promise<UserResponse> {
+    const { data } = await authClient.put<UserResponse>('/auth/me/password', { password })
+    return data
+  },
 
-export async function deleteAccount(): Promise<void> {
-  await authApi.delete('/auth/me')
-}
+  async deleteAccount(): Promise<void> {
+    await authClient.delete('/auth/me')
+  },
 
-export async function me(): Promise<UserResponse> {
-  const { data } = await authApi.get<UserResponse>('/auth/me')
-  return data
-}
+  async me(): Promise<UserResponse> {
+    const { data } = await authClient.get<UserResponse>('/auth/me')
+    return data
+  },
 
-export async function isAvailable(): Promise<boolean> {
-  try {
-    await authApi.get('/health', { timeout: 20000 })
-    return true
-  } catch {
-    return false
+  async isAvailable(): Promise<boolean> {
+    try {
+      await authClient.get('/health', { timeout: 20000 })
+      return true
+    } catch {
+      return false
+    }
+  },
+
+  async refresh(refreshToken: string): Promise<TokenResponse> {
+    const { data } = await authClient.post<TokenResponse>('/auth/refresh', { refreshToken })
+    return data
+  },
+
+  async logout(refreshToken: string): Promise<void> {
+    await authClient.post('/auth/logout', { refreshToken })
   }
-}
-
-export async function refresh(refreshToken: string): Promise<TokenResponse> {
-  const { data } = await authApi.post<TokenResponse>('/auth/refresh', { refreshToken })
-  return data
-}
-
-export async function logout(refreshToken: string): Promise<void> {
-  await authApi.post('/auth/logout', { refreshToken })
 }

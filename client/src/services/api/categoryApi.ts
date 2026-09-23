@@ -1,38 +1,43 @@
-import { expenseApi } from '@/services/api/http'
-import type { Category, CategoryInput } from '@/types/category'
+import { expenseClient } from "@/services/api/http";
+import type { Category, CategoryInput } from "@/types/category";
 
-export async function getAvailableCategories() {
-  const { data } = await expenseApi.get<Category[]>('/categories')
-  return data
-}
+export const categoryApi = {
+  async getAvailableCategories() {
+    const { data } = await expenseClient.get<Category[]>("/categories");
+    return data;
+  },
 
-export async function getEditorCategories() {
-  const { data } = await expenseApi.get<Category[]>('/categories/editor')
-  return data
-}
+  async getEditorCategories() {
+    const { data } = await expenseClient.get<Category[]>("/categories/editor");
+    return data;
+  },
 
-export async function createCategory(input: CategoryInput) {
-  const { data } = await expenseApi.post<Category>('/categories', input)
-  return data
-}
+  async createCategory(input: CategoryInput) {
+    const { data } = await expenseClient.post<Category>("/categories", input);
+    return data;
+  },
 
-export async function updateCategory(id: string, input: CategoryInput) {
-  const { data } = await expenseApi.patch<Category>(`/categories/${id}`, input)
-  return data
-}
+  async updateCategory(id: string, input: CategoryInput) {
+    const { data } = await expenseClient.patch<Category>(
+      `/categories/${id}`,
+      input,
+    );
+    return data;
+  },
 
-export function deleteCategory(id: string) {
-  return expenseApi.delete(`/categories/${id}`)
-}
+  deleteCategory(id: string) {
+    return expenseClient.delete(`/categories/${id}`);
+  },
 
-export function restoreCategory(id: string) {
-  return expenseApi.post(`/categories/${id}/restore`)
-}
+  restoreCategory(id: string) {
+    return expenseClient.post(`/categories/${id}/restore`);
+  },
 
-export function hideSystemCategory(id: string) {
-  return expenseApi.post(`/categories/system/${id}/hide`)
-}
+  hideSystemCategory(id: string) {
+    return expenseClient.post(`/categories/system/${id}/hide`);
+  },
 
-export function restoreSystemCategory(id: string) {
-  return expenseApi.post(`/categories/system/${id}/restore`)
-}
+  restoreSystemCategory(id: string) {
+    return expenseClient.post(`/categories/system/${id}/restore`);
+  },
+};
