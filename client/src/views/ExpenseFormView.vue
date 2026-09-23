@@ -38,6 +38,8 @@ onUnmounted(() => {
   window.removeEventListener("resize", updateScreenWidth);
 });
 
+const today = new Date().toISOString().slice(0, 10);
+
 // Form state
 const isEditing = computed(() => route.query.id !== undefined);
 const editingExpenseId = computed(() => {
@@ -313,6 +315,7 @@ watchCategoryId();
                       class="custom-text-field"
                       color="primary"
                       prepend-icon="mdi-calendar"
+                      :max="today"
                     />
                   </div>
                 </v-card-text>
@@ -365,6 +368,7 @@ watchCategoryId();
                     class="custom-text-field"
                     color="primary"
                     prepend-icon="mdi-calendar"
+                    :max="today"
                   />
 
                   <v-text-field
@@ -442,7 +446,8 @@ watchCategoryId();
                     persistent-hint
                     class="custom-text-field"
                     color="primary"
-                    prepend-icon="mdi-calendar"
+                    prepend-icon="mdi-calendar"                    
+                    :max="today"
                   />
                 </div>
               </v-card-text>
