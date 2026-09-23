@@ -1,7 +1,7 @@
 package org.example.finfast.expenseservice.expense.dto
 
 import java.math.BigDecimal
-import java.time.Instant
+import java.time.LocalDate
 import java.util.*
 
 class BatchUpdateExpenseDto(
@@ -12,7 +12,7 @@ class BatchUpdateExpenseDto(
     /** Explicitly removes both system and custom category assignments. */
     val clearCategory: Boolean = false,
     val description: String?,
-    val paymentDate: Instant?
+    val paymentDate: LocalDate?,
 )
 
 fun BatchUpdateExpenseDto.toUpdateDto() =

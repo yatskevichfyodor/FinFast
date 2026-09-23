@@ -3,6 +3,7 @@ package org.example.finfast.expenseservice.expense.dto
 import org.example.finfast.expenseservice.expense.Expense
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 
 data class ExpenseDto(
@@ -12,7 +13,7 @@ data class ExpenseDto(
     val customCategoryId: UUID?,
     val createdAt: Instant,
     val description: String?,
-    val paymentDate: Instant?,
+    val paymentDate: LocalDate?,
     val deletedAt: Instant? = null
 )
 

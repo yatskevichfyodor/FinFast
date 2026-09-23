@@ -41,44 +41,20 @@ export interface SyncExpensesRequest {
   delete?: string[];
 }
 
-function normalizeInstant(value: string | undefined): string | undefined {
-  if (!value) {
-    return value;
-  }
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return `${value}T00:00:00.000Z`;
-  }
-
-  const parsedValue = new Date(value);
-  if (!Number.isNaN(parsedValue.getTime())) {
-    return parsedValue.toISOString();
-  }
-
-  const legacyDateValue = value
-    .replace(/T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/, "")
-    .replace(/\s+\([^)]*\)$/, "");
-  const parsedLegacyValue = new Date(legacyDateValue);
-
-  return Number.isNaN(parsedLegacyValue.getTime())
-    ? value
-    : parsedLegacyValue.toISOString();
-}
-
 function normalizeCreateExpense(
   expense: CreateExpensePayload,
 ): CreateExpensePayload {
   return {
     ...expense,
-    createdAt: normalizeInstant(expense.createdAt)!,
-    paymentDate: normalizeInstant(expense.paymentDate),
+    createdAt: expense.createdAt,
+    paymentDate: expense.paymentDate,
   };
 }
 
 function normalizeUpdateExpense<T extends UpdateExpenseRequest>(expense: T): T {
   return {
     ...expense,
-    paymentDate: normalizeInstant(expense.paymentDate),
+    paymentDate: expense.paymentDate,
   };
 }
 

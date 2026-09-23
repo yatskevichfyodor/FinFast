@@ -3,6 +3,7 @@ package org.example.finfast.expenseservice.expense
 import jakarta.persistence.*
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 
 @Embeddable
@@ -36,7 +37,7 @@ class Expense(
     var description: String? = null,
 
     @Column(name = "payment_date")
-    var paymentDate: Instant? = null,
+    var paymentDate: LocalDate? = null,
 
     @Column(name = "deleted_at")
     var deletedAt: Instant? = null
