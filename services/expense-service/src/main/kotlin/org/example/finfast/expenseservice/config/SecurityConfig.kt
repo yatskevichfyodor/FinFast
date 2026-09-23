@@ -5,7 +5,9 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.oauth2.jwt.JwtValidators
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.web.SecurityFilterChain
 
@@ -21,8 +23,8 @@ class SecurityConfig(
         
         // Set custom validator to check issuer
         decoder.setJwtValidator(
-            org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator(
-                org.springframework.security.oauth2.jwt.JwtValidators.createDefaultWithIssuer(issuer)
+            DelegatingOAuth2TokenValidator(
+                JwtValidators.createDefaultWithIssuer(issuer)
             )
         )
         
@@ -35,10 +37,15 @@ class SecurityConfig(
             .cors { }
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
-            .authorizeHttpRequests { it.anyRequest().authenticated() }
+            .authorizeHttpRequests { it
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**")
+                .permitAll()
+                .anyRequest()
+                .authenticated() }
             .headers { it.frameOptions { frame -> frame.disable() } }
             .oauth2ResourceServer { it.jwt { } }
 
         return http.build()
     }
+
 }

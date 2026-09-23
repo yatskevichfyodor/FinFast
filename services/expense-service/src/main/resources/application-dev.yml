@@ -27,3 +27,7 @@ finfast:
   auth-service:
     url: http://localhost:8082
   clientUrl: http://localhost:5173
+
+springdoc:
+  api-docs.enabled: true
+  swagger-ui.enabled: true

@@ -23,3 +23,7 @@ finfast:
   expense:
     purge:
       cron: "0 0 3 * * *"
+
+springdoc:
+  api-docs.enabled: false
+  swagger-ui.enabled: false
