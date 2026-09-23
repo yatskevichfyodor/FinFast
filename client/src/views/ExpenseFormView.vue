@@ -118,7 +118,7 @@ function handleMobileStep2Submit() {
     return;
   }
 
-  const hasChanges = selectedCategoryId.value && description.value && paymentDate.value;
+  const hasChanges = selectedCategoryId.value || description.value || paymentDate.value;
 
   if (hasChanges) {
     const updatePayload: ExpensePayload = {
