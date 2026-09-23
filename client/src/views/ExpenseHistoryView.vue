@@ -25,6 +25,19 @@ const activeExpenses = computed<Expense[]>(() =>
   expenseStore.expenses.filter(isExpenseActive)
 )
 
+function formatDisplayDate(date: string): string {
+  const parsedDate = parse(date, 'yyyy-MM-dd', new Date())
+  const currentYear = new Date().getFullYear()
+
+  return parsedDate.toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+    ...(parsedDate.getFullYear() !== currentYear && {
+      year: 'numeric'
+    })
+  })
+}
+
 const groupedExpenses = computed(() => {
   const groups: Record<string, Expense[]> = {}
 
@@ -64,10 +77,7 @@ const groupedExpenses = computed(() => {
     .map(([date, dayExpenses]) => ({
       date,
       dayExpenses,
-      displayDate: parse(date, 'yyyy-MM-dd', new Date()).toLocaleDateString(undefined,{
-        day: 'numeric',
-        month: 'long'
-      }),
+      displayDate: formatDisplayDate(date)
     }))
 })
 
