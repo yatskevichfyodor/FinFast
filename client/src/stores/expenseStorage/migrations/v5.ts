@@ -6,17 +6,26 @@ interface ExpenseRecord {
   expense: Expense
 }
 
-// convert expenses playmentDate field from full ISO string to just the date part (YYYY-MM-DD)
-export function migrateToV4(transaction: IDBTransaction) {
+export function migrateToV5(transaction: IDBTransaction) {
   const objectStore = transaction.objectStore('expenses')
   const request = objectStore.openCursor()
+
+  let processedCount = 0
+  let migratedCount = 0
+
+  console.info('[IndexedDB] Starting migration to v5')
 
   request.onsuccess = () => {
     const cursor = request.result
 
     if (!cursor) {
+      console.info(
+        `[IndexedDB] Migration to v5 completed: ${migratedCount} of ${processedCount} records migrated`
+      )
       return
     }
+
+    processedCount++
 
     const record = cursor.value as ExpenseRecord
     const paymentDate = record.expense.paymentDate
@@ -32,8 +41,17 @@ export function migrateToV4(transaction: IDBTransaction) {
           paymentDate: paymentDate.slice(0, 10)
         }
       })
+
+      migratedCount++
     }
 
     cursor.continue()
+  }
+
+  request.onerror = () => {
+    console.error(
+      '[IndexedDB] Migration to v4 failed:',
+      request.error
+    )
   }
 }

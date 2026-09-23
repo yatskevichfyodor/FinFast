@@ -70,7 +70,6 @@ export default defineConfig(({ mode }) => ({
         pure_funcs: [
           'console.log',
           'console.debug',
-          'console.info',
           'console.warn'
         ],
         drop_debugger: true

@@ -1,9 +1,9 @@
 import { toRaw } from 'vue'
 import type { Expense } from '@/types/expense'
-import { migrateToV4 } from './migrations/v4'
+import { migrateToV5 } from './migrations/v5'
 
 const DATABASE_NAME = 'finfast'
-const DATABASE_VERSION = 4
+const DATABASE_VERSION = 5
 const STORE_NAME = 'expenses'
 
 interface ExpenseRecord {
@@ -28,8 +28,8 @@ export const expenseStorage = {
           })
         }
 
-        if (oldVersion < 4 && transaction) {
-          migrateToV4(transaction)
+        if (oldVersion < 5 && transaction) {
+          migrateToV5(transaction)
         }
 
         // add future migrations here like this:
