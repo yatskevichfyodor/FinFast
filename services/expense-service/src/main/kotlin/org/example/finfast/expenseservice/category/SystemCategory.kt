@@ -6,6 +6,7 @@ enum class SystemCategory(val id: String, val displayName: String, val icon: Str
     FOOD("food", "Еда", "mdi-silverware-fork-knife", "#FF7043"),
     TRANSPORT("transport", "Транспорт", "mdi-car", "#42A5F5"),
     HOME("home", "Дом", "mdi-home", "#AB47BC"),
+    CLOTHES("clothes", "Одежда", "mdi-tshirt-crew", "#FFB74D"),
     SHOPPING("shopping", "Покупки", "mdi-shopping", "#EC407A"),
     ENTERTAINMENT("entertainment", "Развлечения", "mdi-gamepad-variant", "#7E57C2"),
     HEALTH("health", "Здоровье", "mdi-heart-pulse", "#26A69A"),
