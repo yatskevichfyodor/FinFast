@@ -7,12 +7,13 @@ import {
   type Expense
 } from '@/stores/expense'
 import { isExpenseActive } from '@/types/expense'
-import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { parseDate } from '@/utils/dateHelpers'
 import { format, parse } from 'date-fns'
+import { useCategoryStore } from '@/stores/category'
 
 const router = useRouter()
 const expenseStore = useExpenseStore()
+const categoryStore = useCategoryStore()
 
 onMounted(() => {
   void expenseStore.refreshExpenses()
@@ -161,14 +162,14 @@ function editExpense(expense: Expense) {
             <v-card-text class="pa-4">
               <div class="d-flex align-center">
                 <div class="expense-icon" :style="{
-                  '--category-color': getCategoryDisplay(expense.categoryId).color
+                  '--category-color': categoryStore.getCategoryDisplay(expense.categoryId).color
                 }">
-                  <v-icon :icon="getCategoryDisplay(expense.categoryId).icon" size="24" />
+                  <v-icon :icon="categoryStore.getCategoryDisplay(expense.categoryId).icon" size="24" />
                 </div>
 
                 <div class="expense-info flex-grow-1">
                   <div class="expense-category">
-                    {{ getCategoryDisplay(expense.categoryId).name }}
+                    {{ categoryStore.getCategoryDisplay(expense.categoryId).name }}
                   </div>
 
                   <div v-if="expense.description" class="expense-description">

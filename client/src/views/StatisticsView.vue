@@ -3,8 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { useExpenseStore, type Expense } from '@/stores/expense'
 import { isExpenseActive } from '@/types/expense'
 import { useAuthStore } from '@/stores/auth'
-import { getCategoryDisplay } from '@/utils/categoryHelpers'
 import { formatMonthName } from '@/utils/dateHelpers'
+import { useCategoryStore } from '@/stores/category'
 
 interface CategoryStat {
   id: string
@@ -21,6 +21,7 @@ interface MonthStat {
 }
 
 const expenseStore = useExpenseStore()
+const categoryStore = useCategoryStore()
 const authStore = useAuthStore()
 
 const selectedMonthIndex = ref(0)
@@ -76,8 +77,8 @@ const months = computed<MonthStat[]>(() => {
       month: group.month,
       categories: [...group.categories.entries()].map(([id, amount]) => {
         const category = id === '__uncategorized__'
-          ? getCategoryDisplay(undefined)
-          : getCategoryDisplay(id)
+          ? categoryStore.getCategoryDisplay(undefined)
+          : categoryStore.getCategoryDisplay(id)
 
         return {
           id,

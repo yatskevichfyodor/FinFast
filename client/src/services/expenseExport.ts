@@ -1,5 +1,4 @@
-import type { Expense } from '@/types/expense'
-import { getCategoryDisplay } from '@/utils/categoryHelpers'
+import type { Expense } from '@/types/expense';
 
 export type ExportFormat = 'json' | 'csv'
 
@@ -11,7 +10,7 @@ interface ExportRow {
   description?: string
   paymentDate?: string
   date: string
-  category: string
+  category?: string
 }
 
 interface JsonExport {
@@ -37,7 +36,6 @@ function toExportRows(expenses: Expense[]): ExportRow[] {
         hour: '2-digit',
         minute: '2-digit'
       }).format(new Date(expense.createdAt)).replace(', ', ' '),
-      category: getCategoryDisplay(expense.categoryId).name
     }))
 }
 
@@ -70,7 +68,7 @@ export function createCsvExport(expenses: Expense[]): string {
   const header = ['Дата', 'Сумма', 'Категория', 'Описание']
   const lines = [
     header,
-    ...rows.map(row => [row.date, row.amount.toFixed(2), row.category, row.description || ''])
+    ...rows.map(row => [row.date, row.amount.toFixed(2), row.category || '', row.description || ''])
   ].map(row => row.map(escapeCsvCell).join(','))
 
   return `\ufeff${lines.join('\r\n')}`
