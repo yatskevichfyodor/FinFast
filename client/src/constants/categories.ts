@@ -5,7 +5,7 @@ export interface Category {
   color: string
 }
 
-export const CATEGORIES: Category[] = [
+export const SYSTEM_CATEGORIES: Category[] = [
   {
     id: 'food',
     name: 'Еда',

@@ -1,4 +1,4 @@
-import { CATEGORIES } from '@/constants/categories'
+import { SYSTEM_CATEGORIES } from '@/constants/categories'
 import { categoryOrderCache } from '@/stores/categoryOrderCache'
 import type { Expense } from '@/types/expense'
 
@@ -8,7 +8,7 @@ function sortCategoriesByOrder(categoryIds: string[]) {
     orderMap.set(categoryId, index)
   })
 
-  return [...CATEGORIES].sort((left, right) => {
+  return [...SYSTEM_CATEGORIES].sort((left, right) => {
     const leftPriority = orderMap.get(left.id) ?? categoryIds.length
     const rightPriority = orderMap.get(right.id) ?? categoryIds.length
 
@@ -16,8 +16,8 @@ function sortCategoriesByOrder(categoryIds: string[]) {
       return leftPriority - rightPriority
     }
 
-    return CATEGORIES.findIndex(category => category.id === left.id) -
-      CATEGORIES.findIndex(category => category.id === right.id)
+    return SYSTEM_CATEGORIES.findIndex(category => category.id === left.id) -
+      SYSTEM_CATEGORIES.findIndex(category => category.id === right.id)
   })
 }
 
@@ -35,7 +35,7 @@ function calculatePopularCategoryOrder(expenses: Expense[]) {
     )
   }
 
-  return [...CATEGORIES]
+  return [...SYSTEM_CATEGORIES]
     .sort((left, right) => {
       const leftCount = categoryCounters.get(left.id) ?? 0
       const rightCount = categoryCounters.get(right.id) ?? 0
@@ -44,8 +44,8 @@ function calculatePopularCategoryOrder(expenses: Expense[]) {
         return rightCount - leftCount
       }
 
-      return CATEGORIES.findIndex(category => category.id === left.id) -
-        CATEGORIES.findIndex(category => category.id === right.id)
+      return SYSTEM_CATEGORIES.findIndex(category => category.id === left.id) -
+        SYSTEM_CATEGORIES.findIndex(category => category.id === right.id)
     })
     .map(category => category.id)
 }

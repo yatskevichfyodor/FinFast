@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { categoryApi } from '@/services/api/categoryApi'
-import { CATEGORIES } from '@/constants/categories'
+import { SYSTEM_CATEGORIES } from '@/constants/categories'
 import { useAuthStore } from '@/stores/auth'
 import type { Category, CategoryInput } from '@/types/category'
 
@@ -21,7 +21,7 @@ export const useCategoryStore = defineStore('category', () => {
   const availableCategories = computed(() => categories.value.filter(category => !category.deleted && !category.hidden))
 
   function fallbackCategories(): Category[] {
-    return CATEGORIES.map(category => ({ ...category, system: true }))
+    return SYSTEM_CATEGORIES.map(category => ({ ...category, system: true }))
   }
 
   function cacheKey() {

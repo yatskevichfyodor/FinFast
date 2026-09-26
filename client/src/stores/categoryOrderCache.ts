@@ -1,4 +1,4 @@
-import { CATEGORIES } from "@/constants/categories";
+import { SYSTEM_CATEGORIES } from "@/constants/categories";
 
 const CATEGORY_ORDER_STORAGE_KEY = "finfast-category-order";
 const CATEGORY_ORDER_REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000; // 1 day
@@ -27,7 +27,7 @@ function readStoredCategoryOrder(): StoredCategoryOrder | null {
     }
 
     const validCategoryIds = parsedValue.categoryIds.filter((categoryId) =>
-      CATEGORIES.some((category) => category.id === categoryId),
+      SYSTEM_CATEGORIES.some((category) => category.id === categoryId),
     );
 
     if (validCategoryIds.length === 0) {

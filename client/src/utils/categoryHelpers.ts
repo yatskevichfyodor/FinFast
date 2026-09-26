@@ -1,7 +1,7 @@
-import { CATEGORIES, type Category } from '@/constants/categories'
+import { SYSTEM_CATEGORIES, type Category } from '@/constants/categories'
 
 export function getCategoryById(id: string | undefined): Category | undefined {
-  return CATEGORIES.find(cat => cat.id === id)
+  return SYSTEM_CATEGORIES.find(cat => cat.id === id)
 }
 
 export function getCategoryDisplay(categoryId: string | undefined) {
