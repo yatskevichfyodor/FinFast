@@ -1,8 +1,8 @@
 import { CATEGORIES } from '@/constants/categories'
+import { categoryOrderCache } from '@/stores/categoryOrderCache'
 import type { Expense } from '@/types/expense'
-import { categoryOrderStorage, CATEGORY_ORDER_REFRESH_INTERVAL_MS } from '@/stores/categoryOrderStorage'
 
-export function sortCategoriesByOrder(categoryIds: string[]) {
+function sortCategoriesByOrder(categoryIds: string[]) {
   const orderMap = new Map<string, number>()
   categoryIds.forEach((categoryId, index) => {
     orderMap.set(categoryId, index)
@@ -21,7 +21,7 @@ export function sortCategoriesByOrder(categoryIds: string[]) {
   })
 }
 
-export function calculatePopularCategoryOrder(expenses: Expense[]) {
+function calculatePopularCategoryOrder(expenses: Expense[]) {
   const categoryCounters = new Map<string, number>()
 
   for (const expense of expenses) {
@@ -51,14 +51,13 @@ export function calculatePopularCategoryOrder(expenses: Expense[]) {
 }
 
 export function buildPopularCategoryOrder(expenses: Expense[]) {
-  const storedOrder = categoryOrderStorage.readStoredCategoryOrder()
-  const now = Date.now()
+  const cachedCategoryOrder = categoryOrderCache.get();
 
-  if (storedOrder && now - storedOrder.updatedAt < CATEGORY_ORDER_REFRESH_INTERVAL_MS) {
-    return sortCategoriesByOrder(storedOrder.categoryIds)
+  if (cachedCategoryOrder) {
+    return sortCategoriesByOrder(cachedCategoryOrder.categoryIds)
   }
 
   const categoryIds = calculatePopularCategoryOrder(expenses)
-  categoryOrderStorage.writeStoredCategoryOrder(categoryIds)
+  categoryOrderCache.write(categoryIds)
   return sortCategoriesByOrder(categoryIds)
 }
