@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useDropZone } from '@vueuse/core'
 import { useAuthStore } from '@/stores/auth'
 import { useExpenseStore } from '@/stores/expense'
-import { expenseStorage } from '@/stores/expenseStorage'
+import { expenseStorage } from '@/stores/indexedDB'
 import { validateJson, mergeExpenses, type ImportFileData } from '@/services/expenseImport'
 
 const props = defineProps<{ modelValue: boolean }>()
