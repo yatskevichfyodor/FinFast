@@ -1,7 +1,7 @@
 import { ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { expenseApi, type ExpenseApiBody, type SyncExpensesRequest } from '@/services/api/expenseApi'
-import { expenseStorage } from '@/stores/expenseStorage/expenseStorage'
+import { expenseStorage } from '@/stores/expenseStorage'
 import { useAuthStore } from '@/stores/auth'
 import type { Expense, ExpensePayload } from '@/types/expense'
 import { isExpenseActive, normalizeExpense } from '@/types/expense'
