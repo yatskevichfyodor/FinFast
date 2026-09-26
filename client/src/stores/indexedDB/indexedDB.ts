@@ -2,10 +2,10 @@ import { once } from "lodash-es";
 import { migrateToV5 } from "./migrations/v5";
 
 const DATABASE_NAME = "finfast";
-const DATABASE_VERSION = 5;
+const DATABASE_VERSION = 6;
 
-const EXPENSES_STORE_NAME = "expenses";
-const CATEGORIES_STORE_NAME = "categories";
+export const EXPENSES_STORE_NAME = "expenses";
+export const CUSTOM_CATEGORIES_STORE_NAME = "custom_categories";
 
 export const openDatabase = once(async function (): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -22,9 +22,9 @@ export const openDatabase = once(async function (): Promise<IDBDatabase> {
         });
       }
 
-      if (!database.objectStoreNames.contains(CATEGORIES_STORE_NAME)) {
-        database.createObjectStore(CATEGORIES_STORE_NAME, {
-          keyPath: ["categoryId"],
+      if (!database.objectStoreNames.contains(CUSTOM_CATEGORIES_STORE_NAME)) {
+        database.createObjectStore(CUSTOM_CATEGORIES_STORE_NAME, {
+          keyPath: ["userId", "categoryId"],
         });
       }
 

@@ -1,28 +1,28 @@
 import { toRaw } from "vue";
-import type { Expense } from "@/types/expense";
 import { openDatabase } from "./indexedDB";
-import { EXPENSES_STORE_NAME } from "./indexedDB";
+import { CUSTOM_CATEGORIES_STORE_NAME } from "./indexedDB";
+import type { Category } from "@/types/category";
 
-interface ExpenseRecord {
+interface CategoryRecord {
   userId: string;
-  expenseId: string;
-  expense: Expense;
+  categoryId: string;
+  category: Category;
 }
 
-export const expenseStorage = {
-  async loadExpenses(userId: string): Promise<Expense[]> {
+export const categoryStorage = {
+  async loadCategories(userId: string): Promise<Category[]> {
     const database = await openDatabase();
 
     return new Promise((resolve, reject) => {
-      const transaction = database.transaction(EXPENSES_STORE_NAME, "readonly");
+      const transaction = database.transaction(CUSTOM_CATEGORIES_STORE_NAME, "readonly");
       const range = IDBKeyRange.bound([userId, ""], [userId, "\uffff"]);
       const request = transaction
-        .objectStore(EXPENSES_STORE_NAME)
-        .getAll(range) as IDBRequest<ExpenseRecord[]>;
+        .objectStore(CUSTOM_CATEGORIES_STORE_NAME)
+        .getAll(range) as IDBRequest<CategoryRecord[]>;
 
       request.onsuccess = () => {
         database.close();
-        resolve(request.result.map((record) => record.expense));
+        resolve(request.result.map((record) => record.category));
       };
       request.onerror = () => {
         database.close();
@@ -31,32 +31,30 @@ export const expenseStorage = {
     });
   },
 
-  async saveExpenses(userId: string, expenses: Expense[]): Promise<void> {
+  async saveCategories(userId: string, categories: Category[]): Promise<void> {
     const database = await openDatabase();
 
     return new Promise((resolve, reject) => {
-      const transaction = database.transaction(EXPENSES_STORE_NAME, "readwrite");
-      const objectStore = transaction.objectStore(EXPENSES_STORE_NAME);
+      const transaction = database.transaction(CUSTOM_CATEGORIES_STORE_NAME, "readwrite");
+      const objectStore = transaction.objectStore(CUSTOM_CATEGORIES_STORE_NAME);
       const range = IDBKeyRange.bound([userId, ""], [userId, "\uffff"]);
-      const existingRequest = objectStore.getAll(range) as IDBRequest<
-        ExpenseRecord[]
-      >;
+      const existingRequest = objectStore.getAll(range) as IDBRequest<CategoryRecord[]>;
 
       existingRequest.onsuccess = () => {
-        const expensesIds = expenses.map(it => it.id);
+        const categoriesIds = categories.map(it => it.id);
 
         existingRequest.result.forEach((record) => {
-          if (!expensesIds.includes(record.expenseId)) {
-            objectStore.delete([userId, record.expenseId]);
+          if (!categoriesIds.includes(record.categoryId)) {
+            objectStore.delete([userId, record.categoryId]);
           }
         });
 
-        expenses.forEach((expense) => {
+        categories.forEach((category) => {
           objectStore.put({
             userId,
-            expenseId: expense.id,
-            expense: toRaw(expense),
-          } satisfies ExpenseRecord);
+            categoryId: category.id,
+            category: toRaw(category),
+          } satisfies CategoryRecord);
         });
       };
       existingRequest.onerror = () => {
@@ -76,9 +74,5 @@ export const expenseStorage = {
         reject(transaction.error ?? new Error("Failed to save expenses"));
       };
     });
-  },
-
-  async deleteExpenses(userId: string): Promise<void> {
-    await this.saveExpenses(userId, []);
   },
 };
