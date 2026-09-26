@@ -1,5 +1,6 @@
 package org.example.finfast.expenseservice.kafka
 
+import org.example.finfast.expenseservice.expense.ExpenseService
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
@@ -9,7 +10,7 @@ import java.util.UUID
 
 @Component
 class UserDeletedEventConsumer(
-    private val expenseDeletionService: ExpenseDeletionService
+    private val expenseService: ExpenseService
 ) {
     
     private val logger = LoggerFactory.getLogger(UserDeletedEventConsumer::class.java)
@@ -28,10 +29,9 @@ class UserDeletedEventConsumer(
             val eventType = event.get("eventType").asText()
             
             if (eventType == "USER_DELETED") {
-                val userId = UUID.fromString(event.get("userId").asText())
+                val userId = UUID.fromString(event.get("userId").asString())
                 logger.info("Processing USER_DELETED event for user: $userId")
-                
-                expenseDeletionService.deleteExpensesForUser(userId)
+                expenseService.deleteExpensesForUser(userId)
                 logger.info("Successfully deleted expenses for user: $userId")
             } else {
                 logger.debug("Ignoring event type: $eventType")
