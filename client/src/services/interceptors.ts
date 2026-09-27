@@ -1,7 +1,7 @@
 import { authClient, expenseClient } from '@/services/api/http'
 import router from '@/router'
 import { authApi, type TokenResponse } from '@/services/api/authApi'
-import tokenStorage from '@/stores/tokenStorage'
+import tokenStorage from '@/storage/tokenStorage'
 import type { AxiosInstance } from 'axios'
 
 const clients = [authClient, expenseClient]

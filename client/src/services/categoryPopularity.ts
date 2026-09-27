@@ -1,5 +1,5 @@
 import { SYSTEM_CATEGORIES } from '@/constants/categories'
-import { categoryOrderCache } from '@/stores/categoryOrderCache'
+import { categoryOrderCache } from '@/storage/categoryOrderCache'
 import type { Expense } from '@/types/expense'
 import { countBy, orderBy } from 'lodash-es'
 
