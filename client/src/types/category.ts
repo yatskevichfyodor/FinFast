@@ -8,8 +8,14 @@ export interface Category {
   deleted?: boolean
 }
 
+export interface CustomCategory {
+  id: string
+  name: string
+  icon: string
+  color: string
+}
+
 export interface CategoryInput {
-  id?: string
   name: string
   icon: string
   color: string

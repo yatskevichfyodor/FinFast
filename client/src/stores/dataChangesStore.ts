@@ -73,4 +73,9 @@ export const useDataChangeStore = defineStore("data-changes", () => {
     dataChanges.value.EXPENSE.syncRequired = true;
     dataChanges.value.CATEGORY.syncRequired = true;
   }
+
+  return { 
+    dataChanges, 
+    loadDataChanges 
+  }
 });

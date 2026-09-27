@@ -175,8 +175,8 @@ function openEdit(category: Category) {
 
 async function save() {
   if (!form.value.name.trim()) return;
-  if (editingId.value) await store.update(editingId.value, form.value);
-  else await store.create(form.value);
+  if (editingId.value) await store.updateCustomCategory(editingId.value, form.value);
+  else await store.createCustomCategory(form.value);
   dialog.value = false;
 }
 </script>

@@ -9,7 +9,7 @@ interface CategoryRecord {
   category: Category;
 }
 
-export const categoryStorage = {
+export const customCategoryStorage = {
   async loadCategories(userId: string): Promise<Category[]> {
     const database = await openDatabase();
 

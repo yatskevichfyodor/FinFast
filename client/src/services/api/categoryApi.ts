@@ -1,5 +1,5 @@
 import { expenseClient } from "@/services/api/http";
-import type { Category, CategoryInput } from "@/types/category";
+import type { Category, CategoryInput, CustomCategory } from "@/types/category";
 
 export const categoryApi = {
   async getAvailableCategories() {
@@ -12,12 +12,12 @@ export const categoryApi = {
     return data;
   },
 
-  async createCategory(input: CategoryInput) {
+  async createCustomCategory(input: CustomCategory) {
     const { data } = await expenseClient.post<Category>("/categories", input);
     return data;
   },
 
-  async updateCategory(id: string, input: CategoryInput) {
+  async updateCustomCategory(id: string, input: CategoryInput) {
     const { data } = await expenseClient.patch<Category>(
       `/categories/${id}`,
       input,
@@ -25,7 +25,7 @@ export const categoryApi = {
     return data;
   },
 
-  deleteCategory(id: string) {
+  deleteCustomCategory(id: string) {
     return expenseClient.delete(`/categories/${id}`);
   },
 

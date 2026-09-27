@@ -7,189 +7,105 @@ import {
 } from "@/constants/categories";
 import { useAuthStore } from "@/stores/authStore";
 import type { Category, CategoryInput } from "@/types/category";
+import { customCategoryStorage } from "@/storage/indexedDB/customCategoryStorage";
+import { useDataChangeStore } from "./dataChangesStore";
+import { createStoreStateGuard } from "@/utils/storeStateGuard";
 
-const CACHE_KEY = "finfast-categories:";
-const PENDING_KEY = "finfast-category-operations:";
-
-type PendingOperation =
-  | { type: "create"; input: CategoryInput }
-  | { type: "update"; id: string; input: CategoryInput }
-  | { type: "delete" | "restore" | "hideSystem" | "restoreSystem"; id: string };
+const LOCAL_STORAGE_LAST_SYNC_KEY = "finfast-custom-categories-last-sync";
 
 export const useCategoryStore = defineStore("category", () => {
   const authStore = useAuthStore();
+  const dataChangeStore = useDataChangeStore();
+  const storeStateGuard = createStoreStateGuard(() => authStore.userId);
   const categories = ref<Category[]>([]);
-  const isLoading = ref(false);
-  const error = ref<string | null>(null);
+  const customCategories = ref<Category[]>([]);
   const availableCategories = computed(() =>
     categories.value.filter(
       (category) => !category.deleted && !category.hidden,
     ),
   );
+  
+  watch(
+    () => authStore.userId,
+    () => {
+      void loadCustomCategories();
+    },
+    { immediate: true },
+  );
 
-  function fallbackCategories(): Category[] {
-    return SYSTEM_CATEGORIES.map((category) => ({ ...category, system: true }));
-  }
+  async function loadCustomCategories() {
+    const currentUserId = authStore.userId;
+    if (!currentUserId) return;
+    let apiResult: Category[] | undefined;
 
-  function cacheKey() {
-    return `${CACHE_KEY}${authStore.userId ?? "anonymous"}`;
+    const isCurrentState = await storeStateGuard(
+      () =>
+        categoryApi.getAvailableCategories().catch((error) => {
+          console.error("Failed to load categories:", error);
+          return undefined;
+        }),
+      (categories) => {
+        apiResult = categories;
+      }
+    );
+    if (!isCurrentState) return;
+
+    if (apiResult !== undefined) {
+      customCategories.value = apiResult;
+      customCategoryStorage.saveCategories(currentUserId, apiResult);
+      return;
+    }
   }
 
   function saveCache() {
-    localStorage.setItem(cacheKey(), JSON.stringify(categories.value));
-  }
-
-  function pendingKey() {
-    return `${PENDING_KEY}${authStore.userId ?? "anonymous"}`;
-  }
-
-  function readPending(): PendingOperation[] {
-    try {
-      return JSON.parse(
-        localStorage.getItem(pendingKey()) ?? "[]",
-      ) as PendingOperation[];
-    } catch {
-      return [];
-    }
-  }
-
-  function queue(operation: PendingOperation) {
-    localStorage.setItem(
-      pendingKey(),
-      JSON.stringify([...readPending(), operation]),
+    customCategoryStorage.saveCategories(
+      authStore.userId ?? "anonymous",
+      categories.value,
     );
   }
 
-  async function flushPending() {
-    const pending = readPending();
-    if (pending.length === 0) return;
-    const remaining: PendingOperation[] = [];
-    for (const operation of pending) {
-      try {
-        if (operation.type === "create")
-          await categoryApi.createCategory(operation.input);
-        if (operation.type === "update")
-          await categoryApi.updateCategory(operation.id, operation.input);
-        if (operation.type === "delete")
-          await categoryApi.deleteCategory(operation.id);
-        if (operation.type === "restore")
-          await categoryApi.restoreCategory(operation.id);
-        if (operation.type === "hideSystem")
-          await categoryApi.hideSystemCategory(operation.id);
-        if (operation.type === "restoreSystem")
-          await categoryApi.restoreSystemCategory(operation.id);
-      } catch {
-        remaining.push(operation);
-      }
-    }
-    localStorage.setItem(pendingKey(), JSON.stringify(remaining));
-  }
-
-  function loadCache() {
-    try {
-      const cached = localStorage.getItem(cacheKey());
-      categories.value = cached
-        ? (JSON.parse(cached) as Category[])
-        : fallbackCategories();
-    } catch {
-      categories.value = fallbackCategories();
-    }
-  }
-
-  async function load() {
-    loadCache();
-    if (authStore.isAnonymous || !authStore.accessToken) return;
-    isLoading.value = true;
-    error.value = null;
-    try {
-      categories.value = await categoryApi.getEditorCategories();
-      await flushPending();
-      if (readPending().length < 1)
-        categories.value = await categoryApi.getEditorCategories();
-      saveCache();
-    } catch {
-      error.value = "Не удалось синхронизировать категории";
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  async function create(input: CategoryInput) {
-    const localInput = { ...input, id: input.id ?? crypto.randomUUID() };
-    try {
-      const category = await categoryApi.createCategory(localInput);
-      categories.value.push(category);
-    } catch {
-      categories.value.push({ ...localInput, system: false, deleted: false });
-      queue({ type: "create", input: localInput });
-    }
+  async function createCustomCategory(input: CategoryInput) {
+    const localInput = { ...input, id: crypto.randomUUID() };
+    const category = await categoryApi.createCustomCategory(localInput);
+    customCategories.value.push(category);
     saveCache();
   }
 
-  async function update(id: string, input: CategoryInput) {
+  async function updateCustomCategory(id: string, input: CategoryInput) {
     let category: Category;
-    try {
-      category = await categoryApi.updateCategory(id, input);
-    } catch {
-      queue({ type: "update", id, input });
-      category = { id, ...input, system: false, deleted: false };
-    }
-    const index = categories.value.findIndex((item) => item.id === id);
+    category = await categoryApi.updateCustomCategory(id, input);
+    const index = customCategories.value.findIndex(it => it.id === id);
     if (index >= 0) categories.value[index] = category;
     saveCache();
   }
 
   async function remove(id: string) {
-    try {
-      await categoryApi.deleteCategory(id);
-    } catch {
-      queue({ type: "delete", id });
-    }
-    const category = categories.value.find((item) => item.id === id);
+    await categoryApi.deleteCustomCategory(id);
+    const category = categories.value.find(it => it.id === id);
     if (category) category.deleted = true;
     saveCache();
   }
 
   async function restore(id: string) {
-    try {
-      await categoryApi.restoreCategory(id);
-    } catch {
-      queue({ type: "restore", id });
-    }
-    const category = categories.value.find((item) => item.id === id);
+    await categoryApi.restoreCategory(id);
+    const category = categories.value.find(it => it.id === id);
     if (category) category.deleted = false;
     saveCache();
   }
 
-  async function hideSystem(id: string) {
-    try {
-      await categoryApi.hideSystemCategory(id);
-    } catch {
-      queue({ type: "hideSystem", id });
-    }
-    const category = categories.value.find((item) => item.id === id);
+  async function hideSystemCategory(id: string) {
+    await categoryApi.hideSystemCategory(id);
+    const category = categories.value.find(it => it.id === id);
     if (category) category.hidden = true;
     saveCache();
   }
 
   async function restoreSystem(id: string) {
-    try {
-      await categoryApi.restoreSystemCategory(id);
-    } catch {
-      queue({ type: "restoreSystem", id });
-    }
-    const category = categories.value.find((item) => item.id === id);
+    await categoryApi.restoreSystemCategory(id);
+    const category = categories.value.find(it => it.id === id);
     if (category) category.hidden = false;
     saveCache();
   }
-
-  watch(
-    () => authStore.userId,
-    () => {
-      void load();
-    },
-    { immediate: true },
-  );
 
   const categoryById = computed(() => {
     return new Map(categories.value.map((category) => [category.id, category]));
@@ -206,14 +122,12 @@ export const useCategoryStore = defineStore("category", () => {
   return {
     categories,
     availableCategories,
-    isLoading,
-    error,
-    load,
-    create,
-    update,
+    loadCustomCategories,
+    createCustomCategory,
+    updateCustomCategory,
     remove,
     restore,
-    hideSystem,
+    hideSystem: hideSystemCategory,
     restoreSystem,
     getCategoryDisplay,
   };
