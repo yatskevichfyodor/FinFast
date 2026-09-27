@@ -1,10 +1,10 @@
-import { authClient, expenseClient } from '@/services/api/http'
+import { authClient, dataChangesClient, expenseClient } from '@/services/api/http'
 import router from '@/router'
 import { authApi, type TokenResponse } from '@/services/api/authApi'
 import tokenStorage from '@/storage/tokenStorage'
 import type { AxiosInstance } from 'axios'
 
-const clients = [authClient, expenseClient]
+const clients = [authClient, expenseClient, dataChangesClient]
 
 
 let refreshPromise: Promise<TokenResponse> | null = null
