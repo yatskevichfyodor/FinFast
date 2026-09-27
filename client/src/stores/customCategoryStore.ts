@@ -67,7 +67,7 @@ export const useCustomCategoryStore = defineStore("custom-categories", () => {
 
     const isCurrentState = await storeStateGuard(
       () =>
-        categoryApi.getAvailableCategories().catch((error) => {
+        categoryApi.getCustomCategories().catch((error) => {
           console.error("Failed to load categories:", error);
           return undefined;
         }),
@@ -114,7 +114,7 @@ export const useCustomCategoryStore = defineStore("custom-categories", () => {
   }
 
   async function restoreCustomCategory(id: string) {
-    await categoryApi.restoreCategory(id);
+    await categoryApi.restoreCustomCategory(id);
     const category = customCategories.value.find((it) => it.id === id);
     if (category) category.deleted = false;
     saveCache();

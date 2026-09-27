@@ -2,35 +2,35 @@ import { expenseClient } from "@/services/api/http";
 import type { Category, CategoryInput, CustomCategory } from "@/types/category";
 
 export const categoryApi = {
-  async getAvailableCategories() {
-    const { data } = await expenseClient.get<Category[]>("/categories");
-    return data;
-  },
-
-  async getEditorCategories() {
-    const { data } = await expenseClient.get<Category[]>("/categories/editor");
+  async getCustomCategories() {
+    const { data } = await expenseClient.get<Category[]>("/categories/custom");
     return data;
   },
 
   async createCustomCategory(input: CustomCategory) {
-    const { data } = await expenseClient.post<Category>("/categories", input);
+    const { data } = await expenseClient.post<Category>("/categories/custom", input);
     return data;
   },
 
   async updateCustomCategory(id: string, input: CategoryInput) {
     const { data } = await expenseClient.patch<Category>(
-      `/categories/${id}`,
+      `/categories/custom/${id}`,
       input,
     );
     return data;
   },
 
   deleteCustomCategory(id: string) {
-    return expenseClient.delete(`/categories/${id}`);
+    return expenseClient.delete(`/categories/custom/${id}`);
   },
 
-  restoreCategory(id: string) {
-    return expenseClient.post(`/categories/${id}/restore`);
+  restoreCustomCategory(id: string) {
+    return expenseClient.post(`/categories/custom/${id}/restore`);
+  },
+  
+  async getSystemHiddenCategories() {
+    const { data } = await expenseClient.get<Category[]>("/categories/system/hidden");
+    return data;
   },
 
   hideSystemCategory(id: string) {

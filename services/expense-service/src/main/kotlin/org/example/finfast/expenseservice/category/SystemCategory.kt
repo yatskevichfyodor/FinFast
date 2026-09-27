@@ -2,15 +2,15 @@ package org.example.finfast.expenseservice.category
 
 import org.example.finfast.expenseservice.InvalidCategoryException
 
-enum class SystemCategory(val id: String, val displayName: String, val icon: String, val color: String) {
-    FOOD("food", "Еда", "mdi-silverware-fork-knife", "#FF7043"),
-    TRANSPORT("transport", "Транспорт", "mdi-car", "#42A5F5"),
-    HOME("home", "Дом", "mdi-home", "#AB47BC"),
-    CLOTHES("clothes", "Одежда", "mdi-tshirt-crew", "#FFB74D"),
-    SHOPPING("shopping", "Покупки", "mdi-shopping", "#EC407A"),
-    ENTERTAINMENT("entertainment", "Развлечения", "mdi-gamepad-variant", "#7E57C2"),
-    HEALTH("health", "Здоровье", "mdi-heart-pulse", "#26A69A"),
-    SUBSCRIPTIONS("subscriptions", "Подписки", "mdi-calendar-check", "#FFCA28");
+enum class SystemCategory(val id: String) {
+    FOOD("food"),
+    TRANSPORT("transport"),
+    HOME("home"),
+    CLOTHES("clothes"),
+    SHOPPING("shopping"),
+    ENTERTAINMENT("entertainment"),
+    HEALTH("health"),
+    SUBSCRIPTIONS("subscriptions");
 
     companion object {
         fun isValid(id: String): Boolean = entries.any { it.id.equals(id, ignoreCase = true) }

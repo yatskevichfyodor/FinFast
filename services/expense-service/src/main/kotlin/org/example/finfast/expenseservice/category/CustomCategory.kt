@@ -9,7 +9,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "custom_user_categories")
-class CustomUserCategory(
+class CustomCategory(
     @Id
     val id: UUID,
     @Column(name = "user_id", nullable = false, updatable = false)

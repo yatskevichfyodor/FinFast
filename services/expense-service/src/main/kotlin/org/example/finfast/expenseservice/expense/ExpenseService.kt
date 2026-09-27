@@ -2,7 +2,7 @@ package org.example.finfast.expenseservice.expense
 
 import org.example.finfast.expenseservice.ExpenseNotFoundException
 import org.example.finfast.expenseservice.InvalidCategoryException
-import org.example.finfast.expenseservice.category.CustomUserCategoryRepository
+import org.example.finfast.expenseservice.category.CustomCategoryRepository
 import org.example.finfast.expenseservice.category.SystemCategory
 import org.example.finfast.expenseservice.expense.dto.*
 import org.example.finfast.expenseservice.security.CurrentUser
@@ -18,7 +18,7 @@ import java.util.*
 class ExpenseService(
     private val currentUser: CurrentUser,
     private val expenseRepository: ExpenseRepository,
-    private val customUserCategoryRepository: CustomUserCategoryRepository,
+    private val customCategoryRepository: CustomCategoryRepository,
     private val userDataChangeService: UserDataChangeService
 ) {
     private val logger = LoggerFactory.getLogger(ExpenseService::class.java)
@@ -203,7 +203,7 @@ class ExpenseService(
         }
 
         if (customCategoryId != null &&
-            !customUserCategoryRepository.existsByIdAndUserIdAndDeletedAtIsNull(customCategoryId, userId)
+            !customCategoryRepository.existsByIdAndUserIdAndDeletedAtIsNull(customCategoryId, userId)
         ) {
             throw InvalidCategoryException("Custom category is not available")
         }

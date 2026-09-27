@@ -7,36 +7,36 @@ import java.util.UUID
 @RestController
 @RequestMapping("/categories")
 class CategoryController(private val service: CategoryService) {
-    @GetMapping
-    fun available() = ResponseEntity.ok(service.getAvailable())
+    @GetMapping("/custom")
+    fun getCustomCategories() = ResponseEntity.ok(service.getCustomCategories())
 
-    @GetMapping("/editor")
-    fun editor() = ResponseEntity.ok(service.getAllForEditor())
+    @PostMapping("/custom")
+    fun createCustomCategory(@RequestBody input: CategoryInputDto) = ResponseEntity.status(201).body(service.createCustomCategory(input))
 
-    @PostMapping
-    fun create(@RequestBody input: CategoryInputDto) = ResponseEntity.status(201).body(service.create(input))
+    @PatchMapping("/custom/{id}")
+    fun updateCustomCategory(@PathVariable id: UUID, @RequestBody input: CategoryInputDto) =
+        ResponseEntity.ok(service.updateCustomCategory(id, input))
 
-    @PatchMapping("/{id}")
-    fun update(@PathVariable id: UUID, @RequestBody input: CategoryInputDto) =
-        ResponseEntity.ok(service.update(id, input))
-
-    @DeleteMapping("/{id}")
-    fun delete(@PathVariable id: UUID): ResponseEntity<Void> {
-        service.delete(id); return ResponseEntity.noContent().build()
+    @DeleteMapping("/custom/{id}")
+    fun deleteCustomCategory(@PathVariable id: UUID): ResponseEntity<Void> {
+        service.deleteCustomCategory(id); return ResponseEntity.noContent().build()
     }
 
-    @PostMapping("/{id}/restore")
-    fun restore(@PathVariable id: UUID): ResponseEntity<Void> {
-        service.restore(id); return ResponseEntity.ok().build()
+    @PostMapping("/custom/{id}/restore")
+    fun restoreCustomCategory(@PathVariable id: UUID): ResponseEntity<Void> {
+        service.restoreCustomCategory(id); return ResponseEntity.ok().build()
     }
+
+    @GetMapping("/system/hidden")
+    fun getHiddenSystemCategories() = ResponseEntity.ok(service.getHiddenSystemCategories())
 
     @PostMapping("/system/{id}/hide")
-    fun hide(@PathVariable id: String): ResponseEntity<Void> {
-        service.hideSystem(id); return ResponseEntity.ok().build()
+    fun hideSystemCategory(@PathVariable id: String): ResponseEntity<Void> {
+        service.hideSystemCategory(id); return ResponseEntity.ok().build()
     }
 
     @PostMapping("/system/{id}/restore")
-    fun restoreSystem(@PathVariable id: String): ResponseEntity<Void> {
-        service.restoreSystem(id); return ResponseEntity.ok().build()
+    fun restoreSystemCategory(@PathVariable id: String): ResponseEntity<Void> {
+        service.restoreSystemCategory(id); return ResponseEntity.ok().build()
     }
 }

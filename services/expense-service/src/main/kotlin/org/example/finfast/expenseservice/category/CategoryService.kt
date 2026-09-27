@@ -1,59 +1,32 @@
 package org.example.finfast.expenseservice.category
 
-import org.example.finfast.expenseservice.AuthenticationRequiredException
 import org.example.finfast.expenseservice.InvalidCategoryException
+import org.example.finfast.expenseservice.security.CurrentUser
 import org.example.finfast.expenseservice.userdatachange.UserDataChangeService
 import org.example.finfast.expenseservice.userdatachange.UserDataType
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 @Service
 class CategoryService(
-    private val customRepository: CustomUserCategoryRepository,
-    private val hiddenRepository: UserHiddenSystemCategoryRepository,
+    private val currentUser: CurrentUser,
+    private val customRepository: CustomCategoryRepository,
+    private val hiddenCategoryRepository: HiddenSystemCategoryRepository,
     private val userDataChangeService: UserDataChangeService
 ) {
     @Transactional(readOnly = true)
-    fun getAvailable(): List<CategoryDto> {
-        val userId = currentUserId()
-        val hidden = hiddenRepository.findAllByIdUserId(userId).map { it.id.categoryId }.toSet()
-        val system = SystemCategory.entries.filterNot { it.id in hidden }.map {
-            CategoryDto(it.id, it.displayName, it.icon, it.color, true)
-        }
-        val custom = customRepository.findAllByUserIdAndDeletedAtIsNullOrderByCreatedAtAsc(userId).map {
-            CategoryDto(it.id.toString(), it.name, it.icon, it.color, false)
-        }
-        return system + custom
-    }
-
-    @Transactional(readOnly = true)
-    fun getAllForEditor(): List<CategoryDto> {
-        val userId = currentUserId()
-        val hidden = hiddenRepository.findAllByIdUserId(userId).map { it.id.categoryId }.toSet()
-        val system = SystemCategory.entries.map {
-            CategoryDto(
-                it.id,
-                it.displayName,
-                it.icon,
-                it.color,
-                true,
-                it.id in hidden
-            )
-        }
-        val custom = customRepository.findAllByUserIdOrderByCreatedAtAsc(userId).map {
-            CategoryDto(it.id.toString(), it.name, it.icon, it.color, false, deleted = it.deletedAt != null)
-        }
-        return system + custom
+    fun getCustomCategories(): List<CategoryDto> {
+        return customRepository.findAllByUserIdOrderByCreatedAtAsc(currentUser.id())
+            .map { CategoryDto(it.id.toString(), it.name, it.icon, it.color, false) }
     }
 
     @Transactional
-    fun create(input: CategoryInputDto): CustomCategoryDto {
+    fun createCustomCategory(input: CategoryInputDto): CustomCategoryDto {
         validateInput(input)
-        val currentUserId = currentUserId()
-        val category = CustomUserCategory(
+        val currentUserId = currentUser.id()
+        val category = CustomCategory(
             input.id ?: UUID.randomUUID(),
             currentUserId,
             input.name.trim(),
@@ -68,9 +41,9 @@ class CategoryService(
     }
 
     @Transactional
-    fun update(id: UUID, input: CategoryInputDto): CustomCategoryDto {
+    fun updateCustomCategory(id: UUID, input: CategoryInputDto): CustomCategoryDto {
         validateInput(input)
-        val currentUserId = currentUserId()
+        val currentUserId = currentUser.id()
         val category = ownedCategory(currentUserId, id)
         if (category.deletedAt != null) throw InvalidCategoryException("Deleted category cannot be edited")
         category.name = input.name.trim()
@@ -82,8 +55,8 @@ class CategoryService(
     }
 
     @Transactional
-    fun delete(id: UUID) {
-        val currentUserId = currentUserId()
+    fun deleteCustomCategory(id: UUID) {
+        val currentUserId = currentUser.id()
         val category = ownedCategory(currentUserId, id)
         category.deletedAt = Instant.now()
         customRepository.save(category)
@@ -91,32 +64,38 @@ class CategoryService(
     }
 
     @Transactional
-    fun restore(id: UUID) {
-        val currentUserId = currentUserId()
+    fun restoreCustomCategory(id: UUID) {
+        val currentUserId = currentUser.id()
         val category = ownedCategory(currentUserId, id)
         category.deletedAt = null
         customRepository.save(category)
         saveCategoriesChangeTimestamp(currentUserId)
     }
 
+    @Transactional(readOnly = true)
+    fun getHiddenSystemCategories(): List<String> {
+        return hiddenCategoryRepository.findAllByIdUserId(currentUser.id()).map { it.id.categoryId }
+    }
+
     @Transactional
-    fun hideSystem(id: String) {
+    fun hideSystemCategory(id: String) {
         requireValidSystem(id)
-        val currentUserId = currentUserId()
-        hiddenRepository.save(UserHiddenSystemCategory(UserHiddenSystemCategoryId(currentUserId, id)))
+        val currentUserId = currentUser.id()
+        hiddenCategoryRepository.save(UserHiddenSystemCategory(UserHiddenSystemCategoryId(currentUserId, id)))
         saveCategoriesChangeTimestamp(currentUserId)
     }
 
     @Transactional
-    fun restoreSystem(id: String) {
+    fun restoreSystemCategory(id: String) {
         requireValidSystem(id)
-        val currentUserId = currentUserId()
-        hiddenRepository.deleteById(UserHiddenSystemCategoryId(currentUserId, id))
+        val currentUserId = currentUser.id()
+        hiddenCategoryRepository.deleteById(UserHiddenSystemCategoryId(currentUserId, id))
         saveCategoriesChangeTimestamp(currentUserId)
     }
 
-    private fun ownedCategory(userId: UUID, id: UUID): CustomUserCategory =
-        customRepository.findByIdAndUserId(id, userId) ?: throw InvalidCategoryException("Category is not owned by the user")
+    private fun ownedCategory(userId: UUID, id: UUID): CustomCategory =
+        customRepository.findByIdAndUserId(id, userId)
+            ?: throw InvalidCategoryException("Category is not owned by the user")
 
     private fun validateInput(input: CategoryInputDto) {
         if (input.name.trim().isEmpty() || input.name.length > 100 || input.icon.isBlank() || input.color.isBlank()) {
@@ -128,16 +107,11 @@ class CategoryService(
         if (!SystemCategory.isValid(id)) throw InvalidCategoryException("Unknown system category: $id")
     }
 
-    private fun currentUserId(): UUID = UUID.fromString(
-        SecurityContextHolder.getContext().authentication?.takeIf { it.isAuthenticated }?.name
-            ?: throw AuthenticationRequiredException()
-    )
-
     private fun saveCategoriesChangeTimestamp(userId: UUID) {
         userDataChangeService.saveTimestamp(userId, UserDataType.CATEGORY)
     }
 }
 
-private fun CustomUserCategory.toDto(category: CustomUserCategory) = CustomCategoryDto(
+private fun CustomCategory.toDto(category: CustomCategory) = CustomCategoryDto(
     category.id, category.name, category.icon, category.color, category.createdAt, category.deletedAt
 )
