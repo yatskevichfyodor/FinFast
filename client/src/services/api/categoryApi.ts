@@ -28,8 +28,8 @@ export const categoryApi = {
     return expenseClient.post(`/categories/custom/${id}/restore`);
   },
   
-  async getSystemHiddenCategories() {
-    const { data } = await expenseClient.get<Category[]>("/categories/system/hidden");
+  async getSystemHiddenCategoriesIds() {
+    const { data } = await expenseClient.get<string[]>("/categories/system/hidden");
     return data;
   },
 

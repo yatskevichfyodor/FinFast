@@ -218,14 +218,14 @@ async function save() {
                 icon="mdi-eye"
                 variant="text"
                 title="Восстановить"
-                @click="store.restoreSystem(category.id)"
+                @click="store.restoreSystemCategory(category.id)"
               />
               <v-btn
                 v-else
                 icon="mdi-eye-off-outline"
                 variant="text"
                 title="Скрыть"
-                @click="store.hideSystem(category.id)"
+                @click="store.hideSystemCategory(category.id)"
               />
             </template>
           </v-list-item>
@@ -256,7 +256,7 @@ async function save() {
                 icon="mdi-restore"
                 variant="text"
                 title="Восстановить"
-                @click="store.restore(category.id)"
+                @click="store.restoreCustomCategory(category.id)"
               />
               <template v-else>
                 <v-btn
@@ -269,7 +269,7 @@ async function save() {
                   icon="mdi-delete-outline"
                   variant="text"
                   title="Удалить"
-                  @click="store.remove(category.id)"
+                  @click="store.removeCustomCategory(category.id)"
                 />
               </template>
             </template>
