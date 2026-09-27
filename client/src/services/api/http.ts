@@ -10,3 +10,7 @@ export const authClient = axios.create({
 export const expenseClient = axios.create({
   baseURL: API_BASE_URL
 })
+
+export const dataChangesClient = axios.create({
+  baseURL: API_BASE_URL
+})
