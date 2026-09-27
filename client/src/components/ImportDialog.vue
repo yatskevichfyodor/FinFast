@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useDropZone } from '@vueuse/core'
-import { useAuthStore } from '@/stores/auth'
-import { useExpenseStore } from '@/stores/expense'
+import { useAuthStore } from '@/stores/authStore'
+import { useExpenseStore } from '@/stores/expenseStore'
 import { expenseStorage } from '@/storage/indexedDB'
 import { validateJson, mergeExpenses, type ImportFileData } from '@/services/expenseImport'
 

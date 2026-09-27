@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useExpenseStore } from '@/stores/expense'
+import { useAuthStore } from '@/stores/authStore'
+import { useExpenseStore } from '@/stores/expenseStore'
 import { isAxiosError } from 'axios'
 import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'

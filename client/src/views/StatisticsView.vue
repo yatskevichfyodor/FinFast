@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useExpenseStore, type Expense } from '@/stores/expense'
+import { useExpenseStore, type Expense } from '@/stores/expenseStore'
 import { isExpenseActive } from '@/types/expense'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/authStore'
 import { formatMonthName } from '@/utils/dateHelpers'
-import { useCategoryStore } from '@/stores/category'
+import { useCategoryStore } from '@/stores/categoryStore'
 
 interface CategoryStat {
   id: string

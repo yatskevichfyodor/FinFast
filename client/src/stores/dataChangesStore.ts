@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
-import { useAuthStore } from "./auth";
+import { useAuthStore } from "./authStore";
 import type { DataChangeRecord, StoreDataChanges } from "@/types/dataChange";
 import { dataChangesApi } from "@/services/api/dataChangesApi";
 import dataChangesStorage from "@/storage/dataChangesStorage";

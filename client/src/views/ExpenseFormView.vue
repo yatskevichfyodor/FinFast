@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 
 import CategoryPicker from "@/components/CategoryPicker.vue";
 import ExpenseAmountInput from "@/components/ExpenseAmountInput.vue";
-import { useExpenseStore, type ExpensePayload } from "@/stores/expense";
+import { useExpenseStore, type ExpensePayload } from "@/stores/expenseStore";
 import { format, parse } from "date-fns";
 
 const router = useRouter();

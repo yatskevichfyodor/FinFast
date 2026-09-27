@@ -5,11 +5,11 @@ import { useRouter } from 'vue-router'
 import {
   useExpenseStore,
   type Expense
-} from '@/stores/expense'
+} from '@/stores/expenseStore'
 import { isExpenseActive } from '@/types/expense'
 import { parseDate } from '@/utils/dateHelpers'
 import { format, parse } from 'date-fns'
-import { useCategoryStore } from '@/stores/category'
+import { useCategoryStore } from '@/stores/categoryStore'
 
 const router = useRouter()
 const expenseStore = useExpenseStore()

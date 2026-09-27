@@ -7,7 +7,7 @@ import { createPinia } from 'pinia'
 import '@/services/interceptors.ts'
 import { initializePwaUpdate } from '@/services/pwaUpdate'
 import { buildPopularCategoryOrder } from '@/services/categoryPopularity'
-import { useExpenseStore } from '@/stores/expense'
+import { useExpenseStore } from '@/stores/expenseStore.ts'
 
 import './style.css'
 import './styles/common.css'

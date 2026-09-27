@@ -5,7 +5,7 @@ import {
   DEFAULT_CATEGORY_DISPLAY,
   SYSTEM_CATEGORIES,
 } from "@/constants/categories";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore } from "@/stores/authStore";
 import type { Category, CategoryInput } from "@/types/category";
 
 const CACHE_KEY = "finfast-categories:";
