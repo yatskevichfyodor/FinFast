@@ -45,6 +45,7 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     const cachedExpenses = expensesByUser.get(userId)
+    // return if data is already loaded
     if (cachedExpenses) {
       loadedUserId = userId
       expenses.value = cachedExpenses
@@ -52,6 +53,7 @@ export const useExpenseStore = defineStore('expense', () => {
     }
 
     const storedExpenses = (await expenseStorage.loadExpenses(userId)).map(normalizeExpense)
+    // return if user changed account during async operation
     if (currentLoadVersion !== loadVersion || authStore.userId !== userId) {
       return
     }
