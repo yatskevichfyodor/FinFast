@@ -61,5 +61,16 @@ export const useDataChangeStore = defineStore("data-changes", () => {
     }
 
     dataChanges.value = dataChangesStorage.get(currentUserId);
+    dataChanges.value ??= {};
+    dataChanges.value.EXPENSE ??= {
+      changedAt: undefined,
+      syncRequired: true,
+    };
+    dataChanges.value.CATEGORY ??= {
+      changedAt: undefined,
+      syncRequired: true,
+    };
+    dataChanges.value.EXPENSE.syncRequired = true;
+    dataChanges.value.CATEGORY.syncRequired = true;
   }
 });

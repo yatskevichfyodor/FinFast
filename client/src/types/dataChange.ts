@@ -1,15 +1,13 @@
 export interface DataChangeRecord {
-    dataType: 'EXPENSE' | 'CATEGORY'
-    changedAt: string
+  dataType: "EXPENSE" | "CATEGORY";
+  changedAt: string;
 }
 
 export interface StoreDataChangeValues {
-    dataType: 'EXPENSE' | 'CATEGORY'
-    changedAt: string
-    syncRequired: boolean
+  changedAt?: string;
+  syncRequired: boolean;
 }
 
-export type StoreDataChanges = Record<
-  'EXPENSE' | 'CATEGORY',
-  StoreDataChangeValues
->
+export type StoreDataChanges = Partial<
+  Record<"EXPENSE" | "CATEGORY", StoreDataChangeValues>
+>;
