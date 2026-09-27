@@ -1,15 +1,14 @@
 package org.example.finfast.expenseservice.expense
 
-import org.example.finfast.expenseservice.AuthenticationRequiredException
 import org.example.finfast.expenseservice.ExpenseNotFoundException
 import org.example.finfast.expenseservice.InvalidCategoryException
 import org.example.finfast.expenseservice.category.CustomUserCategoryRepository
 import org.example.finfast.expenseservice.category.SystemCategory
 import org.example.finfast.expenseservice.expense.dto.*
+import org.example.finfast.expenseservice.security.CurrentUser
 import org.example.finfast.expenseservice.userdatachange.UserDataChangeService
 import org.example.finfast.expenseservice.userdatachange.UserDataType
 import org.slf4j.LoggerFactory
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -17,6 +16,7 @@ import java.util.*
 
 @Service
 class ExpenseService(
+    private val currentUser: CurrentUser,
     private val expenseRepository: ExpenseRepository,
     private val customUserCategoryRepository: CustomUserCategoryRepository,
     private val userDataChangeService: UserDataChangeService
@@ -25,7 +25,7 @@ class ExpenseService(
 
     @Transactional(readOnly = true)
     fun get(id: UUID): ExpenseDto {
-        val expense = expenseRepository.findById(ExpenseId(currentUserId(), id))
+        val expense = expenseRepository.findById(ExpenseId(currentUser.id(), id))
             .orElseThrow { ExpenseNotFoundException(id) }
 
         if (expense.deletedAt != null) {
@@ -37,20 +37,20 @@ class ExpenseService(
 
     @Transactional(readOnly = true)
     fun getByIds(ids: List<UUID>): List<ExpenseDto> {
-        val userId = currentUserId()
+        val userId = currentUser.id()
         return expenseRepository.findAllById(ids.map { ExpenseId(userId, it) })
             .map { it.toDto() }
     }
 
     @Transactional(readOnly = true)
     fun getAll(): List<ExpenseDto> {
-        return expenseRepository.findAllByExpenseId_UserIdOrderByCreatedAtDesc(currentUserId())
+        return expenseRepository.findAllByExpenseId_UserIdOrderByCreatedAtDesc(currentUser.id())
             .map { it.toDto() }
     }
 
     @Transactional
     fun create(dto: ExpenseDto) {
-        val currentUserId = currentUserId()
+        val currentUserId = currentUser.id()
         validateCategory(currentUserId, dto.categoryId, dto.customCategoryId)
         val expense = Expense(
             expenseId = ExpenseId(currentUserId, dto.id),
@@ -71,7 +71,7 @@ class ExpenseService(
         id: UUID,
         dto: UpdateExpenseDto
     ) {
-        val currentUserId = currentUserId()
+        val currentUserId = currentUser.id()
         val expense = activeExpense(currentUserId, id)
 
         updateExpense(expense, dto, currentUserId)
@@ -82,7 +82,7 @@ class ExpenseService(
 
     @Transactional
     fun delete(id: UUID): Boolean {
-        val currentUserId = currentUserId()
+        val currentUserId = currentUser.id()
         val expenseId = ExpenseId(currentUserId, id)
         val expense = expenseRepository.findById(expenseId).orElse(null) ?: return false
 
@@ -98,7 +98,7 @@ class ExpenseService(
 
     @Transactional
     fun sync(dto: SyncExpensesDto) {
-        val currentUserId = currentUserId()
+        val currentUserId = currentUser.id()
         deleteBatch(currentUserId, dto.delete)
         updateBatch(currentUserId, dto.update)
         createBatch(currentUserId, dto.create)
@@ -207,13 +207,6 @@ class ExpenseService(
         ) {
             throw InvalidCategoryException("Custom category is not available")
         }
-    }
-
-    private fun currentUserId(): UUID {
-        val authentication = SecurityContextHolder.getContext().authentication
-            ?.takeIf { it.isAuthenticated }
-            ?: throw AuthenticationRequiredException()
-        return UUID.fromString(authentication.name)
     }
 
     private fun saveExpensesChangeTimestamp(userId: UUID) {
