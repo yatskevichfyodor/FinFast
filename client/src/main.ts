@@ -11,6 +11,7 @@ import { useExpenseStore } from '@/stores/expenseStore.ts'
 
 import './style.css'
 import './styles/common.css'
+import { useDataChangesStore } from './stores/dataChangesStore.ts'
 
 const app = createApp(App)
 
@@ -18,6 +19,8 @@ app.use(router)
 app.use(vuetify)
 app.use(createPinia())
 
+const dataChangesStore = useDataChangesStore()
+await dataChangesStore.init()
 const expenseStore = useExpenseStore()
 buildPopularCategoryOrder(expenseStore.expenses)
 

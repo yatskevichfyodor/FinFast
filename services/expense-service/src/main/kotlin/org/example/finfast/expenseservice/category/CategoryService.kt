@@ -17,6 +17,14 @@ class CategoryService(
     private val userDataChangeService: UserDataChangeService
 ) {
     @Transactional(readOnly = true)
+    fun getAllCategories(): CustomAndHiddenSystemCategoriesDto {
+        return CustomAndHiddenSystemCategoriesDto(
+            customCategories = getCustomCategories(),
+            hiddenSystemCategoriesIds = getHiddenSystemCategories()
+        )
+    }
+
+    @Transactional(readOnly = true)
     fun getCustomCategories(): List<CategoryDto> {
         return customRepository.findAllByUserIdOrderByCreatedAtAsc(currentUser.id())
             .map { CategoryDto(it.id.toString(), it.name, it.icon, it.color, false) }

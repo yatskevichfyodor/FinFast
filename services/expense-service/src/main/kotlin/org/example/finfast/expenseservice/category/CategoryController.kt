@@ -7,6 +7,9 @@ import java.util.UUID
 @RestController
 @RequestMapping("/categories")
 class CategoryController(private val service: CategoryService) {
+    @GetMapping()
+    fun getAllCategories() = ResponseEntity.ok(service.getAllCategories())
+
     @GetMapping("/custom")
     fun getCustomCategories() = ResponseEntity.ok(service.getCustomCategories())
 

@@ -18,7 +18,7 @@ function toStoreDto(apiDtos: DataChangeRecord[]): StoreDataChanges {
   ) as StoreDataChanges;
 }
 
-export const useDataChangeStore = defineStore("data-changes", () => {
+export const useDataChangesStore = defineStore("data-changes", () => {
   const authStore = useAuthStore();
   const storeStateGuard = createStoreStateGuard(() => authStore.userId);
 
@@ -27,14 +27,14 @@ export const useDataChangeStore = defineStore("data-changes", () => {
   watch(
     () => authStore.userId,
     () => {
-      void loadDataChanges().catch((error) => {
+      void init().catch((error) => {
         console.error("Failed to load data changes:", error);
       });
     },
     { immediate: true },
   );
 
-  async function loadDataChanges() {
+  async function init() {
     const currentUserId = authStore.userId;
     if (!currentUserId) return;
     let apiResult: StoreDataChanges | undefined;
@@ -75,7 +75,7 @@ export const useDataChangeStore = defineStore("data-changes", () => {
   }
 
   return { 
-    dataChanges, 
-    loadDataChanges 
+    dataChanges,
+    init 
   }
 });

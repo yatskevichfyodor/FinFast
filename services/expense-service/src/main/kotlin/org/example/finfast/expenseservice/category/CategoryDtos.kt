@@ -28,3 +28,8 @@ data class CategoryDto(
     val hidden: Boolean = false,
     val deleted: Boolean = false
 )
+
+data class CustomAndHiddenSystemCategoriesDto(
+    val customCategories: List<CategoryDto>,
+    val hiddenSystemCategoriesIds: List<String>
+)

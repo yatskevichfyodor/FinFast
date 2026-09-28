@@ -1,7 +1,12 @@
 import { expenseClient } from "@/services/api/http";
-import type { Category, CategoryInput, CustomCategory } from "@/types/category";
+import type { Category, CategoryInput, CustomAndHiddenSystemCategoriesDto, CustomCategory } from "@/types/category";
 
 export const categoryApi = {
+  async getCustomAndHiddenSystemCategories() {
+    const { data } = await expenseClient.get<CustomAndHiddenSystemCategoriesDto>("/categories");
+    return data;
+  },
+
   async getCustomCategories() {
     const { data } = await expenseClient.get<Category[]>("/categories/custom");
     return data;

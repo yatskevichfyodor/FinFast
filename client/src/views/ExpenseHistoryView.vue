@@ -162,14 +162,14 @@ function editExpense(expense: Expense) {
             <v-card-text class="pa-4">
               <div class="d-flex align-center">
                 <div class="expense-icon" :style="{
-                  '--category-color': categoryStore.getCategoryDisplay(expense.categoryId).color
+                  '--category-color': categoryStore.getCategoryDisplay(expense.categoryId ?? expense.customCategoryId).color
                 }">
-                  <v-icon :icon="categoryStore.getCategoryDisplay(expense.categoryId).icon" size="24" />
+                  <v-icon :icon="categoryStore.getCategoryDisplay(expense.categoryId ?? expense.customCategoryId).icon" size="24" />
                 </div>
 
                 <div class="expense-info flex-grow-1">
                   <div class="expense-category">
-                    {{ categoryStore.getCategoryDisplay(expense.categoryId).name }}
+                    {{ categoryStore.getCategoryDisplay(expense.categoryId ?? expense.customCategoryId).name }}
                   </div>
 
                   <div v-if="expense.description" class="expense-description">
