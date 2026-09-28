@@ -38,7 +38,16 @@ export const openDatabase = once(async function (): Promise<IDBDatabase> {
       // }
     };
 
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const database = request.result;
+
+      database.onversionchange = () => {
+        database.close();
+      };
+
+      resolve(database);
+    };
+    
     request.onerror = () =>
       reject(request.error ?? new Error("Failed to open expenses database"));
   });

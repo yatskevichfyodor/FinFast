@@ -21,11 +21,9 @@ export const customCategoryStorage = {
         .getAll(range) as IDBRequest<CategoryRecord[]>;
 
       request.onsuccess = () => {
-        database.close();
         resolve(request.result.map((record) => record.category));
       };
       request.onerror = () => {
-        database.close();
         reject(request.error ?? new Error("Failed to load expenses"));
       };
     });
@@ -62,15 +60,12 @@ export const customCategoryStorage = {
       };
 
       transaction.oncomplete = () => {
-        database.close();
         resolve();
       };
       transaction.onerror = () => {
-        database.close();
         reject(transaction.error ?? new Error("Failed to save expenses"));
       };
       transaction.onabort = () => {
-        database.close();
         reject(transaction.error ?? new Error("Failed to save expenses"));
       };
     });
