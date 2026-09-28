@@ -24,7 +24,7 @@ const dataChangesStore = useDataChangesStore()
 await dataChangesStore.init()
 const expenseStore = useExpenseStore()
 const categoryStore = useCategoryStore()
-categoryStore.init();
+await categoryStore.init();
 buildPopularCategoryOrder(expenseStore.expenses)
 
 initializePwaUpdate()

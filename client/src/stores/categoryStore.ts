@@ -89,19 +89,20 @@ export const useCategoryStore = defineStore("category", () => {
     if (!currentUserId) return;
     const lastSyncDatetime = getLastSyncDatetime(currentUserId);
     const serverLastCategoryChangeDatetime = getLastCategoryChangeDatetime();
-    if (
-      serverHasNewerData(lastSyncDatetime, serverLastCategoryChangeDatetime)
-    ) {
-      const apiDataReceived = await loadCategories(currentUserId);
-      if (apiDataReceived)
+    if (serverHasNewerData(lastSyncDatetime, serverLastCategoryChangeDatetime)) {
+      const apiDataReceived = await loadCategoriesFromApi(currentUserId);
+      if (apiDataReceived) {
         saveLastSyncDatetime(currentUserId, serverLastCategoryChangeDatetime);
+        return
+      }
     }
+    await loadCategoriesFromLocal(currentUserId);
   }
 
   /**
    * @returns true categories were updated with api data, else false
    */
-  async function loadCategories(currentUserId: string): Promise<boolean> {
+  async function loadCategoriesFromApi(currentUserId: string): Promise<boolean> {
     let apiResult: CustomAndHiddenSystemCategoriesDto | undefined;
 
     const isCurrentState = await storeStateGuard(
@@ -116,17 +117,19 @@ export const useCategoryStore = defineStore("category", () => {
     );
     if (!isCurrentState) return false;
 
-    if (apiResult !== undefined) {
-      customCategories.value = apiResult.customCategories;
-      customCategoryStorage.saveCategories(currentUserId, apiResult.customCategories);
-      hiddenSystemCategoriesIds.value = apiResult.hiddenSystemCategoriesIds;
-      hiddenSystemCategoryStorage.save(currentUserId, apiResult.hiddenSystemCategoriesIds);
-      return true;
-    }
+    if (apiResult === undefined)
+      return false;
+      
+    customCategories.value = apiResult.customCategories;
+    customCategoryStorage.saveCategories(currentUserId, apiResult.customCategories);
+    hiddenSystemCategoriesIds.value = apiResult.hiddenSystemCategoriesIds;
+    hiddenSystemCategoryStorage.save(currentUserId, apiResult.hiddenSystemCategoriesIds);
+    return true;
+  }
 
+  async function loadCategoriesFromLocal(currentUserId: string) {
     customCategories.value = await customCategoryStorage.loadCategories(currentUserId)
     hiddenSystemCategoriesIds.value = hiddenSystemCategoryStorage.get(currentUserId);
-    return false;
   }
 
   function saveCache() {
@@ -193,7 +196,6 @@ export const useCategoryStore = defineStore("category", () => {
     categories, 
     availableCategories,
     init,
-    loadCategories,
     createCustomCategory,
     updateCustomCategory,
     removeCustomCategory,
