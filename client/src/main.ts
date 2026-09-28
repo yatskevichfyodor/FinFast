@@ -12,6 +12,7 @@ import { useExpenseStore } from '@/stores/expenseStore.ts'
 import './style.css'
 import './styles/common.css'
 import { useDataChangesStore } from './stores/dataChangesStore.ts'
+import { useCategoryStore } from './stores/categoryStore.ts'
 
 const app = createApp(App)
 
@@ -22,6 +23,8 @@ app.use(createPinia())
 const dataChangesStore = useDataChangesStore()
 await dataChangesStore.init()
 const expenseStore = useExpenseStore()
+const categoryStore = useCategoryStore()
+categoryStore.init();
 buildPopularCategoryOrder(expenseStore.expenses)
 
 initializePwaUpdate()
