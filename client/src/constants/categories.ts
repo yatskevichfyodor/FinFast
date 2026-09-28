@@ -23,6 +23,13 @@ export const SYSTEM_CATEGORIES: Category[] = [
     system: true,
   },
   {
+    id: 'clothes',
+    name: 'Одежда',
+    icon: 'mdi-tshirt-crew',
+    color: '#FFB74D',
+    system: true,
+  },
+  {
     id: 'shopping',
     name: 'Покупки',
     icon: 'mdi-shopping',
