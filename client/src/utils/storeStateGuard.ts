@@ -50,7 +50,7 @@ export function createStoreStateGuard<TState>(
 ) {
   let latestRequestId = 0
 
-  return async function storeStateGuard<TResult>(
+  async function storeStateGuard<TResult>(
     action: () => Promise<TResult>,
     onLatest: (result: TResult) => unknown,
   ): Promise<boolean> {
@@ -69,4 +69,13 @@ export function createStoreStateGuard<TState>(
     await onLatest(result)
     return true
   }
+
+  function invalidateState() {
+    latestRequestId++;
+  }
+
+  return {
+    storeStateGuard,
+    invalidateState,
+  };
 }

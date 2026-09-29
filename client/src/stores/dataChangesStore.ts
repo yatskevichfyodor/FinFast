@@ -20,7 +20,7 @@ function toStoreDto(apiDtos: DataChangeRecord[]): StoreDataChanges {
 
 export const useDataChangesStore = defineStore("data-changes", () => {
   const authStore = useAuthStore();
-  const storeStateGuard = createStoreStateGuard(() => authStore.userId);
+  const { storeStateGuard } = createStoreStateGuard(() => authStore.userId);
 
   const dataChanges = ref<StoreDataChanges>();
 

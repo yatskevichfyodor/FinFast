@@ -4,8 +4,9 @@ import { useRoute, useRouter } from "vue-router";
 
 import CategoryPicker from "@/components/CategoryPicker.vue";
 import ExpenseAmountInput from "@/components/ExpenseAmountInput.vue";
-import { useExpenseStore, type ExpensePayload } from "@/stores/expenseStore";
+import { useExpenseStore } from "@/stores/expenseStore";
 import { format, parse } from "date-fns";
+import type { CreateExpensePayload, ExpenseUpdatePayload } from "@/types/expense";
 
 const router = useRouter();
 const route = useRoute();
@@ -98,14 +99,14 @@ function handleMobileStep1Submit() {
     return;
   }
 
-  const payload: ExpensePayload = {
+  const payload: CreateExpensePayload = {
     amount: amountValue,
     categoryId: selectedCategoryId.value || undefined,
     customCategoryId: selectedCustomCategoryId.value || undefined,
     description: description.value || undefined,
   };
 
-  const newExpenseId = expenseStore.addExpense(payload);
+  const newExpenseId = expenseStore.createExpense(payload);
   createdExpenseId.value = newExpenseId;
 
   // Move to step 2
@@ -121,9 +122,9 @@ function handleMobileStep2Submit() {
   const hasChanges = selectedCategoryId.value ||selectedCustomCategoryId.value || description.value || paymentDate.value;
 
   if (hasChanges) {
-    const updatePayload: ExpensePayload = {
+    const updatePayload: ExpenseUpdatePayload = {
       id: createdExpenseId.value,
-      amount: currentAmount.value || 0,
+      amount: currentAmount.value ?? undefined,
       categoryId:
         selectedCategoryId.value !== null
           ? selectedCategoryId.value
@@ -163,7 +164,7 @@ function handleDesktopSubmit() {
     const expense = expenseStore.getExpenseById(expenseId);
 
     if (expense) {
-      const updatePayload: ExpensePayload = {
+      const updatePayload: ExpenseUpdatePayload = {
         id: expenseId,
         amount: amountValue,
         categoryId:
@@ -182,14 +183,14 @@ function handleDesktopSubmit() {
       name: "expense-history",
     });
   } else {
-    const payload: ExpensePayload = {
+    const payload: CreateExpensePayload = {
       amount: amountValue,
       categoryId: selectedCategoryId.value || undefined,
       customCategoryId: selectedCustomCategoryId.value || undefined,
       description: description.value || undefined,
       paymentDate: paymentDateFormatted,
     };
-    expenseStore.addExpense(payload);
+    expenseStore.createExpense(payload);
     router.push({
       name: "expense-history",
     });

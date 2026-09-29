@@ -17,7 +17,7 @@ const LOCAL_STORAGE_LAST_SYNC_KEY = "finfast-categories-last-sync";
 export const useCategoryStore = defineStore("category", () => {
   const authStore = useAuthStore();
   const dataChangeStore = useDataChangesStore();
-  const storeStateGuard = createStoreStateGuard(() => authStore.userId);
+  const { storeStateGuard } = createStoreStateGuard(() => authStore.userId);
   const customCategories = ref<Category[]>([]);
   const hiddenSystemCategoriesIds = ref<string[]>([]);
   const systemCategories = computed(() => {

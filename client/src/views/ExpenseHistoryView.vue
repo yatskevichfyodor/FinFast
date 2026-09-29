@@ -1,116 +1,116 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 
-import {
-  useExpenseStore,
-  type Expense
-} from '@/stores/expenseStore'
-import { parseDate } from '@/utils/dateHelpers'
-import { format, parse } from 'date-fns'
-import { useCategoryStore } from '@/stores/categoryStore'
+import { useExpenseStore } from "@/stores/expenseStore";
+import { parseDate } from "@/utils/dateHelpers";
+import { format, parse } from "date-fns";
+import { useCategoryStore } from "@/stores/categoryStore";
+import type { Expense } from "@/types/expense";
 
-const router = useRouter()
-const expenseStore = useExpenseStore()
-const categoryStore = useCategoryStore()
+const router = useRouter();
+const expenseStore = useExpenseStore();
+const categoryStore = useCategoryStore();
 
 onMounted(() => {
-  void expenseStore.refreshExpenses()
-})
+  void expenseStore.refreshExpenses();
+});
 
-const deleteDialogOpen = ref(false)
-const expenseToDelete = ref<Expense | null>(null)
+const deleteDialogOpen = ref(false);
+const expenseToDelete = ref<Expense | null>(null);
 
 const activeExpenses = computed<Expense[]>(() =>
-  expenseStore.expenses.filter(expense => !expense.deletedAt)
-)
+  expenseStore.expenses.filter((expense) => !expense.deletedAt),
+);
 
 function formatDisplayDate(date: string): string {
-  const parsedDate = parse(date, 'yyyy-MM-dd', new Date())
-  const currentYear = new Date().getFullYear()
+  const parsedDate = parse(date, "yyyy-MM-dd", new Date());
+  const currentYear = new Date().getFullYear();
 
   return parsedDate.toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'long',
+    day: "numeric",
+    month: "long",
     ...(parsedDate.getFullYear() !== currentYear && {
-      year: 'numeric'
-    })
-  })
+      year: "numeric",
+    }),
+  });
 }
 
 const groupedExpenses = computed(() => {
-  const groups: Record<string, Expense[]> = {}
+  const groups: Record<string, Expense[]> = {};
 
   activeExpenses.value.forEach((expense: Expense) => {
-    const expenseEffectiveDateString = expense.paymentDate ?? expense.createdAt
+    const expenseEffectiveDateString = expense.paymentDate ?? expense.createdAt;
     if (!expenseEffectiveDateString) {
-      return
+      return;
     }
-    
-    const expenseEffectiveDate = parseDate(expenseEffectiveDateString)
-    
+
+    const expenseEffectiveDate = parseDate(expenseEffectiveDateString);
+
     // Skip invalid dates
     if (isNaN(expenseEffectiveDate.getTime())) {
-      return
+      return;
     }
-    
-    const dateKey: string = format(expenseEffectiveDate, 'yyyy-MM-dd')
+
+    const dateKey: string = format(expenseEffectiveDate, "yyyy-MM-dd");
 
     if (!groups[dateKey]) {
-      groups[dateKey] = []
+      groups[dateKey] = [];
     }
 
-    groups[dateKey].push(expense)
-  })
+    groups[dateKey].push(expense);
+  });
 
-  return Object.entries(groups)
-    // sort expenses within each day by createdAt descending
-    .map(([date, dayExpenses]) => {
-      const sortedDayExpenses = [...dayExpenses].sort((a, b) => 
-        parseDate(b.createdAt).getTime() - parseDate(a.createdAt).getTime()
-      )
+  return (
+    Object.entries(groups)
+      // sort expenses within each day by createdAt descending
+      .map(([date, dayExpenses]) => {
+        const sortedDayExpenses = [...dayExpenses].sort(
+          (a, b) =>
+            parseDate(b.createdAt).getTime() - parseDate(a.createdAt).getTime(),
+        );
 
-      return [date, sortedDayExpenses] as const
-    })
-    // sort by date descending (date is key in the map)
-    .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
-    .map(([date, dayExpenses]) => ({
-      date,
-      dayExpenses,
-      displayDate: formatDisplayDate(date)
-    }))
-})
+        return [date, sortedDayExpenses] as const;
+      })
+      // sort by date descending (date is key in the map)
+      .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+      .map(([date, dayExpenses]) => ({
+        date,
+        dayExpenses,
+        displayDate: formatDisplayDate(date),
+      }))
+  );
+});
 
 function openDeleteDialog(expense: Expense) {
-  expenseToDelete.value = expense
-  deleteDialogOpen.value = true
+  expenseToDelete.value = expense;
+  deleteDialogOpen.value = true;
 }
 
 function closeDeleteDialog() {
-  deleteDialogOpen.value = false
-  expenseToDelete.value = null
+  deleteDialogOpen.value = false;
+  expenseToDelete.value = null;
 }
 
 function confirmDelete() {
   if (!expenseToDelete.value) {
-    return
+    return;
   }
 
-  expenseStore.deleteExpense(expenseToDelete.value.id)
-  closeDeleteDialog()
+  expenseStore.deleteExpense(expenseToDelete.value.id);
+  closeDeleteDialog();
 }
 
 function editExpense(expense: Expense) {
   router.push({
-    name: 'expense-payment-form',
-    query: { 
-      id: expense.id, 
-      amount: expense.amount.toString(), 
-      categoryId: expense.categoryId
-    }
-  })
+    name: "expense-payment-form",
+    query: {
+      id: expense.id,
+      amount: expense.amount.toString(),
+      categoryId: expense.categoryId,
+    },
+  });
 }
-
 </script>
 
 <template>
@@ -118,18 +118,19 @@ function editExpense(expense: Expense) {
     <v-container class="expense-page" max-width="600">
       <!-- Header -->
       <div class="mb-6">
-        <div class="text-h5 font-weight-bold">
-          История расходов
-        </div>
+        <div class="text-h5 font-weight-bold">История расходов</div>
 
-        <div class="text-body-2 text-medium-emphasis mt-1">
-          Сначала новые
-        </div>
+        <div class="text-body-2 text-medium-emphasis mt-1">Сначала новые</div>
       </div>
 
       <!-- Expenses List -->
       <div v-if="activeExpenses.length === 0" class="empty-state">
-        <v-icon icon="mdi-receipt-long-outline" size="64" color="medium-emphasis" class="mb-3" />
+        <v-icon
+          icon="mdi-receipt-long-outline"
+          size="64"
+          color="medium-emphasis"
+          class="mb-3"
+        />
 
         <div class="text-h6 font-weight-medium text-medium-emphasis mb-2">
           Пока нет расходов
@@ -141,7 +142,11 @@ function editExpense(expense: Expense) {
       </div>
 
       <div v-else>
-        <div v-for="{ date, displayDate, dayExpenses } in groupedExpenses" :key="date" class="day-group mb-5">
+        <div
+          v-for="{ date, displayDate, dayExpenses } in groupedExpenses"
+          :key="date"
+          class="day-group mb-5"
+        >
           <div class="day-header">
             <div class="day-date">
               {{ displayDate }}
@@ -157,43 +162,82 @@ function editExpense(expense: Expense) {
             </div>
           </div>
 
-          <v-card v-for="expense in dayExpenses" :key="expense.id" rounded="xl" elevation="0" class="expense-card mb-2">
+          <v-card
+            v-for="expense in dayExpenses"
+            :key="expense.id"
+            rounded="xl"
+            elevation="0"
+            class="expense-card mb-2"
+          >
             <v-card-text class="pa-4">
               <div class="d-flex align-center">
-                <div class="expense-icon" :style="{
-                  '--category-color': categoryStore.getCategoryDisplay(expense.categoryId ?? expense.customCategoryId).color
-                }">
-                  <v-icon :icon="categoryStore.getCategoryDisplay(expense.categoryId ?? expense.customCategoryId).icon" size="24" />
+                <div
+                  class="expense-icon"
+                  :style="{
+                    '--category-color': categoryStore.getCategoryDisplay(
+                      expense.categoryId ?? expense.customCategoryId,
+                    ).color,
+                  }"
+                >
+                  <v-icon
+                    :icon="
+                      categoryStore.getCategoryDisplay(
+                        expense.categoryId ?? expense.customCategoryId,
+                      ).icon
+                    "
+                    size="24"
+                  />
                 </div>
 
                 <div class="expense-info flex-grow-1">
                   <div class="expense-category">
-                    {{ categoryStore.getCategoryDisplay(expense.categoryId ?? expense.customCategoryId).name }}
+                    {{
+                      categoryStore.getCategoryDisplay(
+                        expense.categoryId ?? expense.customCategoryId,
+                      ).name
+                    }}
                   </div>
 
                   <div v-if="expense.description" class="expense-description">
                     {{ expense.description }}
                   </div>
-
                 </div>
 
                 <div class="expense-amount">
                   {{ expense.amount.toFixed(2) }}
-                  <span><img src="/byn-symbol.webp" alt="BYN" class="currency-symbol" /></span>
+                  <span
+                    ><img
+                      src="/byn-symbol.webp"
+                      alt="BYN"
+                      class="currency-symbol"
+                  /></span>
                 </div>
 
                 <v-menu location="bottom end">
                   <template #activator="{ props: menuProps }">
-                    <v-btn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" size="small"
-                      class="expense-menu-btn ml-1" aria-label="Действия с расходом" />
+                    <v-btn
+                      v-bind="menuProps"
+                      icon="mdi-dots-vertical"
+                      variant="text"
+                      size="small"
+                      class="expense-menu-btn ml-1"
+                      aria-label="Действия с расходом"
+                    />
                   </template>
 
                   <v-list density="compact" rounded="lg">
-                    <v-list-item prepend-icon="mdi-pencil-outline" title="Редактировать"
-                      @click="editExpense(expense)" />
+                    <v-list-item
+                      prepend-icon="mdi-pencil-outline"
+                      title="Редактировать"
+                      @click="editExpense(expense)"
+                    />
 
-                    <v-list-item prepend-icon="mdi-delete-outline" title="Удалить" base-color="error"
-                      @click="openDeleteDialog(expense)" />
+                    <v-list-item
+                      prepend-icon="mdi-delete-outline"
+                      title="Удалить"
+                      base-color="error"
+                      @click="openDeleteDialog(expense)"
+                    />
                   </v-list>
                 </v-menu>
               </div>
@@ -219,9 +263,7 @@ function editExpense(expense: Expense) {
           <v-card-actions class="px-5 pb-5">
             <v-spacer />
 
-            <v-btn variant="text" @click="closeDeleteDialog">
-              Отмена
-            </v-btn>
+            <v-btn variant="text" @click="closeDeleteDialog"> Отмена </v-btn>
 
             <v-btn color="error" variant="flat" @click="confirmDelete">
               Удалить
@@ -229,8 +271,7 @@ function editExpense(expense: Expense) {
           </v-card-actions>
         </v-card>
       </v-dialog>
-
-     </v-container>
+    </v-container>
   </v-main>
 </template>
 
@@ -271,7 +312,9 @@ function editExpense(expense: Expense) {
 .expense-card {
   background: #ffffff;
   border: 1px solid #edf0f3;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .expense-card:hover {
@@ -287,9 +330,7 @@ function editExpense(expense: Expense) {
   justify-content: center;
   border-radius: 12px;
   color: var(--category-color);
-  background: color-mix(in srgb,
-      var(--category-color) 10%,
-      white);
+  background: color-mix(in srgb, var(--category-color) 10%, white);
   margin-right: 12px;
 }
 
@@ -325,5 +366,4 @@ function editExpense(expense: Expense) {
 .expense-menu-btn {
   flex-shrink: 0;
 }
-
 </style>

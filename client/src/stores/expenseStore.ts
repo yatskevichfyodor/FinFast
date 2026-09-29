@@ -6,8 +6,9 @@ import { useAuthStore } from "@/stores/authStore";
 import type {
   Expense,
   ApiResponseExpenseDto,
-  ExpensePayload,
   SyncExpensesDto,
+  ExpenseUpdatePayload,
+  CreateExpensePayload,
 } from "@/types/expense";
 import { createSequentialByKeys } from "@/utils/sequentialByKeys";
 import { createCoalescedOperation } from "@/utils/coalescedOperation";
@@ -17,8 +18,8 @@ import {
   mapExpenseToUpdateDto,
   parseApiExpense,
 } from "@/mappers/expenseMappers";
+import { createStoreStateGuard } from "@/utils/storeStateGuard";
 
-export type { Expense, ExpensePayload } from "@/types/expense";
 
 type SplitPendingExpensesResult = {
   toCreate: Expense[];
@@ -32,29 +33,28 @@ export const useExpenseStore = defineStore("expense", () => {
   const expenses = ref<Expense[]>([]);
   const syncError = ref<string | null>(null);
   let loadedUserId: string | null = null;
-  let loadVersion = 0;
 
   const sequentialExpenseOperation = createSequentialByKeys<string>();
+  const { storeStateGuard, invalidateState } = createStoreStateGuard(
+    () => authStore.userId,
+  );
 
   async function loadExpensesFromStorage() {
-    const userId = authStore.userId;
-    const currentLoadVersion = ++loadVersion;
-
     loadedUserId = null;
     expenses.value = [];
 
-    if (!userId) {
+    const currentUserId = authStore.userId;
+    if (!currentUserId) {
       return;
     }
 
-    const storedExpenses = await expenseStorage.loadExpenses(userId);
-    // return if user changed account during async operation
-    if (currentLoadVersion !== loadVersion || authStore.userId !== userId) {
-      return;
-    }
-
-    loadedUserId = userId;
-    expenses.value = storedExpenses;
+    await storeStateGuard(
+      async () => await expenseStorage.loadExpenses(currentUserId),
+      (storedExpenses: Expense[]) => {
+        expenses.value = storedExpenses;
+        loadedUserId = currentUserId;
+      },
+    );
   }
 
   function saveExpensesToStorage() {
@@ -73,7 +73,7 @@ export const useExpenseStore = defineStore("expense", () => {
       return;
     }
 
-    loadVersion++;
+    invalidateState();
     if (loadedUserId === userId) {
       loadedUserId = null;
       expenses.value = [];
@@ -103,7 +103,7 @@ export const useExpenseStore = defineStore("expense", () => {
 
     const notSyncedExpensesIds = notSyncedExpenses.map((expense) => expense.id);
 
-    sequentialExpenseOperation(notSyncedExpensesIds, async () => {
+    await sequentialExpenseOperation(notSyncedExpensesIds, async () => {
       syncError.value = null;
 
       try {
@@ -162,40 +162,39 @@ export const useExpenseStore = defineStore("expense", () => {
     }
 
     await loadExpensesFromStorage();
-
     try {
       await syncExpenses();
-      const apiExpenses = await expenseApi.getExpenses();
-      const apiExpensesIds = new Set(apiExpenses.map((expense) => expense.id));
+      await loadExpensesFromApi();
+    } catch (error) {
+      console.error("Failed to refresh expenses:", error);
+    }
+  }
 
-      expenses.value = expenses.value.filter(
-        (expense) =>
-          expense.isCreatedLocally ||
-          !expense.isSynced ||
-          apiExpensesIds.has(expense.id),
-      );
+  async function loadExpensesFromApi() {
+    const apiExpenses = await expenseApi.getExpenses();
+    const apiExpensesIds = new Set(apiExpenses.map((expense) => expense.id));
 
-      const localExpenseById = new Map(
-        expenses.value.map((expense) => [expense.id, expense]),
-      );
-      for (const apiExpense of apiExpenses) {
-        const local = localExpenseById.get(apiExpense.id);
-        if (local && !local.isSynced) {
-          continue;
-        }
+    expenses.value = expenses.value.filter(
+      (expense) => !expense.isSynced || apiExpensesIds.has(expense.id),
+    );
 
+    const localExpenseById = new Map(
+      expenses.value.map((expense) => [expense.id, expense]),
+    );
+
+    apiExpenses.forEach((apiExpense) => {
+      const local = localExpenseById.get(apiExpense.id);
+      if (local && !local.isSynced) {
         const mapped = parseApiExpense(apiExpense);
         if (local) {
-          Object.assign(local, mapped);
+          Object.assign(local, mapped); // refresh expense state in case it was modified from other device
         } else {
           expenses.value.push(mapped);
         }
       }
+    });
 
-      saveExpensesToStorage();
-    } catch (error) {
-      console.error("Failed to refresh expenses:", error);
-    }
+    saveExpensesToStorage();
   }
 
   function getNotSyncedExpenses() {
@@ -249,7 +248,44 @@ export const useExpenseStore = defineStore("expense", () => {
     expenses.value = expenses.value.filter((expense) => !ids.has(expense.id));
   }
 
-  async function createExpenseDirectly(expense: Expense) {
+  function hasNotSyncedExpensesExcept(expenseId: string) {
+    return getNotSyncedExpenses().some((expense) => expense.id !== expenseId);
+  }
+
+  function createExpense(payload: CreateExpensePayload): string {
+    const expense = createExpenseLocally(payload);
+
+    if (getNotSyncedExpenses().length > 0) {
+      void syncExpenses().catch((error) => {
+        console.error("Failed to sync expenses:", error);
+      });
+    } else {
+      void createExpenseOnApi(expense).catch((error) =>
+        console.error("Failed to create expense:", error),
+      );
+    }
+    return expense.id;
+  }
+
+  function createExpenseLocally(payload: CreateExpensePayload): Expense {
+    const expense: Expense = {
+      id: crypto.randomUUID(),
+      amount: payload.amount,
+      categoryId: payload.categoryId,
+      customCategoryId: payload.customCategoryId,
+      createdAt: new Date().toISOString(),
+      description: payload.description,
+      paymentDate: payload.paymentDate,
+      isSynced: false,
+      isCreatedLocally: true,
+    };
+
+    expenses.value.push(expense);
+    saveExpensesToStorage();
+    return expense;
+  }
+
+  async function createExpenseOnApi(expense: Expense) {
     await sequentialExpenseOperation([expense.id], async () => {
       await expenseApi.createExpense(mapExpenseToCreateDto(expense));
       expense.isCreatedLocally = false;
@@ -258,7 +294,41 @@ export const useExpenseStore = defineStore("expense", () => {
     });
   }
 
-  async function updateExpenseDirectly(expense: Expense) {
+  function updateExpense(payload: ExpenseUpdatePayload) {
+    const expense = updateExpenseLocally(payload);
+
+    if (hasNotSyncedExpensesExcept(payload.id)) {
+      void syncExpenses().catch((error) => {
+        console.error("Failed to sync expenses:", error);
+      });
+    } else {
+      void updateExpenseOnApi(expense).catch((error) =>
+        console.error("Failed to update expense:", error),
+      );
+    }
+  }
+
+  function updateExpenseLocally(payload: ExpenseUpdatePayload): Expense {
+    const expenseId = payload.id;
+
+    const index = expenses.value.findIndex(
+      (expense) => expense.id === expenseId,
+    );
+    if (index === -1) {
+      throw Error("Expense to update was not found locally")
+    }
+
+    expenses.value[index] = {
+      ...expenses.value[index]!,
+      ...payload,
+      isSynced: false,
+    };
+    saveExpensesToStorage();
+
+    return expenses.value[index];
+  }
+
+  async function updateExpenseOnApi(expense: Expense) {
     await sequentialExpenseOperation([expense.id], async () => {
       if (expense.isCreatedLocally) {
         await expenseApi.createExpense(mapExpenseToCreateDto(expense));
@@ -274,111 +344,53 @@ export const useExpenseStore = defineStore("expense", () => {
     });
   }
 
-  async function deleteExpenseDirectly(expense: Expense) {
+  function deleteExpense(expenseId: string) {
+    const expense = deleteExpenseLocally(expenseId);
+    if (expense === undefined)
+      return
+
+    if (hasNotSyncedExpensesExcept(expenseId)) {
+      void syncExpenses().catch((error) => {
+        console.error("Failed to sync expenses:", error);
+      });
+    } else {
+      void deleteExpenseOnApi(expense).catch((error) =>
+        console.error("Failed to delete expense:", error),
+      );
+    }
+  }
+
+  /**
+   * @returns
+   *  Expense - if expense is marked as deleted locally to sync deletion with API later.
+   *  undefined - if expense was created only locally or if expense was not found locally
+   */
+  function deleteExpenseLocally(expenseId: string): Expense | undefined {
+    const expense = expenses.value.find((expense) => expense.id === expenseId);
+
+    if (!expense) {
+      return undefined;
+    }
+
+    if (expense.isCreatedLocally) {
+      removeExpensesLocally([expenseId]);
+      saveExpensesToStorage();
+      return undefined;
+    }
+
+    expense.deletedAt = new Date().toISOString();
+    expense.isSynced = false;
+    saveExpensesToStorage();
+    return expense;
+  }
+
+  async function deleteExpenseOnApi(expense: Expense) {
     await sequentialExpenseOperation([expense.id], async () => {
       await expenseApi.deleteExpense(expense.id);
       expense.deletedAt = expense.deletedAt ?? new Date().toISOString();
       expense.isSynced = true;
       saveExpensesToStorage();
     });
-  }
-
-  function hasNotSyncedExpensesExcept(expenseId: string) {
-    return getNotSyncedExpenses().some((expense) => expense.id !== expenseId);
-  }
-
-  function addExpense(payload: ExpensePayload): string {
-    const hasPendingExpenses = getNotSyncedExpenses().length > 0;
-    const newExpenseId = crypto.randomUUID();
-    const expense: Expense = {
-      id: newExpenseId,
-      amount: payload.amount,
-      categoryId: payload.categoryId,
-      customCategoryId: payload.customCategoryId,
-      createdAt: new Date().toISOString(),
-      description: payload.description,
-      paymentDate: payload.paymentDate,
-      isSynced: false,
-      isCreatedLocally: true,
-    };
-
-    expenses.value.push(expense);
-    saveExpensesToStorage();
-
-    if (hasPendingExpenses) {
-      void syncExpenses().catch((error) => {
-        console.error("Failed to sync expenses:", error);
-      });
-    } else {
-      void createExpenseDirectly(expense).catch((error) =>
-        console.error("Failed to create expense:", error),
-      );
-    }
-
-    return newExpenseId;
-  }
-
-  function updateExpense(payload: ExpensePayload) {
-    if (payload.id === undefined) {
-      return;
-    }
-
-    const expenseId = payload.id;
-    const hasOtherNotSyncedExpenses = hasNotSyncedExpensesExcept(expenseId);
-    const index = expenses.value.findIndex(
-      (expense) => expense.id === expenseId,
-    );
-
-    if (index === -1) {
-      return;
-    }
-
-    expenses.value[index] = {
-      ...expenses.value[index]!,
-      ...payload,
-      isSynced: false,
-    };
-
-    saveExpensesToStorage();
-
-    if (hasOtherNotSyncedExpenses) {
-      void syncExpenses().catch((error) => {
-        console.error("Failed to sync expenses:", error);
-      });
-    } else {
-      void updateExpenseDirectly(expenses.value[index]!).catch((error) =>
-        console.error("Failed to update expense:", error),
-      );
-    }
-  }
-
-  function deleteExpense(id: string) {
-    const hasNotSyncedExpenses = hasNotSyncedExpensesExcept(id);
-    const expense = expenses.value.find((expense) => expense.id === id);
-
-    if (!expense) {
-      return;
-    }
-
-    if (expense.isCreatedLocally) {
-      removeExpensesLocally([id]);
-      saveExpensesToStorage();
-      return;
-    }
-
-    expense.deletedAt = new Date().toISOString();
-    expense.isSynced = false;
-    saveExpensesToStorage();
-
-    if (hasNotSyncedExpenses) {
-      void syncExpenses().catch((error) => {
-        console.error("Failed to sync expenses:", error);
-      });
-    } else {
-      void deleteExpenseDirectly(expense).catch((error) =>
-        console.error("Failed to delete expense:", error),
-      );
-    }
   }
 
   function getExpenseById(id: string) {
@@ -446,7 +458,7 @@ export const useExpenseStore = defineStore("expense", () => {
     loadExpensesFromStorage,
     clearCurrentUserExpenses,
     refreshExpenses,
-    addExpense,
+    createExpense,
     updateExpense,
     deleteExpense,
     getExpenseById,

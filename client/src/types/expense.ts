@@ -20,9 +20,17 @@ export interface Expense {
   isCreatedLocally: boolean
 }
 
-export interface ExpensePayload {
-  id?: string
+export interface CreateExpensePayload {
   amount: number
+  categoryId?: string
+  customCategoryId?: string
+  description?: string
+  paymentDate?: string
+}
+
+export interface ExpenseUpdatePayload {
+  id: string
+  amount?: number
   categoryId?: string
   customCategoryId?: string
   /** Explicitly removes both system and custom category assignments during update. */

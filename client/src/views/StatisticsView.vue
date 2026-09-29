@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useExpenseStore, type Expense } from '@/stores/expenseStore'
+import { useExpenseStore } from '@/stores/expenseStore'
 import { useAuthStore } from '@/stores/authStore'
 import { formatMonthName } from '@/utils/dateHelpers'
 import { useCategoryStore } from '@/stores/categoryStore'
