@@ -8,7 +8,7 @@ import {
 import { expenseStorage } from "@/storage/indexedDB";
 import { useAuthStore } from "@/stores/authStore";
 import type { Expense, ExpensePayload } from "@/types/expense";
-import { isExpenseActive, normalizeExpense } from "@/types/expense";
+import { isExpenseActive } from "@/types/expense";
 import { createSequentialByKey } from "@/utils/sequentialByKey";
 
 export type { Expense, ExpensePayload } from "@/types/expense";
@@ -35,7 +35,6 @@ export const useExpenseStore = defineStore("expense", () => {
       paymentDate: apiExpense.paymentDate,
       deletedAt: apiExpense.deletedAt,
       isSynced: true,
-      isDeleted: false,
       isCreatedLocally: false,
     };
   }
@@ -59,9 +58,7 @@ export const useExpenseStore = defineStore("expense", () => {
       return;
     }
 
-    const storedExpenses = (await expenseStorage.loadExpenses(userId)).map(
-      normalizeExpense,
-    );
+    const storedExpenses = await expenseStorage.loadExpenses(userId)
     // return if user changed account during async operation
     if (currentLoadVersion !== loadVersion || authStore.userId !== userId) {
       return;
@@ -202,7 +199,7 @@ export const useExpenseStore = defineStore("expense", () => {
             )
           : [];
 
-      const { softDelete, toUpdate, toCreate, locallyDeleted } =
+      const { toCreate, toUpdate, toDelete, locallyDeleted } =
         splitPendingExpenses(pendingExpenses, apiExpenses);
 
       const syncRequest: SyncExpensesRequest = {};
@@ -232,8 +229,8 @@ export const useExpenseStore = defineStore("expense", () => {
         }));
       }
 
-      if (softDelete.length > 0) {
-        syncRequest.delete = softDelete.map((expense) => expense.id);
+      if (toDelete.length > 0) {
+        syncRequest.delete = toDelete.map((expense) => expense.id);
       }
 
       if (
@@ -251,9 +248,8 @@ export const useExpenseStore = defineStore("expense", () => {
         expense.isSynced = true;
         expense.isCreatedLocally = false;
       });
-      softDelete.forEach((expense) => {
+      toDelete.forEach((expense) => {
         expense.isSynced = true;
-        expense.isDeleted = false;
       });
       removeExpensesLocally(locallyDeleted.map((expense) => expense.id));
 
@@ -287,9 +283,8 @@ export const useExpenseStore = defineStore("expense", () => {
     );
 
     return {
-      softDelete: pendingExpenses.filter((expense) => {
-        const apiExpense = apiById.get(expense.id);
-        return !!expense.deletedAt && !!apiExpense && !apiExpense.deletedAt;
+      toCreate: pendingExpenses.filter((expense) => {
+        return isExpenseActive(expense) && !apiById.has(expense.id);
       }),
       toUpdate: pendingExpenses.filter((expense) => {
         const apiExpense = apiById.get(expense.id);
@@ -297,8 +292,9 @@ export const useExpenseStore = defineStore("expense", () => {
           isExpenseActive(expense) && !!apiExpense && !apiExpense.deletedAt
         );
       }),
-      toCreate: pendingExpenses.filter((expense) => {
-        return isExpenseActive(expense) && !apiById.has(expense.id);
+      toDelete: pendingExpenses.filter((expense) => {
+        const apiExpense = apiById.get(expense.id);
+        return !!expense.deletedAt && !!apiExpense && !apiExpense.deletedAt;
       }),
       locallyDeleted: pendingExpenses.filter((expense) => {
         return (
@@ -403,7 +399,6 @@ export const useExpenseStore = defineStore("expense", () => {
         await expenseApi.deleteExpense(expense.id);
         expense.deletedAt = expense.deletedAt ?? new Date().toISOString();
         expense.isSynced = true;
-        expense.isDeleted = false;
         persistExpenses();
       } catch (error) {
         console.error("Failed to delete expense:", error);
@@ -427,7 +422,6 @@ export const useExpenseStore = defineStore("expense", () => {
       description: payload.description,
       paymentDate: payload.paymentDate,
       isSynced: false,
-      isDeleted: false,
       isCreatedLocally: true,
     };
 
@@ -536,7 +530,6 @@ export const useExpenseStore = defineStore("expense", () => {
     }
 
     expense.deletedAt = new Date().toISOString();
-    expense.isDeleted = false;
     expense.isSynced = false;
     persistExpenses();
 
@@ -570,16 +563,12 @@ export const useExpenseStore = defineStore("expense", () => {
     }
 
     const anonymousUserId = `anonymous:${anonymousProfile}`;
-    const anonymousExpenses = (
-      await expenseStorage.loadExpenses(anonymousUserId)
-    ).map(normalizeExpense);
+    const anonymousExpenses = await expenseStorage.loadExpenses(anonymousUserId);
     if (anonymousExpenses.length === 0) {
       return 0;
     }
 
-    const currentExpenses = (
-      await expenseStorage.loadExpenses(authStore.userId)
-    ).map(normalizeExpense);
+    const currentExpenses = await expenseStorage.loadExpenses(authStore.userId);
     const existingIds = new Set(currentExpenses.map((expense) => expense.id));
     const transferredExpenses = anonymousExpenses.filter(
       (expense) => !existingIds.has(expense.id),

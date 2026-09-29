@@ -10,12 +10,10 @@ export interface Expense {
   description?: string
   /** Payment date in ISO 8601 date format (YYYY-MM-DD), without time or timezone. */
   paymentDate?: string
-  /** When set, the expense is in trash. Synced with the server. */
+  /** When set, the expense is deleted locally. */
   deletedAt?: string
   /** whether the record has been synchronized with the API */
   isSynced: boolean
-  /** @deprecated Use deletedAt instead. Kept for IndexedDB migration. */
-  isDeleted: boolean
   /** a record that has not yet been posted to the API */
   isCreatedLocally: boolean
 }
@@ -37,11 +35,4 @@ export function isExpenseDeleted(expense: Expense): boolean {
 
 export function isExpenseActive(expense: Expense): boolean {
   return !expense.deletedAt
-}
-
-export function normalizeExpense(expense: Expense): Expense {
-  if (expense.isDeleted && !expense.deletedAt) {
-    return { ...expense, deletedAt: new Date().toISOString() }
-  }
-  return expense
 }

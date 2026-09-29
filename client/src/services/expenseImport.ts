@@ -174,7 +174,6 @@ export function convertImportedExpenseToExpense(
     description: imported.description,
     paymentDate: imported.paymentDate,
     isSynced,
-    isDeleted: false,
     isCreatedLocally: !isSynced
   }
 }
