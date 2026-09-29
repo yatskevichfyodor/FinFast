@@ -24,7 +24,7 @@ const showExportDialog = ref(false)
 const showImportDialog = ref(false)
 const showLogoutDialog = ref(false)
 const showAccountDialog = ref(false)
-const pendingExpensesCount = computed(() => expenseStore.getPendingExpensesCount())
+const pendingExpensesCount = computed(() => expenseStore.getNotSyncedExpensesCount())
 const shouldShowLogin = computed(() => !authStore.isAuthenticated || authStore.isAnonymous)
 
 const buildInfo = computed(() => {

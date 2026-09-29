@@ -7,11 +7,16 @@ import type {
   Expense,
   ApiResponseExpenseDto,
   ExpensePayload,
-  SyncExpensesDto
+  SyncExpensesDto,
 } from "@/types/expense";
 import { createSequentialByKey } from "@/utils/sequentialByKey";
 import { createCoalescedOperation } from "@/utils/coalescedOperation";
-import { mapExpenseToBatchUpdateDto, mapExpenseToCreateDto, mapExpenseToUpdateDto, parseApiExpense } from "@/mappers/expenseMappers";
+import {
+  mapExpenseToBatchUpdateDto,
+  mapExpenseToCreateDto,
+  mapExpenseToUpdateDto,
+  parseApiExpense,
+} from "@/mappers/expenseMappers";
 
 export type { Expense, ExpensePayload } from "@/types/expense";
 
@@ -32,7 +37,7 @@ export const useExpenseStore = defineStore("expense", () => {
 
   const sequentialExpenseOperation = createSequentialByKey<string>();
 
-  async function loadExpenses() {
+  async function loadExpensesFromLocalStorage() {
     const userId = authStore.userId;
     const currentLoadVersion = ++loadVersion;
 
@@ -70,73 +75,19 @@ export const useExpenseStore = defineStore("expense", () => {
   watch(
     () => authStore.userId,
     () => {
-      void loadExpenses().catch((error) => {
+      void loadExpensesFromLocalStorage().catch((error) => {
         console.error("Failed to load expenses:", error);
       });
     },
     { immediate: true },
   );
 
-  const syncExpenses = createCoalescedOperation(syncExpensesWithApi);
-
-  async function refreshExpenses() {
-    const userId = authStore.userId;
-    if (!userId || authStore.isAnonymous || !authStore.accessToken) {
-      return;
-    }
-
-    await loadExpenses();
-
-    try {
-      await syncExpenses();
-      const apiExpenses = await expenseApi.getExpenses();
-      const serverIds = new Set(apiExpenses.map((expense) => expense.id));
-      const pendingIds = new Set(
-        getPendingExpenses().map((expense) => expense.id),
-      );
-
-      expenses.value = expenses.value.filter((expense) => {
-        if (pendingIds.has(expense.id)) {
-          return true;
-        }
-        if (expense.isCreatedLocally) {
-          return true;
-        }
-        if (!expense.isSynced) {
-          return true;
-        }
-        return serverIds.has(expense.id);
-      });
-
-      const localById = new Map(
-        expenses.value.map((expense) => [expense.id, expense]),
-      );
-      for (const apiExpense of apiExpenses) {
-        const local = localById.get(apiExpense.id);
-        if (local && !local.isSynced) {
-          continue;
-        }
-
-        const mapped = parseApiExpense(apiExpense);
-        if (local) {
-          Object.assign(local, mapped);
-        } else {
-          expenses.value.push(mapped);
-        }
-      }
-
-      saveExpensesLocally();
-    } catch (error) {
-      console.error("Failed to refresh expenses:", error);
-    }
-  }
-
-  async function syncExpensesWithApi() {
+  const syncExpenses = createCoalescedOperation(async () => {
     if (authStore.isAnonymous || !authStore.accessToken) {
       return;
     }
 
-    const pendingExpenses = getPendingExpenses();
+    const pendingExpenses = getNotSyncedExpenses();
     if (pendingExpenses.length === 0) {
       return;
     }
@@ -145,7 +96,9 @@ export const useExpenseStore = defineStore("expense", () => {
     syncError.value = null;
 
     try {
-      const apiExpenses = await expenseApi.getExpensesByIds(pendingExpenses.map((expense) => expense.id))
+      const apiExpenses = await expenseApi.getExpensesByIds(
+        pendingExpenses.map((expense) => expense.id),
+      );
 
       const { toCreate, toUpdate, toDelete, locallyDeleted } =
         splitPendingExpenses(pendingExpenses, apiExpenses);
@@ -191,9 +144,52 @@ export const useExpenseStore = defineStore("expense", () => {
     } finally {
       isSyncing.value = false;
     }
+  });
+
+  async function refreshExpenses() {
+    const userId = authStore.userId;
+    if (!userId || authStore.isAnonymous || !authStore.accessToken) {
+      return;
+    }
+
+    await loadExpensesFromLocalStorage();
+
+    try {
+      await syncExpenses();
+      const apiExpenses = await expenseApi.getExpenses();
+      const apiExpensesIds = new Set(apiExpenses.map((expense) => expense.id));
+
+      expenses.value = expenses.value.filter(
+        (expense) =>
+          expense.isCreatedLocally ||
+          !expense.isSynced ||
+          apiExpensesIds.has(expense.id),
+      );
+
+      const localExpenseById = new Map(
+        expenses.value.map((expense) => [expense.id, expense]),
+      );
+      for (const apiExpense of apiExpenses) {
+        const local = localExpenseById.get(apiExpense.id);
+        if (local && !local.isSynced) {
+          continue;
+        }
+
+        const mapped = parseApiExpense(apiExpense);
+        if (local) {
+          Object.assign(local, mapped);
+        } else {
+          expenses.value.push(mapped);
+        }
+      }
+
+      saveExpensesLocally();
+    } catch (error) {
+      console.error("Failed to refresh expenses:", error);
+    }
   }
 
-  function getPendingExpenses() {
+  function getNotSyncedExpenses() {
     if (loadedUserId !== authStore.userId) {
       return [];
     }
@@ -201,8 +197,8 @@ export const useExpenseStore = defineStore("expense", () => {
     return expenses.value.filter((expense) => !expense.isSynced);
   }
 
-  function getPendingExpensesCount() {
-    return getPendingExpenses().length;
+  function getNotSyncedExpensesCount() {
+    return getNotSyncedExpenses().length;
   }
 
   function splitPendingExpenses(
@@ -274,7 +270,10 @@ export const useExpenseStore = defineStore("expense", () => {
           await expenseApi.createExpense(mapExpenseToCreateDto(expense));
           expense.isCreatedLocally = false;
         } else {
-          await expenseApi.updateExpense(expense.id, mapExpenseToUpdateDto(expense));
+          await expenseApi.updateExpense(
+            expense.id,
+            mapExpenseToUpdateDto(expense),
+          );
         }
         expense.isSynced = true;
         saveExpensesLocally();
@@ -307,11 +306,11 @@ export const useExpenseStore = defineStore("expense", () => {
   }
 
   function hasOtherPendingExpenses(expenseId: string) {
-    return getPendingExpenses().some((expense) => expense.id !== expenseId);
+    return getNotSyncedExpenses().some((expense) => expense.id !== expenseId);
   }
 
   function addExpense(payload: ExpensePayload): string {
-    const hasPendingExpenses = getPendingExpenses().length > 0;
+    const hasPendingExpenses = getNotSyncedExpenses().length > 0;
     const newExpenseId = crypto.randomUUID();
     const expense: Expense = {
       id: newExpenseId,
@@ -424,7 +423,7 @@ export const useExpenseStore = defineStore("expense", () => {
       ...currentExpenses,
       ...transferredExpenses,
     ]);
-    await loadExpenses();
+    await loadExpensesFromLocalStorage();
     await syncExpenses();
     await expenseStorage.saveExpenses(anonymousUserId, []);
     localStorage.removeItem("finfast-anonymous-profile");
@@ -457,14 +456,14 @@ export const useExpenseStore = defineStore("expense", () => {
     expenses,
     isSyncing,
     syncError,
-    loadExpenses,
+    loadExpenses: loadExpensesFromLocalStorage,
     clearCurrentUserExpenses,
     refreshExpenses,
     addExpense,
     updateExpense,
     deleteExpense,
     getExpenseById,
-    getPendingExpensesCount,
+    getNotSyncedExpensesCount,
     transferAnonymousExpenses,
     saveExpensesLocally,
     updateExpenseDirectly,
