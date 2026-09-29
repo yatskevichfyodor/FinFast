@@ -10,6 +10,7 @@ import { useAuthStore } from "@/stores/authStore";
 import type { Expense, ExpensePayload } from "@/types/expense";
 import { isExpenseActive } from "@/types/expense";
 import { createSequentialByKey } from "@/utils/sequentialByKey";
+import { createCoalescedOperation } from "@/utils/coalescedOperation";
 
 export type { Expense, ExpensePayload } from "@/types/expense";
 
@@ -104,27 +105,7 @@ export const useExpenseStore = defineStore("expense", () => {
     { immediate: true },
   );
 
-  let syncPromise: Promise<void> | null = null;
-  let syncRequested = false;
-
-  async function queueExpensesSyncWithApi(): Promise<void> {
-    syncRequested = true;
-
-    if (syncPromise) {
-      return syncPromise;
-    }
-
-    syncPromise = (async () => {
-      while (syncRequested) {
-        syncRequested = false;
-        await syncExpensesWithApi();
-      }
-    })().finally(() => {
-      syncPromise = null;
-    });
-
-    return syncPromise;
-  }
+  const queueExpensesSyncWithApi = createCoalescedOperation(syncExpensesWithApi)
 
   async function refreshExpenses() {
     const userId = authStore.userId;
