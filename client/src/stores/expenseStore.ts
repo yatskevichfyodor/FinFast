@@ -1,17 +1,25 @@
 import { ref, watch } from "vue";
 import { defineStore } from "pinia";
-import {
-  expenseApi,
-  type ExpenseApiBody,
-  type SyncExpensesRequest,
-} from "@/services/api/expenseApi";
+import { expenseApi } from "@/services/api/expenseApi";
 import { expenseStorage } from "@/storage/indexedDB";
 import { useAuthStore } from "@/stores/authStore";
-import type { Expense, ExpensePayload } from "@/types/expense";
+import type {
+  Expense,
+  ExpenseApiBody,
+  ExpensePayload,
+  SyncExpensesRequest,
+} from "@/types/expense";
 import { createSequentialByKey } from "@/utils/sequentialByKey";
 import { createCoalescedOperation } from "@/utils/coalescedOperation";
 
 export type { Expense, ExpensePayload } from "@/types/expense";
+
+type SplitPendingExpensesResult = {
+  toCreate: Expense[];
+  toUpdate: Expense[];
+  toDelete: Expense[];
+  locallyDeleted: Expense[];
+};
 
 export const useExpenseStore = defineStore("expense", () => {
   const authStore = useAuthStore();
@@ -58,7 +66,7 @@ export const useExpenseStore = defineStore("expense", () => {
       return;
     }
 
-    const storedExpenses = await expenseStorage.loadExpenses(userId)
+    const storedExpenses = await expenseStorage.loadExpenses(userId);
     // return if user changed account during async operation
     if (currentLoadVersion !== loadVersion || authStore.userId !== userId) {
       return;
@@ -104,7 +112,8 @@ export const useExpenseStore = defineStore("expense", () => {
     { immediate: true },
   );
 
-  const queueExpensesSyncWithApi = createCoalescedOperation(syncExpensesWithApi)
+  const queueExpensesSyncWithApi =
+    createCoalescedOperation(syncExpensesWithApi);
 
   async function refreshExpenses() {
     const userId = authStore.userId;
@@ -257,7 +266,7 @@ export const useExpenseStore = defineStore("expense", () => {
   function splitPendingExpenses(
     pendingExpenses: Expense[],
     apiExpenses: ExpenseApiBody[],
-  ) {
+  ): SplitPendingExpensesResult {
     const apiById = new Map(
       apiExpenses.map((expense) => [expense.id, expense]),
     );
@@ -268,9 +277,7 @@ export const useExpenseStore = defineStore("expense", () => {
       }),
       toUpdate: pendingExpenses.filter((expense) => {
         const apiExpense = apiById.get(expense.id);
-        return (
-          !expense.deletedAt && !!apiExpense && !apiExpense.deletedAt
-        );
+        return !expense.deletedAt && !!apiExpense && !apiExpense.deletedAt;
       }),
       toDelete: pendingExpenses.filter((expense) => {
         const apiExpense = apiById.get(expense.id);
@@ -329,7 +336,7 @@ export const useExpenseStore = defineStore("expense", () => {
       } catch (error) {
         console.error("Failed to create expense:", error);
       }
-    })
+    });
   }
 
   async function updateExpenseDirectly(expense: Expense) {
@@ -543,7 +550,8 @@ export const useExpenseStore = defineStore("expense", () => {
     }
 
     const anonymousUserId = `anonymous:${anonymousProfile}`;
-    const anonymousExpenses = await expenseStorage.loadExpenses(anonymousUserId);
+    const anonymousExpenses =
+      await expenseStorage.loadExpenses(anonymousUserId);
     if (anonymousExpenses.length === 0) {
       return 0;
     }

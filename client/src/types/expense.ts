@@ -28,3 +28,43 @@ export interface ExpensePayload {
   description?: string
   paymentDate?: string
 }
+
+export interface ExpenseApiBody {
+  id: string;
+  amount?: number;
+  categoryId?: string;
+  customCategoryId?: string;
+  createdAt: string;
+  description?: string;
+  paymentDate?: string;
+  deletedAt?: string;
+}
+
+export interface CreateExpensePayload {
+  id: string;
+  amount: number;
+  categoryId?: string;
+  customCategoryId?: string;
+  createdAt: string;
+  description?: string;
+  paymentDate?: string;
+}
+
+export interface UpdateExpenseRequest {
+  amount?: number;
+  categoryId?: string;
+  customCategoryId?: string;
+  clearCategory?: boolean;
+  description?: string;
+  paymentDate?: string;
+}
+
+export interface BatchUpdateExpenseRequest extends UpdateExpenseRequest {
+  id: string;
+}
+
+export interface SyncExpensesRequest {
+  create?: CreateExpensePayload[];
+  update?: BatchUpdateExpenseRequest[];
+  delete?: string[];
+}

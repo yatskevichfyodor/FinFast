@@ -1,69 +1,12 @@
 import axios from "axios";
 import { expenseClient } from "@/services/api/http";
+import type { CreateExpensePayload, ExpenseApiBody, SyncExpensesRequest, UpdateExpenseRequest } from "@/types/expense";
 
-export interface ExpenseApiBody {
-  id: string;
-  amount?: number;
-  categoryId?: string;
-  customCategoryId?: string;
-  createdAt: string;
-  description?: string;
-  paymentDate?: string;
-  deletedAt?: string;
-}
-
-export interface CreateExpensePayload {
-  id: string;
-  amount: number;
-  categoryId?: string;
-  customCategoryId?: string;
-  createdAt: string;
-  description?: string;
-  paymentDate?: string;
-}
-
-export interface UpdateExpenseRequest {
-  amount?: number;
-  categoryId?: string;
-  customCategoryId?: string;
-  clearCategory?: boolean;
-  description?: string;
-  paymentDate?: string;
-}
-
-export interface BatchUpdateExpenseRequest extends UpdateExpenseRequest {
-  id: string;
-}
-
-export interface SyncExpensesRequest {
-  create?: CreateExpensePayload[];
-  update?: BatchUpdateExpenseRequest[];
-  delete?: string[];
-}
-
-function normalizeCreateExpense(
-  expense: CreateExpensePayload,
-): CreateExpensePayload {
-  return {
-    ...expense,
-    createdAt: expense.createdAt,
-    paymentDate: expense.paymentDate,
-  };
-}
-
-function normalizeUpdateExpense<T extends UpdateExpenseRequest>(expense: T): T {
-  return {
-    ...expense,
-    paymentDate: expense.paymentDate,
-  };
-}
 
 export const expenseApi = {
   async getExpense(id: string): Promise<ExpenseApiBody | undefined> {
     try {
-      const { data } = await expenseClient.get<ExpenseApiBody>(
-        `/expenses/${id}`,
-      );
+      const { data } = await expenseClient.get<ExpenseApiBody>(`/expenses/${id}`);
       return data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -99,25 +42,18 @@ export const expenseApi = {
   },
 
   async createExpense(expense: CreateExpensePayload): Promise<void> {
-    await expenseClient.post("/expenses", normalizeCreateExpense(expense));
+    await expenseClient.post("/expenses", expense);
   },
 
   async syncExpenses(request: SyncExpensesRequest): Promise<void> {
-    await expenseClient.post("/expenses/sync", {
-      ...request,
-      create: request.create?.map(normalizeCreateExpense),
-      update: request.update?.map(normalizeUpdateExpense),
-    });
+    await expenseClient.post("/expenses/sync", request);
   },
 
   async updateExpense(
     id: string,
     updates: UpdateExpenseRequest,
   ): Promise<void> {
-    await expenseClient.patch(
-      `/expenses/${id}`,
-      normalizeUpdateExpense(updates),
-    );
+    await expenseClient.patch(`/expenses/${id}`, updates);
   },
 
   async deleteExpense(id: string): Promise<void> {
