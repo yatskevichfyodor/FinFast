@@ -14,7 +14,9 @@ export interface Expense {
   deletedAt?: string
   /** whether the record has been synchronized with the API */
   isSynced: boolean
-  /** a record that has not yet been posted to the API */
+  /** a record that has not yet been posted to the API 
+   * isSynced is always true when isCreatedLocally == true
+  */
   isCreatedLocally: boolean
 }
 

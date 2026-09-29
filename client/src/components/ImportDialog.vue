@@ -137,7 +137,7 @@ async function processFile(file: File) {
     // Сохраняем объединённые данные
     await expenseStorage.saveExpenses(userId, merged)
 
-    await expenseStore.loadExpenses()
+    await expenseStore.loadExpensesFromStorage()
 
     // Показываем успешное сообщение
     if (added === 0 && updated === 0) {
