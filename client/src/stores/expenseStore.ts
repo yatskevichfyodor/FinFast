@@ -5,9 +5,12 @@ import { expenseStorage } from "@/storage/indexedDB";
 import { useAuthStore } from "@/stores/authStore";
 import type {
   Expense,
-  ExpenseApiBody,
+  ApiResponseExpenseDto,
   ExpensePayload,
-  SyncExpensesRequest,
+  SyncExpensesDto,
+  BatchUpdateExpenseDto,
+  CreateExpenseDto,
+  UpdateExpenseDto,
 } from "@/types/expense";
 import { createSequentialByKey } from "@/utils/sequentialByKey";
 import { createCoalescedOperation } from "@/utils/coalescedOperation";
@@ -21,6 +24,56 @@ type SplitPendingExpensesResult = {
   locallyDeleted: Expense[];
 };
 
+function parseApiExpense(apiExpense: ApiResponseExpenseDto): Expense {
+  return {
+    id: apiExpense.id,
+    amount: apiExpense.amount ?? 0,
+    categoryId: apiExpense.categoryId,
+    customCategoryId: apiExpense.customCategoryId,
+    createdAt: apiExpense.createdAt,
+    description: apiExpense.description,
+    paymentDate: apiExpense.paymentDate,
+    deletedAt: apiExpense.deletedAt,
+    isSynced: true,
+    isCreatedLocally: false,
+  };
+}
+
+function mapExpenseToCreateDto(expense: Expense): CreateExpenseDto {
+  return {
+    id: expense.id,
+    amount: expense.amount,
+    categoryId: expense.categoryId,
+    customCategoryId: expense.customCategoryId,
+    createdAt: expense.createdAt,
+    description: expense.description,
+    paymentDate: expense.paymentDate,
+  };
+}
+
+function mapExpenseToUpdateDto(expense: Expense): UpdateExpenseDto {
+  return {
+    amount: expense.amount,
+    categoryId: expense.categoryId,
+    customCategoryId: expense.customCategoryId,
+    clearCategory: expense.clearCategory,
+    description: expense.description,
+    paymentDate: expense.paymentDate,
+  };
+}
+
+function mapExpenseToBatchUpdateDto(expense: Expense): BatchUpdateExpenseDto {
+  return {
+    id: expense.id,
+    amount: expense.amount,
+    categoryId: expense.categoryId,
+    customCategoryId: expense.customCategoryId,
+    clearCategory: expense.clearCategory,
+    description: expense.description,
+    paymentDate: expense.paymentDate,
+  };
+}
+
 export const useExpenseStore = defineStore("expense", () => {
   const authStore = useAuthStore();
   const expensesByUser = new Map<string, Expense[]>();
@@ -31,21 +84,6 @@ export const useExpenseStore = defineStore("expense", () => {
   let loadVersion = 0;
 
   const sequentialExpenseOperation = createSequentialByKey<string>();
-
-  function mapApiExpenseToLocal(apiExpense: ExpenseApiBody): Expense {
-    return {
-      id: apiExpense.id,
-      amount: apiExpense.amount ?? 0,
-      categoryId: apiExpense.categoryId,
-      customCategoryId: apiExpense.customCategoryId,
-      createdAt: apiExpense.createdAt,
-      description: apiExpense.description,
-      paymentDate: apiExpense.paymentDate,
-      deletedAt: apiExpense.deletedAt,
-      isSynced: true,
-      isCreatedLocally: false,
-    };
-  }
 
   async function loadExpenses() {
     const userId = authStore.userId;
@@ -153,7 +191,7 @@ export const useExpenseStore = defineStore("expense", () => {
           continue;
         }
 
-        const mapped = mapApiExpenseToLocal(apiExpense);
+        const mapped = parseApiExpense(apiExpense);
         if (local) {
           Object.assign(local, mapped);
         } else {
@@ -191,31 +229,14 @@ export const useExpenseStore = defineStore("expense", () => {
       const { toCreate, toUpdate, toDelete, locallyDeleted } =
         splitPendingExpenses(pendingExpenses, apiExpenses);
 
-      const syncRequest: SyncExpensesRequest = {};
+      const syncRequest: SyncExpensesDto = {};
 
       if (toCreate.length > 0) {
-        syncRequest.create = toCreate.map((expense) => ({
-          id: expense.id,
-          amount: expense.amount,
-          categoryId: expense.categoryId,
-          customCategoryId: expense.customCategoryId,
-          clearCategory: expense.clearCategory,
-          createdAt: expense.createdAt,
-          description: expense.description,
-          paymentDate: expense.paymentDate,
-        }));
+        syncRequest.create = toCreate.map(mapExpenseToCreateDto);
       }
 
       if (toUpdate.length > 0) {
-        syncRequest.update = toUpdate.map((expense) => ({
-          id: expense.id,
-          amount: expense.amount,
-          categoryId: expense.categoryId,
-          customCategoryId: expense.customCategoryId,
-          clearCategory: expense.clearCategory,
-          description: expense.description,
-          paymentDate: expense.paymentDate,
-        }));
+        syncRequest.update = toUpdate.map(mapExpenseToBatchUpdateDto);
       }
 
       if (toDelete.length > 0) {
@@ -265,7 +286,7 @@ export const useExpenseStore = defineStore("expense", () => {
 
   function splitPendingExpenses(
     pendingExpenses: Expense[],
-    apiExpenses: ExpenseApiBody[],
+    apiExpenses: ApiResponseExpenseDto[],
   ): SplitPendingExpensesResult {
     const apiById = new Map(
       apiExpenses.map((expense) => [expense.id, expense]),
@@ -321,15 +342,7 @@ export const useExpenseStore = defineStore("expense", () => {
   async function createExpenseDirectly(expense: Expense) {
     await sequentialExpenseOperation(expense.id, async () => {
       try {
-        await expenseApi.createExpense({
-          id: expense.id,
-          amount: expense.amount,
-          categoryId: expense.categoryId,
-          customCategoryId: expense.customCategoryId,
-          createdAt: expense.createdAt,
-          description: expense.description,
-          paymentDate: expense.paymentDate,
-        });
+        await expenseApi.createExpense(mapExpenseToCreateDto(expense));
         expense.isCreatedLocally = false;
         expense.isSynced = true;
         persistExpenses();
@@ -343,25 +356,10 @@ export const useExpenseStore = defineStore("expense", () => {
     await sequentialExpenseOperation(expense.id, async () => {
       try {
         if (expense.isCreatedLocally) {
-          await expenseApi.createExpense({
-            id: expense.id,
-            amount: expense.amount,
-            categoryId: expense.categoryId,
-            customCategoryId: expense.customCategoryId,
-            createdAt: expense.createdAt,
-            description: expense.description,
-            paymentDate: expense.paymentDate,
-          });
+          await expenseApi.createExpense(mapExpenseToCreateDto(expense));
           expense.isCreatedLocally = false;
         } else {
-          await expenseApi.updateExpense(expense.id, {
-            amount: expense.amount,
-            categoryId: expense.categoryId,
-            customCategoryId: expense.customCategoryId,
-            clearCategory: expense.clearCategory,
-            description: expense.description,
-            paymentDate: expense.paymentDate,
-          });
+          await expenseApi.updateExpense(expense.id, mapExpenseToUpdateDto(expense));
         }
         expense.isSynced = true;
         persistExpenses();
@@ -446,12 +444,7 @@ export const useExpenseStore = defineStore("expense", () => {
 
     expenses.value[index] = {
       ...expenses.value[index]!,
-      amount: payload.amount,
-      categoryId: payload.categoryId,
-      customCategoryId: payload.customCategoryId,
-      clearCategory: payload.clearCategory,
-      description: payload.description,
-      paymentDate: payload.paymentDate,
+      ...payload,
       isSynced: false,
     };
 

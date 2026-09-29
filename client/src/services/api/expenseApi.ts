@@ -1,12 +1,12 @@
 import axios from "axios";
 import { expenseClient } from "@/services/api/http";
-import type { CreateExpensePayload, ExpenseApiBody, SyncExpensesRequest, UpdateExpenseRequest } from "@/types/expense";
+import type { CreateExpenseDto, ApiResponseExpenseDto, SyncExpensesDto, UpdateExpenseDto } from "@/types/expense";
 
 
 export const expenseApi = {
-  async getExpense(id: string): Promise<ExpenseApiBody | undefined> {
+  async getExpense(id: string): Promise<ApiResponseExpenseDto | undefined> {
     try {
-      const { data } = await expenseClient.get<ExpenseApiBody>(`/expenses/${id}`);
+      const { data } = await expenseClient.get<ApiResponseExpenseDto>(`/expenses/${id}`);
       return data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -17,13 +17,13 @@ export const expenseApi = {
     }
   },
 
-  async getExpensesByIds(ids: string[]): Promise<ExpenseApiBody[]> {
+  async getExpensesByIds(ids: string[]): Promise<ApiResponseExpenseDto[]> {
     if (ids.length === 0) {
       return [];
     }
 
     try {
-      const { data } = await expenseClient.get<ExpenseApiBody[]>("/expenses", {
+      const { data } = await expenseClient.get<ApiResponseExpenseDto[]>("/expenses", {
         params: { ids: ids.join(",") },
       });
       return data;
@@ -36,22 +36,22 @@ export const expenseApi = {
     }
   },
 
-  async getExpenses(): Promise<ExpenseApiBody[]> {
-    const { data } = await expenseClient.get<ExpenseApiBody[]>("/expenses");
+  async getExpenses(): Promise<ApiResponseExpenseDto[]> {
+    const { data } = await expenseClient.get<ApiResponseExpenseDto[]>("/expenses");
     return data;
   },
 
-  async createExpense(expense: CreateExpensePayload): Promise<void> {
+  async createExpense(expense: CreateExpenseDto): Promise<void> {
     await expenseClient.post("/expenses", expense);
   },
 
-  async syncExpenses(request: SyncExpensesRequest): Promise<void> {
+  async syncExpenses(request: SyncExpensesDto): Promise<void> {
     await expenseClient.post("/expenses/sync", request);
   },
 
   async updateExpense(
     id: string,
-    updates: UpdateExpenseRequest,
+    updates: UpdateExpenseDto,
   ): Promise<void> {
     await expenseClient.patch(`/expenses/${id}`, updates);
   },

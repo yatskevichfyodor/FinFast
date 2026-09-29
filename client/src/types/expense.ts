@@ -29,7 +29,7 @@ export interface ExpensePayload {
   paymentDate?: string
 }
 
-export interface ExpenseApiBody {
+export interface ApiResponseExpenseDto {
   id: string;
   amount?: number;
   categoryId?: string;
@@ -40,7 +40,7 @@ export interface ExpenseApiBody {
   deletedAt?: string;
 }
 
-export interface CreateExpensePayload {
+export interface CreateExpenseDto {
   id: string;
   amount: number;
   categoryId?: string;
@@ -50,7 +50,7 @@ export interface CreateExpensePayload {
   paymentDate?: string;
 }
 
-export interface UpdateExpenseRequest {
+export interface UpdateExpenseDto {
   amount?: number;
   categoryId?: string;
   customCategoryId?: string;
@@ -59,12 +59,12 @@ export interface UpdateExpenseRequest {
   paymentDate?: string;
 }
 
-export interface BatchUpdateExpenseRequest extends UpdateExpenseRequest {
+export interface BatchUpdateExpenseDto extends UpdateExpenseDto {
   id: string;
 }
 
-export interface SyncExpensesRequest {
-  create?: CreateExpensePayload[];
-  update?: BatchUpdateExpenseRequest[];
+export interface SyncExpensesDto {
+  create?: CreateExpenseDto[];
+  update?: BatchUpdateExpenseDto[];
   delete?: string[];
 }
