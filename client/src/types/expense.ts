@@ -10,7 +10,7 @@ export interface Expense {
   description?: string
   /** Payment date in ISO 8601 date format (YYYY-MM-DD), without time or timezone. */
   paymentDate?: string
-  /** When set, the expense is deleted locally. */
+  /** When set, the expense is soft deleted on the server or deleted locally */
   deletedAt?: string
   /** whether the record has been synchronized with the API */
   isSynced: boolean
@@ -27,12 +27,4 @@ export interface ExpensePayload {
   clearCategory?: boolean
   description?: string
   paymentDate?: string
-}
-
-export function isExpenseDeleted(expense: Expense): boolean {
-  return !!expense.deletedAt
-}
-
-export function isExpenseActive(expense: Expense): boolean {
-  return !expense.deletedAt
 }

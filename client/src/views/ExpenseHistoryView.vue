@@ -6,7 +6,6 @@ import {
   useExpenseStore,
   type Expense
 } from '@/stores/expenseStore'
-import { isExpenseActive } from '@/types/expense'
 import { parseDate } from '@/utils/dateHelpers'
 import { format, parse } from 'date-fns'
 import { useCategoryStore } from '@/stores/categoryStore'
@@ -23,7 +22,7 @@ const deleteDialogOpen = ref(false)
 const expenseToDelete = ref<Expense | null>(null)
 
 const activeExpenses = computed<Expense[]>(() =>
-  expenseStore.expenses.filter(isExpenseActive)
+  expenseStore.expenses.filter(expense => !expense.deletedAt)
 )
 
 function formatDisplayDate(date: string): string {

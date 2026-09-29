@@ -8,7 +8,6 @@ import {
 import { expenseStorage } from "@/storage/indexedDB";
 import { useAuthStore } from "@/stores/authStore";
 import type { Expense, ExpensePayload } from "@/types/expense";
-import { isExpenseActive } from "@/types/expense";
 import { createSequentialByKey } from "@/utils/sequentialByKey";
 import { createCoalescedOperation } from "@/utils/coalescedOperation";
 
@@ -265,12 +264,12 @@ export const useExpenseStore = defineStore("expense", () => {
 
     return {
       toCreate: pendingExpenses.filter((expense) => {
-        return isExpenseActive(expense) && !apiById.has(expense.id);
+        return !expense.deletedAt && !apiById.has(expense.id);
       }),
       toUpdate: pendingExpenses.filter((expense) => {
         const apiExpense = apiById.get(expense.id);
         return (
-          isExpenseActive(expense) && !!apiExpense && !apiExpense.deletedAt
+          !expense.deletedAt && !!apiExpense && !apiExpense.deletedAt
         );
       }),
       toDelete: pendingExpenses.filter((expense) => {
