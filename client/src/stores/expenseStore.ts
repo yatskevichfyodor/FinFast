@@ -20,7 +20,6 @@ import {
 } from "@/mappers/expenseMappers";
 import { createStoreStateGuard } from "@/utils/storeStateGuard";
 
-
 type SplitPendingExpensesResult = {
   toCreate: Expense[];
   toUpdate: Expense[];
@@ -103,7 +102,7 @@ export const useExpenseStore = defineStore("expense", () => {
 
     const notSyncedExpensesIds = notSyncedExpenses.map((expense) => expense.id);
 
-    await sequentialExpenseOperation(notSyncedExpensesIds, async () => {
+    await sequentialExpenseOperation.byKeys(notSyncedExpensesIds, async () => {
       syncError.value = null;
 
       try {
@@ -157,7 +156,7 @@ export const useExpenseStore = defineStore("expense", () => {
 
   async function refreshExpenses() {
     const userId = authStore.userId;
-    if (!userId || authStore.isAnonymous || !authStore.accessToken) {
+    if (!userId || authStore.isAnonymous) {
       return;
     }
 
@@ -171,30 +170,32 @@ export const useExpenseStore = defineStore("expense", () => {
   }
 
   async function loadExpensesFromApi() {
-    const apiExpenses = await expenseApi.getExpenses();
-    const apiExpensesIds = new Set(apiExpenses.map((expense) => expense.id));
+    sequentialExpenseOperation.all(async () => {
+      const apiExpenses = await expenseApi.getExpenses();
+      const apiExpensesIds = new Set(apiExpenses.map((expense) => expense.id));
 
-    expenses.value = expenses.value.filter(
-      (expense) => !expense.isSynced || apiExpensesIds.has(expense.id),
-    );
+      expenses.value = expenses.value.filter(
+        (expense) => !expense.isSynced || apiExpensesIds.has(expense.id),
+      );
 
-    const localExpenseById = new Map(
-      expenses.value.map((expense) => [expense.id, expense]),
-    );
+      const localExpenseById = new Map(
+        expenses.value.map((expense) => [expense.id, expense]),
+      );
 
-    apiExpenses.forEach((apiExpense) => {
-      const local = localExpenseById.get(apiExpense.id);
-      if (local && !local.isSynced) {
-        const mapped = parseApiExpense(apiExpense);
-        if (local) {
-          Object.assign(local, mapped); // refresh expense state in case it was modified from other device
-        } else {
-          expenses.value.push(mapped);
+      apiExpenses.forEach((apiExpense) => {
+        const local = localExpenseById.get(apiExpense.id);
+        if (local && !local.isSynced) {
+          const mapped = parseApiExpense(apiExpense);
+          if (local) {
+            Object.assign(local, mapped); // refresh expense state in case it was modified from other device
+          } else {
+            expenses.value.push(mapped);
+          }
         }
-      }
-    });
+      });
 
-    saveExpensesToStorage();
+      saveExpensesToStorage();
+    });
   }
 
   function getNotSyncedExpenses() {
@@ -286,7 +287,7 @@ export const useExpenseStore = defineStore("expense", () => {
   }
 
   async function createExpenseOnApi(expense: Expense) {
-    await sequentialExpenseOperation([expense.id], async () => {
+    await sequentialExpenseOperation.byKey(expense.id, async () => {
       await expenseApi.createExpense(mapExpenseToCreateDto(expense));
       expense.isCreatedLocally = false;
       expense.isSynced = true;
@@ -315,7 +316,7 @@ export const useExpenseStore = defineStore("expense", () => {
       (expense) => expense.id === expenseId,
     );
     if (index === -1) {
-      throw Error("Expense to update was not found locally")
+      throw Error("Expense to update was not found locally");
     }
 
     expenses.value[index] = {
@@ -329,7 +330,7 @@ export const useExpenseStore = defineStore("expense", () => {
   }
 
   async function updateExpenseOnApi(expense: Expense) {
-    await sequentialExpenseOperation([expense.id], async () => {
+    await sequentialExpenseOperation.byKey(expense.id, async () => {
       if (expense.isCreatedLocally) {
         await expenseApi.createExpense(mapExpenseToCreateDto(expense));
         expense.isCreatedLocally = false;
@@ -346,8 +347,7 @@ export const useExpenseStore = defineStore("expense", () => {
 
   function deleteExpense(expenseId: string) {
     const expense = deleteExpenseLocally(expenseId);
-    if (expense === undefined)
-      return
+    if (expense === undefined) return;
 
     if (hasNotSyncedExpensesExcept(expenseId)) {
       void syncExpenses().catch((error) => {
@@ -385,7 +385,7 @@ export const useExpenseStore = defineStore("expense", () => {
   }
 
   async function deleteExpenseOnApi(expense: Expense) {
-    await sequentialExpenseOperation([expense.id], async () => {
+    await sequentialExpenseOperation.byKey(expense.id, async () => {
       await expenseApi.deleteExpense(expense.id);
       expense.deletedAt = expense.deletedAt ?? new Date().toISOString();
       expense.isSynced = true;

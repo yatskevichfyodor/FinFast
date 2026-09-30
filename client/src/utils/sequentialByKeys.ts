@@ -1,93 +1,109 @@
 /**
- * Creates an asynchronous operation that runs sequentially for each key.
+ * Creates a utility for sequentializing asynchronous operations by keys.
  *
- * An operation can occupy one or multiple keys. If another operation is
- * already running for any of the same keys, the new operation waits until
- * all conflicting operations finish.
+ * Semantics:
+ * - `byKey(key, operation)` waits for a previous operation using the same key.
+ * - `byKeys(keys, operation)` waits for previous operations using any of the
+ *   specified keys. The operation occupies all specified keys while running.
+ * - `all(operation)` waits for all currently running operations and blocks
+ *   all keyed operations while it is running.
  *
- * Operations for different keys can run concurrently.
+ * Operations using different keys can run concurrently.
  *
- * Each call to createSequentialByKeys() creates an independent operation
- * with its own set of active keys.
+ * Example:
  *
- * @example
  * const sequentialExpenseOperation = createSequentialByKeys<string>();
  *
- * // Operations for the same expense are executed sequentially.
- * void sequentialExpenseOperation(["expense-1"], async () => {
- *   await updateExpense("expense-1");
+ * await sequentialExpenseOperation.byKey(expenseId, async () => {
+ *   await updateExpense(expenseId);
  * });
  *
- * void sequentialExpenseOperation(["expense-1"], async () => {
- *   await deleteExpense("expense-1");
- * });
- *
- * // Result:
- * // updateExpense("expense-1") → deleteExpense("expense-1")
- *
- * @example
- * // An operation can occupy multiple keys.
- * void sequentialExpenseOperation(
- *   ["expense-1", "expense-2", "expense-3"],
+ * await sequentialExpenseOperation.byKeys(
+ *   [expenseId1, expenseId2],
  *   async () => {
- *     await syncExpenses(["expense-1", "expense-2", "expense-3"]);
+ *     await syncExpenses([expenseId1, expenseId2]);
  *   },
  * );
  *
- * // Any operation for one of these expenses waits for the sync.
- * void sequentialExpenseOperation(["expense-2"], async () => {
- *   await updateExpense("expense-2");
+ * await sequentialExpenseOperation.all(async () => {
+ *   const expenses = await loadAllExpenses();
+ *   await reconcileExpenses(expenses);
  * });
- *
- * // Result:
- * // syncExpenses(...) → updateExpense("expense-2")
- *
- * @example
- * // Operations for different keys can run concurrently.
- * void sequentialExpenseOperation(["expense-1"], async () => {
- *   await updateExpense("expense-1");
- * });
- *
- * void sequentialExpenseOperation(["expense-2"], async () => {
- *   await updateExpense("expense-2");
- * });
- *
- * // Both operations can run at the same time.
- *
- * @param keys Keys that the operation occupies while it is running.
- * @param operation Asynchronous operation to execute.
  */
 export function createSequentialByKeys<TKey>() {
-  const promises = new Map<TKey, Promise<void>>();
+  const ALL_KEY = Symbol("ALL");
+  const promises = new Map<TKey | typeof ALL_KEY, Promise<void>>();
 
-  return async function sequentialByKeys(
-    keys: TKey[],
+  async function run(
+    keys: (TKey | typeof ALL_KEY)[],
     operation: () => Promise<void>,
   ): Promise<void> {
     const uniqueKeys = [...new Set(keys)];
 
-    const previousOperations = uniqueKeys
-      .map((key) => promises.get(key))
-      .filter((promise): promise is Promise<void> => promise !== undefined);
+    const previousOperations = new Set<Promise<void>>();
 
-    if (previousOperations.length > 0) {
+    for (const key of uniqueKeys) {
+      const previousOperation = promises.get(key);
+
+      if (previousOperation) {
+        previousOperations.add(previousOperation);
+      }
+    }
+
+    if (uniqueKeys.includes(ALL_KEY)) {
+      // `all()` must wait for every currently running operation.
+      for (const promise of promises.values()) {
+        previousOperations.add(promise);
+      }
+    } else {
+      // Keyed operations must wait for a currently running `all()`.
+      const allOperation = promises.get(ALL_KEY);
+
+      if (allOperation) {
+        previousOperations.add(allOperation);
+      }
+    }
+
+    if (previousOperations.size > 0) {
       await Promise.all(previousOperations);
     }
 
     const currentOperation = operation();
 
-    uniqueKeys.forEach((key) => {
+    for (const key of uniqueKeys) {
       promises.set(key, currentOperation);
-    });
+    }
 
     try {
       await currentOperation;
     } finally {
-      uniqueKeys.forEach((key) => {
+      for (const key of uniqueKeys) {
         if (promises.get(key) === currentOperation) {
           promises.delete(key);
         }
-      });
+      }
     }
+  }
+
+  return {
+    byKey(
+      key: TKey,
+      operation: () => Promise<void>,
+    ): Promise<void> {
+      return run([key], operation);
+    },
+
+    byKeys(
+      keys: TKey[],
+      operation: () => Promise<void>,
+    ): Promise<void> {
+      return run(keys, operation);
+    },
+
+    all(
+      operation: () => Promise<void>,
+    ): Promise<void> {
+      return run([ALL_KEY], operation);
+    },
   };
 }
