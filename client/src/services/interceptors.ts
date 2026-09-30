@@ -41,6 +41,10 @@ function setupRequestInterceptor(client: AxiosInstance) {
       return config;
     }
 
+    if (authStore.isOffline || authStore.isAnonymous) {
+      return config;
+    }
+
     let accessToken = authStore.accessToken;
 
     if (!accessToken) {
@@ -61,7 +65,6 @@ function setupRequestInterceptor(client: AxiosInstance) {
 function setupResponseInterceptor(client: AxiosInstance) {
   client.interceptors.response.use(
     (response) => response,
-
     async (error) => {
       const requestUrl = error.config?.url ?? "";
       const isRetry = error.config?._finfastRetry === true;
