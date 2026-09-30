@@ -160,7 +160,7 @@ watch(
       class="keypad-card"
     >
       <v-card-text class="keypad-card-text">
-        <v-row dense>
+        <v-row density="comfortable">
           <v-col
             v-for="digit in [
               '1', '2', '3',

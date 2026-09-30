@@ -57,13 +57,23 @@ export const useExpenseStore = defineStore("expense", () => {
   }
 
   function saveExpensesToStorage() {
-    const userId = authStore.userId;
-    if (!userId || loadedUserId !== userId) {
-      console.error("Cannot save expenses without a loaded user");
-      throw new Error("Cannot save expenses without a loaded user");
+    const currentUserId = authStore.userId
+    validateCurrentUser(currentUserId)
+    return expenseStorage.saveExpenses(currentUserId!, expenses.value);
+  }
+
+  function validateCurrentUser(currentUserId: string | null) {
+    if (!currentUserId) {
+      throw new Error("No current user was found")
     }
 
-    return expenseStorage.saveExpenses(userId, expenses.value);
+    if (!loadedUserId) {
+      throw new Error("No user loaded in expense store")
+    }
+
+    if (loadedUserId !== currentUserId) {
+      throw new Error("Invalid user loaded")
+    }
   }
 
   async function clearCurrentUserExpenses() {

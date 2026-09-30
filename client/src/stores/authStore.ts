@@ -5,6 +5,7 @@ import {
   type TokenResponse,
   type UserResponse,
 } from "@/services/api/authApi";
+import { singleFlight } from "@/utils/singleFlight";
 
 const ACCESS_TOKEN_KEY = "finfast-access-token";
 const REFRESH_TOKEN_KEY = "finfast-refresh-token";
@@ -12,7 +13,8 @@ const USER_ID_KEY = "finfast-user-id";
 const USERNAME_KEY = "finfast-username";
 const OFFLINE_MODE_KEY = "finfast-offline-mode";
 const ANONYMOUS_PROFILE_KEY = "finfast-anonymous-profile";
-const ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY = "finfast-access-token-expiration-timestamp"
+const ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY =
+  "finfast-access-token-expiration-timestamp";
 
 interface TokenClaims {
   sub: string;
@@ -68,6 +70,7 @@ export const useAuthStore = defineStore("auth", () => {
   const isAnonymous = ref(false);
   const googleLinked = ref(false);
   const hasPassword = ref(false);
+  let storeInitialized = false;
 
   function setUserFromClaims(claims: TokenClaims) {
     userId.value = claims?.userId || claims?.sub || userId.value;
@@ -90,16 +93,21 @@ export const useAuthStore = defineStore("auth", () => {
   function saveAccessTokenExpirationTimestamp(iat: number, exp: number) {
     const lifetimeMs = (exp - iat) * 1000;
     const expirationTimestamp = Date.now() + lifetimeMs;
-    localStorage.setItem(ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY, expirationTimestamp.toString());
+    localStorage.setItem(
+      ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY,
+      expirationTimestamp.toString(),
+    );
   }
 
   /**
    * @returns undefined if no data
    */
   function isAccessTokenExpired(): boolean | undefined {
-    const expirationTimestamp = localStorage.getItem(ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY)
+    const expirationTimestamp = localStorage.getItem(
+      ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY,
+    );
     if (!expirationTimestamp) return undefined;
-    return Date.now() >= Number(expirationTimestamp)
+    return Date.now() >= Number(expirationTimestamp);
   }
 
   function restoreUserFromStorage() {
@@ -140,6 +148,7 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   restoreUserFromStorage();
+  storeInitialized = true;
 
   const isAuthenticated = computed(
     () =>
@@ -159,7 +168,7 @@ export const useAuthStore = defineStore("auth", () => {
       const claims = readTokenClaims(tokens.accessToken);
       if (claims) {
         setUserFromClaims(claims);
-        saveAccessTokenExpirationTimestamp(claims.iat, claims.exp)
+        saveAccessTokenExpirationTimestamp(claims.iat, claims.exp);
       }
     }
   }
@@ -228,35 +237,21 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  let refreshPromise: Promise<void> | null = null;
-
-  async function refresh() {
+  const refresh = singleFlight(async () => {
     if (!refreshToken.value) {
       throw new Error("Refresh token is missing");
     }
 
-    if (refreshPromise) {
-      return refreshPromise;
+    const currentRefreshToken = refreshToken.value;
+
+    if (!currentRefreshToken) {
+      throw new Error("Refresh token is missing");
     }
 
-    refreshPromise = (async () => {
-      const currentRefreshToken = refreshToken.value;
-
-      if (!currentRefreshToken) {
-        throw new Error("Refresh token is missing");
-      }
-
-      const tokens = await authApi.refresh(currentRefreshToken);
-      saveTokens(tokens);
-      await loadCurrentUser();
-    })();
-
-    try {
-      await refreshPromise;
-    } finally {
-      refreshPromise = null;
-    }
-  }
+    const tokens = await authApi.refresh(currentRefreshToken);
+    saveTokens(tokens);
+    await loadCurrentUser();
+  });
 
   async function logout() {
     const currentRefreshToken = refreshToken.value;
@@ -307,5 +302,6 @@ export const useAuthStore = defineStore("auth", () => {
     loadCurrentUser,
     refresh,
     logout,
+    storeInitialized,
   };
 });
