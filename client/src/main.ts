@@ -3,7 +3,6 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import vuetify from './plugins/vuetify'
-import { createPinia } from 'pinia'
 import '@/services/interceptors.ts'
 import { initializePwaUpdate } from '@/services/pwaUpdate'
 import { buildPopularCategoryOrder } from '@/services/categoryPopularity'
@@ -13,17 +12,18 @@ import './style.css'
 import './styles/common.css'
 import { useDataChangesStore } from './stores/dataChangesStore.ts'
 import { useCategoryStore } from './stores/categoryStore.ts'
+import { pinia } from './stores/index.ts'
 
 const app = createApp(App)
 
 app.use(router)
 app.use(vuetify)
-app.use(createPinia())
+app.use(pinia)
 
-const dataChangesStore = useDataChangesStore()
+const dataChangesStore = useDataChangesStore(pinia)
 await dataChangesStore.init()
-const expenseStore = useExpenseStore()
-const categoryStore = useCategoryStore()
+const expenseStore = useExpenseStore(pinia)
+const categoryStore = useCategoryStore(pinia)
 await categoryStore.init();
 buildPopularCategoryOrder(expenseStore.expenses)
 

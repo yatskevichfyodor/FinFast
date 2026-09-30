@@ -1,35 +1,14 @@
 import { authClient, dataChangesClient, expenseClient } from '@/services/api/http'
 import router from '@/router'
-import { authApi, type TokenResponse } from '@/services/api/authApi'
 import tokenStorage from '@/storage/tokenStorage'
 import type { AxiosInstance } from 'axios'
+import { useAuthStore } from '@/stores/authStore'
+import { pinia } from '@/stores'
+
 
 const clients = [authClient, expenseClient, dataChangesClient]
 
-
-let refreshPromise: Promise<TokenResponse> | null = null
-
-async function refreshTokens(): Promise<TokenResponse> {
-  const refreshToken = tokenStorage.getRefreshToken()
-
-  if (!refreshToken) {
-    throw new Error('Refresh token is missing')
-  }
-
-  if (!refreshPromise) {
-    refreshPromise = authApi.refresh(refreshToken)
-      .then(tokens => {
-        tokenStorage.save(tokens.accessToken, tokens.refreshToken)
-
-        return tokens
-      })
-      .finally(() => {
-        refreshPromise = null
-      })
-  }
-
-  return refreshPromise
-}
+const authStore = useAuthStore(pinia)
 
 const PUBLIC_AUTH_REQUESTS = new Set([
   '/auth/login',
@@ -54,16 +33,28 @@ function redirectToLogin() {
 }
 
 function setupRequestInterceptor(client: AxiosInstance) {
-  client.interceptors.request.use(config => {
+  client.interceptors.request.use(async config => {
     if (isPublicAuthRequest(config.url ?? '')) {
       return config
     }
 
-    const accessToken = tokenStorage.getAccessToken()
+    let accessToken = authStore.accessToken
 
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`
+    if (!accessToken) {
+      return config
     }
+
+    if (authStore.isAccessTokenExpired()) {
+      try {
+        await authStore.refresh()
+        accessToken = authStore.accessToken
+      } catch (error) {
+        redirectToLogin()
+        throw error
+      }
+    }
+    
+    config.headers.Authorization = `Bearer ${accessToken}`
 
     return config
   })
@@ -93,12 +84,12 @@ function setupResponseInterceptor(client: AxiosInstance) {
       }
 
       try {
-        const tokens = await refreshTokens()
+        await authStore.refresh()
 
         error.config._finfastRetry = true
-        error.config.headers.Authorization = `Bearer ${tokens.accessToken}`
+        error.config.headers.Authorization = `Bearer ${authStore.accessToken}`
 
-        return client.request(error.config)
+        return client.request(error.config) // request again with new access_token
       } catch (refreshError) {
         redirectToLogin()
         return Promise.reject(refreshError)
