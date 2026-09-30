@@ -1,105 +1,106 @@
-import { authClient, dataChangesClient, expenseClient } from '@/services/api/http'
-import router from '@/router'
-import tokenStorage from '@/storage/tokenStorage'
-import type { AxiosInstance } from 'axios'
-import { useAuthStore } from '@/stores/authStore'
-import { pinia } from '@/stores'
+import {
+  authClient,
+  dataChangesClient,
+  expenseClient,
+} from "@/services/api/http";
+import router from "@/router";
+import tokenStorage from "@/storage/tokenStorage";
+import type { AxiosInstance } from "axios";
+import { useAuthStore } from "@/stores/authStore";
+import { pinia } from "@/stores";
 
+const clients = [authClient, expenseClient, dataChangesClient];
 
-const clients = [authClient, expenseClient, dataChangesClient]
-
-const authStore = useAuthStore(pinia)
+const authStore = useAuthStore(pinia);
 
 const PUBLIC_AUTH_REQUESTS = new Set([
-  '/auth/login',
-  '/auth/register',
-  '/auth/refresh',
-  '/auth/google'
-])
+  "/auth/login",
+  "/auth/register",
+  "/auth/refresh",
+  "/auth/google",
+]);
 
 function isPublicAuthRequest(url: string): boolean {
-  return PUBLIC_AUTH_REQUESTS.has(url)
+  return PUBLIC_AUTH_REQUESTS.has(url);
 }
 
 function redirectToLogin() {
-  tokenStorage.clear()
+  tokenStorage.clear();
 
   void router.replace({
-    name: 'login',
+    name: "login",
     query: {
-      redirect: router.currentRoute.value.fullPath
-    }
-  })
+      redirect: router.currentRoute.value.fullPath,
+    },
+  });
 }
 
 function setupRequestInterceptor(client: AxiosInstance) {
-  client.interceptors.request.use(async config => {
-    if (isPublicAuthRequest(config.url ?? '')) {
-      return config
+  client.interceptors.request.use(async (config) => {
+    if (isPublicAuthRequest(config.url ?? "")) {
+      return config;
     }
 
-    let accessToken = authStore.accessToken
+    let accessToken = authStore.accessToken;
 
     if (!accessToken) {
-      return config
+      return config;
     }
 
     if (authStore.isAccessTokenExpired()) {
-      try {
-        await authStore.refresh()
-        accessToken = authStore.accessToken
-      } catch (error) {
-        redirectToLogin()
-        throw error
-      }
+      await refreshTokens();
+      accessToken = authStore.accessToken;
     }
-    
-    config.headers.Authorization = `Bearer ${accessToken}`
 
-    return config
-  })
+    config.headers.Authorization = `Bearer ${accessToken}`;
+
+    return config;
+  });
 }
 
 function setupResponseInterceptor(client: AxiosInstance) {
   client.interceptors.response.use(
-    response => response,
+    (response) => response,
 
-    async error => {
-      const requestUrl = error.config?.url ?? ''
-      const isRetry = error.config?._finfastRetry === true
+    async (error) => {
+      const requestUrl = error.config?.url ?? "";
+      const isRetry = error.config?._finfastRetry === true;
 
       if (
         error.response?.status !== 401 ||
         isPublicAuthRequest(requestUrl) ||
         isRetry
       ) {
-        return Promise.reject(error)
+        return Promise.reject(error);
       }
 
-      const refreshToken = tokenStorage.getRefreshToken()
+      const refreshToken = tokenStorage.getRefreshToken();
 
       if (!refreshToken) {
-        redirectToLogin()
-        return Promise.reject(error)
+        redirectToLogin();
+        return Promise.reject(error);
       }
 
-      try {
-        await authStore.refresh()
+      await refreshTokens();
+      error.config._finfastRetry = true;
+      error.config.headers.Authorization = `Bearer ${authStore.accessToken}`;
 
-        error.config._finfastRetry = true
-        error.config.headers.Authorization = `Bearer ${authStore.accessToken}`
-
-        return client.request(error.config) // request again with new access_token
-      } catch (refreshError) {
-        redirectToLogin()
-        return Promise.reject(refreshError)
-      }
-    }
-  )
+      return client.request(error.config); // request again with new access_token
+    },
+  );
 }
 
-clients.forEach(client => {
-  setupRequestInterceptor(client)
-  setupResponseInterceptor(client)
-})
-console.log('API INTERCEPTORS INITIALIZED')
+async function refreshTokens() {
+  try {
+    await authStore.refresh();
+  } catch (error) {
+    console.log("Refresh tokens request error: ", error);
+    throw error;
+  }
+}
+
+clients.forEach((client) => {
+  setupRequestInterceptor(client);
+  setupResponseInterceptor(client);
+});
+console.log("API INTERCEPTORS INITIALIZED");
