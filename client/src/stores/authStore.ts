@@ -12,9 +12,9 @@ const REFRESH_TOKEN_KEY = "finfast-refresh-token";
 const USER_ID_KEY = "finfast-user-id";
 const USERNAME_KEY = "finfast-username";
 const OFFLINE_MODE_KEY = "finfast-offline-mode";
-const ANONYMOUS_PROFILE_KEY = "finfast-anonymous-profile";
-const ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY =
-  "finfast-access-token-expiration-timestamp";
+const ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY = "finfast-access-token-expiration-timestamp";
+export const ANONYMOUS_MODE_ENABLED_KEY = "finfast-anonymous-mode-enabled"
+export const ANONYMOUS_USER_ID = "anonymous";
 
 interface TokenClaims {
   sub: string;
@@ -39,14 +39,6 @@ function readTokenClaims(token: string): TokenClaims | null {
   return JSON.parse(decodedPayload) as TokenClaims;
 }
 
-function createAnonymousProfileId(): string {
-  if (typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-
-  return "anonymous-" + Date.now();
-}
-
 export const useAuthStore = defineStore("auth", () => {
   const accessToken = ref<string | null>(
     localStorage.getItem(ACCESS_TOKEN_KEY),
@@ -54,7 +46,7 @@ export const useAuthStore = defineStore("auth", () => {
   const refreshToken = ref<string | null>(
     localStorage.getItem(REFRESH_TOKEN_KEY),
   );
-  // true if user continue using his account with an old access_token, or if user using app without registration (anonymous mode)
+  // true if user continue using his account with an old access_token, or user using app without registration (anonymous mode)
   const isOffline = ref(localStorage.getItem(OFFLINE_MODE_KEY) === "true");
   const userId = ref<string | null>(
     accessToken.value || isOffline.value
@@ -118,12 +110,9 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   function continueWithoutAccount() {
-    const anonymousProfile =
-      localStorage.getItem(ANONYMOUS_PROFILE_KEY) ?? createAnonymousProfileId();
-    localStorage.setItem(ANONYMOUS_PROFILE_KEY, anonymousProfile);
     accessToken.value = null;
     refreshToken.value = null;
-    userId.value = `anonymous:${anonymousProfile}`;
+    userId.value = ANONYMOUS_USER_ID;
     username.value = "Без аккаунта";
     isAnonymous.value = true;
     googleLinked.value = false;
@@ -134,15 +123,11 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.setItem(USER_ID_KEY, userId.value);
     localStorage.setItem(USERNAME_KEY, username.value);
     localStorage.setItem(OFFLINE_MODE_KEY, "true");
+    localStorage.setItem(ANONYMOUS_MODE_ENABLED_KEY, "true");
   }
 
-  if (
-    !accessToken.value &&
-    isOffline.value &&
-    localStorage.getItem(ANONYMOUS_PROFILE_KEY)
-  ) {
-    const anonymousProfile = localStorage.getItem(ANONYMOUS_PROFILE_KEY)!;
-    userId.value = `anonymous:${anonymousProfile}`;
+  if (localStorage.getItem(ANONYMOUS_MODE_ENABLED_KEY)) {
+    userId.value = ANONYMOUS_USER_ID;
     username.value = "Без аккаунта";
     isAnonymous.value = true;
   }
@@ -163,6 +148,7 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
     localStorage.removeItem(OFFLINE_MODE_KEY);
+    localStorage.removeItem(ANONYMOUS_MODE_ENABLED_KEY);
 
     if (tokens.accessToken) {
       const claims = readTokenClaims(tokens.accessToken);
@@ -269,7 +255,7 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.removeItem(USER_ID_KEY);
     localStorage.removeItem(USERNAME_KEY);
     localStorage.removeItem(OFFLINE_MODE_KEY);
-    localStorage.removeItem(ANONYMOUS_PROFILE_KEY);
+    localStorage.removeItem(ANONYMOUS_MODE_ENABLED_KEY);
 
     if (currentRefreshToken) {
       try {

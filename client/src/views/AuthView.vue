@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { isAxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
+import { ANONYMOUS_MODE_ENABLED_KEY, ANONYMOUS_USER_ID, useAuthStore } from '@/stores/authStore'
 import { useExpenseStore } from '@/stores/expenseStore'
 import { expenseStorage } from '@/storage/indexedDB'
 import { authApi } from '@/services/api/authApi'
@@ -151,9 +151,8 @@ function handleGoogleError(message: string) {
 }
 
 async function continueAfterLogin() {
-  const profileId = localStorage.getItem('finfast-anonymous-profile')
-  if (profileId) {
-    anonymousExpensesCount.value = (await expenseStorage.loadExpenses(`anonymous:${profileId}`)).length
+  if (localStorage.getItem(ANONYMOUS_MODE_ENABLED_KEY)) {
+    anonymousExpensesCount.value = (await expenseStorage.loadExpenses(ANONYMOUS_USER_ID)).length
   }
 
   if (anonymousExpensesCount.value > 0) {

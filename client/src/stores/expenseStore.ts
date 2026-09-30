@@ -2,7 +2,7 @@ import { onScopeDispose, ref, watch } from "vue";
 import { defineStore } from "pinia";
 import { expenseApi } from "@/services/api/expenseApi";
 import { expenseStorage } from "@/storage/indexedDB";
-import { useAuthStore } from "@/stores/authStore";
+import { ANONYMOUS_MODE_ENABLED_KEY, ANONYMOUS_USER_ID, useAuthStore } from "@/stores/authStore";
 import type {
   Expense,
   ApiResponseExpenseDto,
@@ -30,7 +30,6 @@ type SplitPendingExpensesResult = {
 export const useExpenseStore = defineStore("expense", () => {
   const authStore = useAuthStore();
   const expenses = ref<Expense[]>([]);
-  const syncError = ref<string | null>(null);
   let loadedUserId: string | null = null;
 
   const sequentialExpenseOperation = createSequentialByKeys<string>();
@@ -57,22 +56,22 @@ export const useExpenseStore = defineStore("expense", () => {
   }
 
   function saveExpensesToStorage() {
-    const currentUserId = authStore.userId
-    validateCurrentUser(currentUserId)
+    const currentUserId = authStore.userId;
+    validateCurrentUser(currentUserId);
     return expenseStorage.saveExpenses(currentUserId!, expenses.value);
   }
 
   function validateCurrentUser(currentUserId: string | null) {
     if (!currentUserId) {
-      throw new Error("No current user was found")
+      throw new Error("No current user was found");
     }
 
     if (!loadedUserId) {
-      throw new Error("No user loaded in expense store")
+      throw new Error("No user loaded in expense store");
     }
 
     if (loadedUserId !== currentUserId) {
-      throw new Error("Invalid user loaded")
+      throw new Error("Invalid user loaded");
     }
   }
 
@@ -113,8 +112,6 @@ export const useExpenseStore = defineStore("expense", () => {
     const notSyncedExpensesIds = notSyncedExpenses.map((expense) => expense.id);
 
     await sequentialExpenseOperation.byKeys(notSyncedExpensesIds, async () => {
-      syncError.value = null;
-
       try {
         const apiExpenses =
           await expenseApi.getExpensesByIds(notSyncedExpensesIds);
@@ -158,7 +155,7 @@ export const useExpenseStore = defineStore("expense", () => {
 
         saveExpensesToStorage();
       } catch (error) {
-        syncError.value = "Не удалось синхронизировать расходы";
+        console.error("Couldn't sync expenses");
         throw error;
       }
     });
@@ -166,7 +163,7 @@ export const useExpenseStore = defineStore("expense", () => {
 
   async function refreshExpenses() {
     const userId = authStore.userId;
-    if (!userId || authStore.isAnonymous) {
+    if (!userId) {
       return;
     }
 
@@ -412,14 +409,7 @@ export const useExpenseStore = defineStore("expense", () => {
       return 0;
     }
 
-    const anonymousProfile = localStorage.getItem("finfast-anonymous-profile");
-    if (!anonymousProfile) {
-      return 0;
-    }
-
-    const anonymousUserId = `anonymous:${anonymousProfile}`;
-    const anonymousExpenses =
-      await expenseStorage.loadExpenses(anonymousUserId);
+    const anonymousExpenses = await expenseStorage.loadExpenses(ANONYMOUS_USER_ID);
     if (anonymousExpenses.length === 0) {
       return 0;
     }
@@ -435,8 +425,8 @@ export const useExpenseStore = defineStore("expense", () => {
     ]);
     await loadExpensesFromStorage();
     await syncExpenses();
-    await expenseStorage.saveExpenses(anonymousUserId, []);
-    localStorage.removeItem("finfast-anonymous-profile");
+    await expenseStorage.saveExpenses(ANONYMOUS_USER_ID, []);
+    localStorage.removeItem(ANONYMOUS_MODE_ENABLED_KEY);
     return transferredExpenses.length;
   }
 
@@ -445,7 +435,8 @@ export const useExpenseStore = defineStore("expense", () => {
       if (
         navigator.onLine &&
         authStore.isAuthenticated &&
-        !authStore.isAnonymous
+        !authStore.isAnonymous &&
+        !authStore.isOffline
       ) {
         void refreshExpenses().catch((error) =>
           console.error("Failed to sync expenses:", error),
@@ -464,10 +455,9 @@ export const useExpenseStore = defineStore("expense", () => {
 
   return {
     expenses,
-    syncError,
     loadExpensesFromStorage,
-    clearCurrentUserExpenses,
     refreshExpenses,
+    clearCurrentUserExpenses,
     createExpense,
     updateExpense,
     deleteExpense,
