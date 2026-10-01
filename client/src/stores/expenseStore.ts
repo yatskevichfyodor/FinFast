@@ -24,7 +24,6 @@ type SplitPendingExpensesResult = {
   toCreate: Expense[];
   toUpdate: Expense[];
   toDelete: Expense[];
-  locallyDeleted: Expense[];
 };
 
 export const useExpenseStore = defineStore("expense", () => {
@@ -99,6 +98,13 @@ export const useExpenseStore = defineStore("expense", () => {
     { immediate: true },
   );
 
+  /**
+   * Send local data changes to the API.
+   * Local data changes include:
+   * - expense field change
+   * - expense creation
+   * - expense deletion
+   */
   const syncExpenses = createCoalescedOperation(async () => {
     if (authStore.isAnonymous || !authStore.accessToken) {
       return;
@@ -113,11 +119,10 @@ export const useExpenseStore = defineStore("expense", () => {
 
     await sequentialExpenseOperation.byKeys(notSyncedExpensesIds, async () => {
       try {
-        const apiExpenses =
-          await expenseApi.getExpensesByIds(notSyncedExpensesIds);
+        const apiExpenses = await expenseApi.getExpensesByIds(notSyncedExpensesIds);
 
-        const { toCreate, toUpdate, toDelete, locallyDeleted } =
-          splitPendingExpenses(notSyncedExpenses, apiExpenses);
+        const { toCreate, toUpdate, toDelete } =
+          splitNotSyncedExpenses(notSyncedExpenses, apiExpenses);
 
         const syncRequest: SyncExpensesDto = {};
 
@@ -151,7 +156,6 @@ export const useExpenseStore = defineStore("expense", () => {
         toDelete.forEach((expense) => {
           expense.isSynced = true;
         });
-        removeExpensesLocally(locallyDeleted.map((expense) => expense.id));
 
         saveExpensesToStorage();
       } catch (error) {
@@ -168,11 +172,13 @@ export const useExpenseStore = defineStore("expense", () => {
     }
 
     await loadExpensesFromStorage();
-    try {
-      await syncExpenses();
-      await loadExpensesFromApi();
-    } catch (error) {
-      console.error("Failed to refresh expenses:", error);
+    if (!authStore.isOffline) {
+      try {
+        await syncExpenses();
+        await loadExpensesFromApi();
+      } catch (error) {
+        console.error("Failed to refresh expenses:", error);
+      }
     }
   }
 
@@ -217,33 +223,26 @@ export const useExpenseStore = defineStore("expense", () => {
     return getNotSyncedExpenses().length;
   }
 
-  function splitPendingExpenses(
-    pendingExpenses: Expense[],
-    apiExpenses: ApiResponseExpenseDto[],
+  function splitNotSyncedExpenses(
+    notSyncedExpenses: Expense[], // local not synced expenses
+    apiExpenses: ApiResponseExpenseDto[], // their current api version
   ): SplitPendingExpensesResult {
-    const apiById = new Map(
+    const apiExpensesById = new Map(
       apiExpenses.map((expense) => [expense.id, expense]),
     );
 
     return {
-      toCreate: pendingExpenses.filter((expense) => {
-        return !expense.deletedAt && !apiById.has(expense.id);
+      toCreate: notSyncedExpenses.filter((localExpense) => {
+        return !localExpense.deletedAt && !apiExpensesById.has(localExpense.id);
       }),
-      toUpdate: pendingExpenses.filter((expense) => {
-        const apiExpense = apiById.get(expense.id);
-        return !expense.deletedAt && !!apiExpense && !apiExpense.deletedAt;
+      toUpdate: notSyncedExpenses.filter((localExpense) => {
+        const apiExpense = apiExpensesById.get(localExpense.id);
+        return !localExpense.deletedAt && !!apiExpense && !apiExpense.deletedAt;
       }),
-      toDelete: pendingExpenses.filter((expense) => {
-        const apiExpense = apiById.get(expense.id);
-        return !!expense.deletedAt && !!apiExpense && !apiExpense.deletedAt;
-      }),
-      locallyDeleted: pendingExpenses.filter((expense) => {
-        return (
-          !!expense.deletedAt &&
-          expense.isCreatedLocally &&
-          !apiById.has(expense.id)
-        );
-      }),
+      toDelete: notSyncedExpenses.filter((localExpense) => {
+        const apiExpense = apiExpensesById.get(localExpense.id);
+        return !!localExpense.deletedAt && !!apiExpense && !apiExpense.deletedAt;
+      })
     };
   }
 
