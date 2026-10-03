@@ -1,6 +1,4 @@
-import { defineStore } from "pinia";
-import { ref, watch } from "vue";
-import { useAuthStore } from "./authStore";
+import { reactive, ref } from "vue";
 import type { DataChangeRecord, StoreDataChanges } from "@/types/dataChange";
 import { dataChangesApi } from "@/services/api/dataChangesApi";
 import dataChangesStorage from "@/storage/dataChangesStorage";
@@ -18,25 +16,34 @@ function toStoreDto(apiDtos: DataChangeRecord[]): StoreDataChanges {
   ) as StoreDataChanges;
 }
 
-export const useDataChangesStore = defineStore("data-changes", () => {
-  const authStore = useAuthStore();
-  const { storeStateGuard } = createStoreStateGuard(() => authStore.userId);
+export type DataChangesStore = ReturnType<typeof createDataChangesStore>;
+
+export function createDataChangesStore(userId: string) {
+  const { storeStateGuard } = createStoreStateGuard();
 
   const dataChanges = ref<StoreDataChanges>();
 
-  watch(
-    () => authStore.userId,
-    () => {
-      void init().catch((error) => {
-        console.error("Failed to load data changes:", error);
-      });
-    },
-    { immediate: true },
-  );
+  function init() {
+    loadDataFromLocal();
+    loadDataFromApi();
+  }
 
-  async function init() {
-    const currentUserId = authStore.userId;
-    if (!currentUserId) return;
+  function loadDataFromLocal() {
+    dataChanges.value = dataChangesStorage.get(userId);
+    dataChanges.value ??= {};
+    dataChanges.value.EXPENSE ??= {
+      changedAt: undefined,
+      syncRequired: true,
+    };
+    dataChanges.value.CATEGORY ??= {
+      changedAt: undefined,
+      syncRequired: true,
+    };
+    dataChanges.value.EXPENSE.syncRequired = true;
+    dataChanges.value.CATEGORY.syncRequired = true;
+  }
+
+  async function loadDataFromApi() {
     let apiResult: StoreDataChanges | undefined;
 
     const isCurrentState = await storeStateGuard(
@@ -56,26 +63,12 @@ export const useDataChangesStore = defineStore("data-changes", () => {
 
     if (apiResult !== undefined) {
       dataChanges.value = apiResult;
-      dataChangesStorage.save(currentUserId, apiResult);
-      return;
+      dataChangesStorage.save(userId, apiResult);
     }
-
-    dataChanges.value = dataChangesStorage.get(currentUserId);
-    dataChanges.value ??= {};
-    dataChanges.value.EXPENSE ??= {
-      changedAt: undefined,
-      syncRequired: true,
-    };
-    dataChanges.value.CATEGORY ??= {
-      changedAt: undefined,
-      syncRequired: true,
-    };
-    dataChanges.value.EXPENSE.syncRequired = true;
-    dataChanges.value.CATEGORY.syncRequired = true;
   }
 
-  return { 
+  return reactive({ 
     dataChanges,
     init 
-  }
-});
+  })
+};

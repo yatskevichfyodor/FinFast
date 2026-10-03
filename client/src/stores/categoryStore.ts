@@ -8,15 +8,15 @@ import {
 import { useAuthStore } from "@/stores/authStore";
 import type { Category, CategoryInput, CustomAndHiddenSystemCategoriesDto, CustomCategory } from "@/types/category";
 import { customCategoryStorage } from "@/storage/indexedDB/customCategoryStorage";
-import { useDataChangesStore } from "./dataChangesStore";
 import { createStoreStateGuard } from "@/utils/storeStateGuard";
 import hiddenSystemCategoryStorage from "@/storage/hiddenSystemCategoryStorage";
+import { useDataChangesStore } from ".";
 
 const LOCAL_STORAGE_LAST_SYNC_KEY = "finfast-categories-last-sync";
 
 export const useCategoryStore = defineStore("category", () => {
   const authStore = useAuthStore();
-  const dataChangeStore = useDataChangesStore();
+  const dataChangeStore = useDataChangesStore().value!;
   const { storeStateGuard } = createStoreStateGuard(() => authStore.userId);
   const customCategories = ref<Category[]>([]);
   const hiddenSystemCategoriesIds = ref<string[]>([]);

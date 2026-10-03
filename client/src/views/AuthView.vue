@@ -6,7 +6,7 @@ import { ANONYMOUS_MODE_ENABLED_KEY, ANONYMOUS_USER_ID, useAuthStore } from '@/s
 import { expenseStorage } from '@/storage/indexedDB'
 import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
-import { useExpenseStore } from '@/stores/expenseStoreContext'
+import { useExpenseStore } from '@/stores'
 
 const route = useRoute()
 const router = useRouter()

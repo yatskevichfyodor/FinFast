@@ -1,36 +1,54 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import AppNavigation from '@/components/AppNavigation.vue'
-import UserMenu from '@/components/UserMenu.vue'
-import { updateAvailable } from '@/services/pwaUpdate'
-import { useAuthStore } from './stores/authStore'
-import { setExpenseStore, useExpenseStore } from './stores/expenseStoreContext'
-import { pinia } from './stores'
-import { buildPopularCategoryOrder } from './services/categoryPopularity'
+import { computed, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import AppNavigation from "@/components/AppNavigation.vue";
+import UserMenu from "@/components/UserMenu.vue";
+import { updateAvailable } from "@/services/pwaUpdate";
+import { useAuthStore } from "./stores/authStore";
+import {
+  pinia,
+  setDataChangesStore,
+  setExpenseStore,
+  useDataChangesStore,
+  useExpenseStore,
+} from "./stores";
+import { buildPopularCategoryOrder } from "./services/categoryPopularity";
+import { useCategoryStore } from "./stores/categoryStore";
 
-const route = useRoute()
-const showNavigation = computed(() => route.meta.requiresAuth === true)
-const showUserMenu = ref(false)
-const expenseStoreReady = ref(false)
+const route = useRoute();
+const showNavigation = computed(() => route.meta.requiresAuth === true);
+const showUserMenu = ref(false);
+const expenseStoreReady = ref(false);
 
 const authStore = useAuthStore(pinia);
 
+const dataChangesStore = useDataChangesStore();
+const categoryStore = useCategoryStore(pinia);
+
+async function refreshStores(userId: string | null) {
+  setDataChangesStore(userId);
+  if (dataChangesStore.value) {
+    dataChangesStore.value.init();
+  }
+
+  setExpenseStore(userId);
+  const expenseStore = useExpenseStore();
+  if (expenseStore.value) {
+    await expenseStore.value.init();
+    expenseStoreReady.value = true;
+  }
+
+  await categoryStore.init();
+  if (expenseStore.value) {
+    buildPopularCategoryOrder(expenseStore.value.expenses);
+  }
+}
+
 watch(
-    () => authStore.userId,
-    async (userId) => {
-        setExpenseStore(userId);
-        const expenseStore = useExpenseStore();
-        if (expenseStore.value) {
-          await expenseStore.value.init();
-          expenseStoreReady.value = true;
-          buildPopularCategoryOrder(expenseStore.value.expenses)
-        }
-    },
-    { immediate: true },
+  () => authStore.userId,
+  refreshStores,
+  { immediate: true },
 );
-
-
 </script>
 
 <template>
@@ -82,5 +100,4 @@ watch(
   z-index: 2;
   max-width: min(360px, calc(100vw - 32px));
 }
-
 </style>

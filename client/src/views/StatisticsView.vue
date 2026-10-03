@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { formatMonthName } from "@/utils/dateHelpers";
 import { useCategoryStore } from "@/stores/categoryStore";
-import { useExpenseStore } from "@/stores/expenseStoreContext";
+import { useExpenseStore } from "@/stores";
 
 interface CategoryStat {
   id: string;

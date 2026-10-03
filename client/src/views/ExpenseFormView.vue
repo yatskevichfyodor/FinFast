@@ -6,7 +6,7 @@ import CategoryPicker from "@/components/CategoryPicker.vue";
 import ExpenseAmountInput from "@/components/ExpenseAmountInput.vue";
 import { format, parse } from "date-fns";
 import type { CreateExpensePayload, ExpenseUpdatePayload } from "@/types/expense";
-import { useExpenseStore } from "@/stores/expenseStoreContext";
+import { useExpenseStore } from "@/stores";
 
 const router = useRouter();
 const route = useRoute();

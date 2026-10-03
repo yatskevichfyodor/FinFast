@@ -8,7 +8,7 @@ import LogoutConfirmationDialog from '@/components/LogoutConfirmationDialog.vue'
 import AccountDialog from '@/components/AccountDialog.vue'
 import { updateAvailable, updatePwa } from '@/services/pwaUpdate'
 import { format } from 'date-fns/format'
-import { useExpenseStore } from '@/stores/expenseStoreContext'
+import { useExpenseStore } from '@/stores'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{

@@ -6,7 +6,7 @@ import { parseDate } from "@/utils/dateHelpers";
 import { format, parse } from "date-fns";
 import { useCategoryStore } from "@/stores/categoryStore";
 import type { Expense } from "@/types/expense";
-import { useExpenseStore } from "@/stores/expenseStoreContext";
+import { useExpenseStore } from "@/stores";
 
 const router = useRouter();
 const expenseStore = useExpenseStore().value!;

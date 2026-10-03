@@ -4,7 +4,7 @@ import { useDropZone } from '@vueuse/core'
 import { useAuthStore } from '@/stores/authStore'
 import { expenseStorage } from '@/storage/indexedDB'
 import { validateJson, mergeExpenses, type ImportFileData } from '@/services/expenseImport'
-import { useExpenseStore } from '@/stores/expenseStoreContext'
+import { useExpenseStore } from '@/stores'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{

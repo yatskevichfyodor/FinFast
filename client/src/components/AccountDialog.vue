@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { isAxiosError } from 'axios'
 import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
-import { useExpenseStore } from '@/stores/expenseStoreContext'
+import { useExpenseStore } from '@/stores'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
