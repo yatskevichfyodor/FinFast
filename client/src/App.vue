@@ -24,7 +24,7 @@ watch(
         if (expenseStore.value) {
           await expenseStore.value.init();
           expenseStoreReady.value = true;
-          buildPopularCategoryOrder(expenseStore.value.expenses.value)
+          buildPopularCategoryOrder(expenseStore.value.expenses)
         }
     },
     { immediate: true },

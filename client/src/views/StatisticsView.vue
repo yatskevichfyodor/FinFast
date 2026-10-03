@@ -28,7 +28,7 @@ onMounted(() => {
 const selectedMonthIndex = ref(0);
 
 const activeExpenses = computed(() =>
-  expenseStore.expenses.value.filter((expense) => !expense.deletedAt),
+  expenseStore.expenses.filter((expense) => !expense.deletedAt),
 );
 
 const months = computed<MonthStat[]>(() => {

@@ -20,7 +20,7 @@ const deleteDialogOpen = ref(false);
 const expenseToDelete = ref<Expense | null>(null);
 
 const activeExpenses = computed<Expense[]>(() =>
-  expenseStore.expenses.value.filter((expense) => !expense.deletedAt),
+  expenseStore.expenses.filter((expense) => !expense.deletedAt),
 );
 
 function formatDisplayDate(date: string): string {

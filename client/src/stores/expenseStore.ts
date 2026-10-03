@@ -1,4 +1,4 @@
-import { onScopeDispose, ref, watch } from "vue";
+import { onScopeDispose, reactive, ref } from "vue";
 import { expenseApi } from "@/services/api/expenseApi";
 import { expenseStorage } from "@/storage/indexedDB";
 import { ANONYMOUS_USER_ID, useAuthStore } from "@/stores/authStore";
@@ -420,7 +420,7 @@ export function createExpenseStore(userId: string) {
 
   initializeOnlineSync();
 
-  return {
+  return reactive({ // reactive helps to access expenses directly: expenseStore.expenses instead of expenseStore.expenses.value
     expenses,
     init,
     loadExpensesFromStorage,
@@ -432,5 +432,5 @@ export function createExpenseStore(userId: string) {
     getExpenseById,
     getNotSyncedExpensesCount,
     transferAnonymousExpenses,
-  };
+  });
 }
