@@ -1,153 +1,151 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useExpenseStore } from '@/stores/expenseStore'
-import { formatMonthName } from '@/utils/dateHelpers'
-import { useCategoryStore } from '@/stores/categoryStore'
+import { computed, onMounted, ref, watch } from "vue";
+import { formatMonthName } from "@/utils/dateHelpers";
+import { useCategoryStore } from "@/stores/categoryStore";
+import { useExpenseStore } from "@/stores/expenseStoreContext";
 
 interface CategoryStat {
-  id: string
-  name: string
-  icon: string
-  color: string
-  amount: number
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  amount: number;
 }
 
 interface MonthStat {
-  year: number
-  month: number
-  categories: CategoryStat[]
+  year: number;
+  month: number;
+  categories: CategoryStat[];
 }
 
-const expenseStore = useExpenseStore()
-const categoryStore = useCategoryStore()
+const expenseStore = useExpenseStore().value!;
+const categoryStore = useCategoryStore();
 
 onMounted(() => {
   void expenseStore.refreshExpenses();
 });
 
-const selectedMonthIndex = ref(0)
+const selectedMonthIndex = ref(0);
 
 const activeExpenses = computed(() =>
-  expenseStore.expenses.filter(expense => !expense.deletedAt)
-)
+  expenseStore.expenses.value.filter((expense) => !expense.deletedAt),
+);
 
 const months = computed<MonthStat[]>(() => {
-  const monthGroups = new Map<string, {
-    year: number
-    month: number
-    categories: Map<string, number>
-  }>()
+  const monthGroups = new Map<
+    string,
+    {
+      year: number;
+      month: number;
+      categories: Map<string, number>;
+    }
+  >();
 
-  activeExpenses.value.forEach(expense => {
-    const date = new Date(expense.createdAt)
+  activeExpenses.value.forEach((expense) => {
+    const date = new Date(expense.createdAt);
     if (Number.isNaN(date.getTime())) {
-      return
+      return;
     }
 
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1
-    const monthKey = `${year}-${String(month).padStart(2, '0')}`
-    const categoryId = expense.categoryId ?? '__uncategorized__'
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const monthKey = `${year}-${String(month).padStart(2, "0")}`;
+    const categoryId = expense.categoryId ?? "__uncategorized__";
     const group = monthGroups.get(monthKey) ?? {
       year,
       month,
-      categories: new Map<string, number>()
-    }
+      categories: new Map<string, number>(),
+    };
 
     group.categories.set(
       categoryId,
-      (group.categories.get(categoryId) ?? 0) + expense.amount
-    )
-    monthGroups.set(monthKey, group)
-  })
+      (group.categories.get(categoryId) ?? 0) + expense.amount,
+    );
+    monthGroups.set(monthKey, group);
+  });
 
   return [...monthGroups.values()]
     .sort((a, b) => b.year - a.year || b.month - a.month)
-    .map(group => ({
+    .map((group) => ({
       year: group.year,
       month: group.month,
       categories: [...group.categories.entries()].map(([id, amount]) => {
-        const category = id === '__uncategorized__'
-          ? categoryStore.getCategoryDisplay(undefined)
-          : categoryStore.getCategoryDisplay(id)
+        const category =
+          id === "__uncategorized__"
+            ? categoryStore.getCategoryDisplay(undefined)
+            : categoryStore.getCategoryDisplay(id);
 
         return {
           id,
           name: category.name,
           icon: category.icon,
           color: category.color,
-          amount
-        }
-      })
-    }))
-})
+          amount,
+        };
+      }),
+    }));
+});
 
-watch(months, value => {
+watch(months, (value) => {
   if (selectedMonthIndex.value >= value.length) {
-    selectedMonthIndex.value = Math.max(value.length - 1, 0)
+    selectedMonthIndex.value = Math.max(value.length - 1, 0);
   }
-})
+});
 
-const currentMonth = computed(() => months.value[selectedMonthIndex.value])
+const currentMonth = computed(() => months.value[selectedMonthIndex.value]);
 
 const totalAmount = computed(() => {
   return (currentMonth.value?.categories ?? []).reduce(
     (total, category) => total + category.amount,
-    0
-  )
-})
+    0,
+  );
+});
 
 const formattedTotal = computed(() => {
-  return totalAmount.value.toFixed(2)
-})
+  return totalAmount.value.toFixed(2);
+});
 
 const monthName = computed(() => {
   if (!currentMonth.value) {
-    return 'Нет данных'
+    return "Нет данных";
   }
 
-  return formatMonthName(currentMonth.value.year, currentMonth.value.month)
-})
+  return formatMonthName(currentMonth.value.year, currentMonth.value.month);
+});
 
 const sortedCategories = computed(() => {
-  return [...(currentMonth.value?.categories ?? [])]
-    .sort((a, b) => b.amount - a.amount)
-})
+  return [...(currentMonth.value?.categories ?? [])].sort(
+    (a, b) => b.amount - a.amount,
+  );
+});
 
 function previousMonth() {
   if (selectedMonthIndex.value < months.value.length - 1) {
-    selectedMonthIndex.value++
+    selectedMonthIndex.value++;
   }
 }
 
 function nextMonth() {
   if (selectedMonthIndex.value > 0) {
-    selectedMonthIndex.value--
+    selectedMonthIndex.value--;
   }
 }
 
 function getPercentage(amount: number) {
   if (!totalAmount.value) {
-    return 0
+    return 0;
   }
 
-  return Math.round(
-    (amount / totalAmount.value) * 100
-  )
+  return Math.round((amount / totalAmount.value) * 100);
 }
 </script>
 
 <template>
   <v-main class="statistics-page">
-    <v-container
-      max-width="700"
-      class="py-8"
-    >
+    <v-container max-width="700" class="py-8">
       <!-- Header -->
       <div class="mb-6">
-        <div class="text-h5 font-weight-bold">
-          Статистика
-        </div>
+        <div class="text-h5 font-weight-bold">Статистика</div>
 
         <div class="text-body-2 text-medium-emphasis mt-1">
           Анализ ваших расходов
@@ -155,13 +153,8 @@ function getPercentage(amount: number) {
       </div>
 
       <!-- Month selector -->
-      <v-card
-        rounded="xl"
-        elevation="0"
-        class="month-selector mb-5"
-      >
+      <v-card rounded="xl" elevation="0" class="month-selector mb-5">
         <v-card-text class="d-flex align-center justify-space-between pa-3">
-
           <v-btn
             icon="mdi-chevron-left"
             variant="text"
@@ -179,41 +172,27 @@ function getPercentage(amount: number) {
             :disabled="selectedMonthIndex <= 0"
             @click="nextMonth"
           />
-
         </v-card-text>
       </v-card>
 
       <!-- Total -->
-      <v-card
-        rounded="xl"
-        elevation="0"
-        class="total-card mb-6"
-      >
+      <v-card rounded="xl" elevation="0" class="total-card mb-6">
         <v-card-text class="pa-6">
-
-          <div class="total-label">
-            Всего расходов
-          </div>
+          <div class="total-label">Всего расходов</div>
 
           <div class="total-amount">
             {{ formattedTotal }}
             <span>₽</span>
           </div>
 
-          <div class="total-caption">
-            за {{ monthName }}
-          </div>
-
+          <div class="total-caption">за {{ monthName }}</div>
         </v-card-text>
       </v-card>
 
       <!-- Categories -->
-      <div class="section-title mb-3">
-        По категориям
-      </div>
+      <div class="section-title mb-3">По категориям</div>
 
       <div class="category-list">
-
         <v-card
           v-for="category in sortedCategories"
           :key="category.id"
@@ -222,25 +201,19 @@ function getPercentage(amount: number) {
           class="category-card mb-3"
         >
           <v-card-text class="pa-4">
-
             <div class="d-flex align-center">
-
               <!-- Icon -->
               <div
                 class="category-icon"
                 :style="{
-                  '--category-color': category.color
+                  '--category-color': category.color,
                 }"
               >
-                <v-icon
-                  :icon="category.icon"
-                  size="23"
-                />
+                <v-icon :icon="category.icon" size="23" />
               </div>
 
               <!-- Name -->
               <div class="category-info">
-
                 <div class="d-flex justify-space-between">
                   <span class="category-name">
                     {{ category.name }}
@@ -263,14 +236,10 @@ function getPercentage(amount: number) {
                 <div class="percentage">
                   {{ getPercentage(category.amount) }}%
                 </div>
-
               </div>
-
             </div>
-
           </v-card-text>
         </v-card>
-
       </div>
 
       <!-- Empty state -->
@@ -281,24 +250,19 @@ function getPercentage(amount: number) {
         class="empty-state"
       >
         <v-card-text class="text-center py-10">
-
           <v-icon
             icon="mdi-chart-box-outline"
             size="52"
             color="medium-emphasis"
           />
 
-          <div class="text-h6 mt-3">
-            Нет расходов
-          </div>
+          <div class="text-h6 mt-3">Нет расходов</div>
 
           <div class="text-body-2 text-medium-emphasis mt-1">
             За этот месяц пока нет данных
           </div>
-
         </v-card-text>
       </v-card>
-
     </v-container>
   </v-main>
 </template>
@@ -320,11 +284,7 @@ function getPercentage(amount: number) {
 /* Total */
 
 .total-card {
-  background: linear-gradient(
-    135deg,
-    #e8f5e9,
-    #e0f2f1
-  );
+  background: linear-gradient(135deg, #e8f5e9, #e0f2f1);
 }
 
 .total-label {
@@ -377,8 +337,7 @@ function getPercentage(amount: number) {
 .category-card:hover {
   transform: translateY(-2px);
 
-  box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
 .category-icon {
@@ -395,11 +354,7 @@ function getPercentage(amount: number) {
 
   color: var(--category-color);
 
-  background: color-mix(
-    in srgb,
-    var(--category-color) 10%,
-    white
-  );
+  background: color-mix(in srgb, var(--category-color) 10%, white);
 }
 
 .category-info {

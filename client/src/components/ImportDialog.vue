@@ -2,9 +2,9 @@
 import { ref, watch } from 'vue'
 import { useDropZone } from '@vueuse/core'
 import { useAuthStore } from '@/stores/authStore'
-import { useExpenseStore } from '@/stores/expenseStore'
 import { expenseStorage } from '@/storage/indexedDB'
 import { validateJson, mergeExpenses, type ImportFileData } from '@/services/expenseImport'
+import { useExpenseStore } from '@/stores/expenseStoreContext'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -19,7 +19,7 @@ watch(() => props.modelValue, (newValue) => {
 })
 
 const authStore = useAuthStore()
-const expenseStore = useExpenseStore()
+const expenseStore = useExpenseStore().value!
 
 const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)

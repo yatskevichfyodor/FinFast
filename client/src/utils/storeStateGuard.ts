@@ -10,7 +10,7 @@
  *
  * This allows the operation itself to return `undefined` without
  * conflicting with the guard's stale-result handling.
- * 
+ *
  * @example
  * const storeStateGuard = createStoreStateGuard(
  *   () => authStore.userId
@@ -46,28 +46,31 @@
  * }
  */
 export function createStoreStateGuard<TState>(
-  getState: () => TState,
+  getState?: () => TState,
 ) {
-  let latestRequestId = 0
+  let latestRequestId = 0;
 
   async function storeStateGuard<TResult>(
     action: () => Promise<TResult>,
     onLatest: (result: TResult) => unknown,
   ): Promise<boolean> {
-    const requestId = ++latestRequestId
-    const stateBefore = getState()
+    const requestId = ++latestRequestId;
+    let stateBefore;
+    if (getState) {
+      stateBefore = getState();
+    }
 
-    const result = await action()
+    const result = await action();
 
     if (
       requestId !== latestRequestId ||
-      !Object.is(stateBefore, getState())
+      (getState && !Object.is(stateBefore, getState()))
     ) {
-      return false
+      return false;
     }
 
-    await onLatest(result)
-    return true
+    await onLatest(result);
+    return true;
   }
 
   function invalidateState() {

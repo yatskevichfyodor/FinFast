@@ -2,10 +2,10 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { useExpenseStore } from '@/stores/expenseStore'
 import { isAxiosError } from 'axios'
 import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
+import { useExpenseStore } from '@/stores/expenseStoreContext'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -14,7 +14,7 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const authStore = useAuthStore()
-const expenseStore = useExpenseStore()
+const expenseStore = useExpenseStore().value!
 
 const showPasswordForm = ref(false)
 const showUnlinkGoogleDialog = ref(false)
@@ -135,7 +135,7 @@ async function deleteAccount() {
   isDeletingAccount.value = true
   try {
     await authApi.deleteAccount()
-    await expenseStore.clearCurrentUserExpenses()
+    await expenseStore.clearUserExpenses()
     showDeleteAccountDialog.value = false
     emit('update:modelValue', false)
     await authStore.logout()

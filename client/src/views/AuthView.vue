@@ -3,15 +3,14 @@ import { computed, onMounted, ref } from 'vue'
 import { isAxiosError } from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import { ANONYMOUS_MODE_ENABLED_KEY, ANONYMOUS_USER_ID, useAuthStore } from '@/stores/authStore'
-import { useExpenseStore } from '@/stores/expenseStore'
 import { expenseStorage } from '@/storage/indexedDB'
 import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
+import { useExpenseStore } from '@/stores/expenseStoreContext'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const expenseStore = useExpenseStore()
 
 const username = ref('')
 const password = ref('')
@@ -170,6 +169,7 @@ async function continueWithoutAccount() {
 async function transferAnonymousExpenses() {
   errorMessage.value = ''
   try {
+    const expenseStore = useExpenseStore().value!;
     await expenseStore.transferAnonymousExpenses()
     showTransferDialog.value = false
     await router.push({ name: 'home' })

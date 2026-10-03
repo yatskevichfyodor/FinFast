@@ -1,5 +1,4 @@
 import { onScopeDispose, ref, watch } from "vue";
-import { defineStore } from "pinia";
 import { expenseApi } from "@/services/api/expenseApi";
 import { expenseStorage } from "@/storage/indexedDB";
 import {
@@ -22,6 +21,7 @@ import {
   parseApiExpense,
 } from "@/mappers/expenseMappers";
 import { createStoreStateGuard } from "@/utils/storeStateGuard";
+import { pinia } from ".";
 
 type SplitPendingExpensesResult = {
   toCreate: Expense[];
@@ -29,77 +29,38 @@ type SplitPendingExpensesResult = {
   toDelete: Expense[];
 };
 
-export const useExpenseStore = defineStore("expense", () => {
-  const authStore = useAuthStore();
-  const expenses = ref<Expense[]>([]);
-  let loadedUserId: string | null = null;
+export type ExpenseStore = ReturnType<typeof createExpenseStore>;
 
+export function createExpenseStore(userId: string) {
+  const authStore = useAuthStore(pinia)
   const sequentialExpenseOperation = createSequentialByKeys<string>();
-  const { storeStateGuard, invalidateState } = createStoreStateGuard(
-    () => authStore.userId,
-  );
+  const { storeStateGuard, invalidateState } = createStoreStateGuard();
+
+  const expenses = ref<Expense[]>([]);
+
+  async function init() {
+    await loadExpensesFromStorage();
+  }
 
   async function loadExpensesFromStorage() {
-    loadedUserId = null;
     expenses.value = [];
 
-    const currentUserId = authStore.userId;
-    if (!currentUserId) {
-      return;
-    }
-
     await storeStateGuard(
-      async () => await expenseStorage.loadExpenses(currentUserId),
+      async () => await expenseStorage.loadExpenses(userId),
       (storedExpenses: Expense[]) => {
         expenses.value = storedExpenses;
-        loadedUserId = currentUserId;
       },
     );
   }
 
   function saveExpensesToStorage() {
-    const currentUserId = authStore.userId;
-    validateCurrentUser(currentUserId);
-    return expenseStorage.saveExpenses(currentUserId!, expenses.value);
+    return expenseStorage.saveExpenses(userId, expenses.value);
   }
 
-  function validateCurrentUser(currentUserId: string | null) {
-    if (!currentUserId) {
-      throw new Error("No current user was found");
-    }
-
-    if (!loadedUserId) {
-      throw new Error("No user loaded in expense store");
-    }
-
-    if (loadedUserId !== currentUserId) {
-      throw new Error("Invalid user loaded");
-    }
-  }
-
-  async function clearCurrentUserExpenses() {
-    const userId = authStore.userId;
-    if (!userId) {
-      return;
-    }
-
+  async function clearUserExpenses() {
     invalidateState();
-    if (loadedUserId === userId) {
-      loadedUserId = null;
-      expenses.value = [];
-    }
     await expenseStorage.saveExpenses(userId, []);
   }
-
-  watch(
-    () => authStore.userId,
-    () => {
-      void loadExpensesFromStorage().catch((error) => {
-        console.error("Failed to load expenses:", error);
-      });
-    },
-    { immediate: true },
-  );
 
   /**
    * Send local data changes to the API.
@@ -109,7 +70,7 @@ export const useExpenseStore = defineStore("expense", () => {
    * - expense deletion
    */
   const syncExpensesChanges = createCoalescedOperation(async () => {
-    if (authStore.isAnonymous || !authStore.accessToken) {
+    if (userId === ANONYMOUS_USER_ID) {
       return;
     }
 
@@ -172,10 +133,6 @@ export const useExpenseStore = defineStore("expense", () => {
   });
 
   async function refreshExpenses() {
-    const userId = authStore.userId;
-    if (!userId) {
-      return;
-    }
 
     await loadExpensesFromStorage();
     if (!authStore.isOffline) {
@@ -218,11 +175,7 @@ export const useExpenseStore = defineStore("expense", () => {
   }
 
   function getNotSyncedExpenses() {
-    if (loadedUserId !== authStore.userId) {
-      return [];
-    }
-
-    return expenses.value.filter((expense) => !expense.isSynced);
+    return expenses.value.filter(expense => !expense.isSynced);
   }
 
   function getNotSyncedExpensesCount() {
@@ -412,9 +365,7 @@ export const useExpenseStore = defineStore("expense", () => {
   }
 
   async function transferAnonymousExpenses(): Promise<void> {
-    const currentUserId = authStore.userId;
-
-    if (!currentUserId || authStore.isAnonymous) {
+    if (userId === ANONYMOUS_USER_ID) {
       return;
     }
 
@@ -450,8 +401,7 @@ export const useExpenseStore = defineStore("expense", () => {
     const sync = () => {
       if (
         navigator.onLine &&
-        authStore.isAuthenticated &&
-        !authStore.isAnonymous &&
+        userId !== ANONYMOUS_USER_ID &&
         !authStore.isOffline
       ) {
         void refreshExpenses().catch((error) =>
@@ -471,9 +421,10 @@ export const useExpenseStore = defineStore("expense", () => {
 
   return {
     expenses,
+    init,
     loadExpensesFromStorage,
     refreshExpenses,
-    clearCurrentUserExpenses,
+    clearUserExpenses,
     createExpense,
     updateExpense,
     deleteExpense,
@@ -481,4 +432,4 @@ export const useExpenseStore = defineStore("expense", () => {
     getNotSyncedExpensesCount,
     transferAnonymousExpenses,
   };
-});
+};

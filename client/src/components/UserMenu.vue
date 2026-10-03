@@ -2,13 +2,13 @@
 import { ref, watch, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { useExpenseStore } from '@/stores/expenseStore'
 import ExportDialog from '@/components/ExportDialog.vue'
 import ImportDialog from '@/components/ImportDialog.vue'
 import LogoutConfirmationDialog from '@/components/LogoutConfirmationDialog.vue'
 import AccountDialog from '@/components/AccountDialog.vue'
 import { updateAvailable, updatePwa } from '@/services/pwaUpdate'
 import { format } from 'date-fns/format'
+import { useExpenseStore } from '@/stores/expenseStoreContext'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -17,7 +17,7 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const authStore = useAuthStore()
-const expenseStore = useExpenseStore()
+const expenseStore = useExpenseStore().value!
 
 const localOpen = ref(props.modelValue)
 const showExportDialog = ref(false)

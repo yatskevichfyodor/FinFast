@@ -1,13 +1,36 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppNavigation from '@/components/AppNavigation.vue'
 import UserMenu from '@/components/UserMenu.vue'
 import { updateAvailable } from '@/services/pwaUpdate'
+import { useAuthStore } from './stores/authStore'
+import { setExpenseStore, useExpenseStore } from './stores/expenseStoreContext'
+import { pinia } from './stores'
+import { buildPopularCategoryOrder } from './services/categoryPopularity'
 
 const route = useRoute()
 const showNavigation = computed(() => route.meta.requiresAuth === true)
 const showUserMenu = ref(false)
+const expenseStoreReady = ref(false)
+
+const authStore = useAuthStore(pinia);
+
+watch(
+    () => authStore.userId,
+    async (userId) => {
+        setExpenseStore(userId);
+        const expenseStore = useExpenseStore();
+        if (expenseStore.value) {
+          await expenseStore.value.init();
+          expenseStoreReady.value = true;
+          buildPopularCategoryOrder(expenseStore.value.expenses.value)
+        }
+    },
+    { immediate: true },
+);
+
+
 </script>
 
 <template>
@@ -40,7 +63,7 @@ const showUserMenu = ref(false)
       </div>
     </template>
 
-    <UserMenu v-model="showUserMenu" />
+    <UserMenu v-if="expenseStoreReady" v-model="showUserMenu" />
   </v-app>
 </template>
 

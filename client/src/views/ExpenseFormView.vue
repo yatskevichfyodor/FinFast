@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import CategoryPicker from "@/components/CategoryPicker.vue";
 import ExpenseAmountInput from "@/components/ExpenseAmountInput.vue";
-import { useExpenseStore } from "@/stores/expenseStore";
 import { format, parse } from "date-fns";
 import type { CreateExpensePayload, ExpenseUpdatePayload } from "@/types/expense";
+import { useExpenseStore } from "@/stores/expenseStoreContext";
 
 const router = useRouter();
 const route = useRoute();
@@ -16,7 +16,7 @@ const emit = defineEmits<{
   cancel: [];
 }>();
 
-const expenseStore = useExpenseStore();
+const expenseStore = useExpenseStore().value!;
 
 // Breakpoint for mobile/desktop mode
 const MOBILE_BREAKPOINT = 960;
