@@ -2,7 +2,10 @@ import { onScopeDispose, ref, watch } from "vue";
 import { defineStore } from "pinia";
 import { expenseApi } from "@/services/api/expenseApi";
 import { expenseStorage } from "@/storage/indexedDB";
-import { ANONYMOUS_MODE_ENABLED_KEY, ANONYMOUS_USER_ID, useAuthStore } from "@/stores/authStore";
+import {
+  ANONYMOUS_USER_ID,
+  useAuthStore,
+} from "@/stores/authStore";
 import type {
   Expense,
   ApiResponseExpenseDto,
@@ -105,7 +108,7 @@ export const useExpenseStore = defineStore("expense", () => {
    * - expense creation
    * - expense deletion
    */
-  const syncExpenses = createCoalescedOperation(async () => {
+  const syncExpensesChanges = createCoalescedOperation(async () => {
     if (authStore.isAnonymous || !authStore.accessToken) {
       return;
     }
@@ -119,10 +122,13 @@ export const useExpenseStore = defineStore("expense", () => {
 
     await sequentialExpenseOperation.byKeys(notSyncedExpensesIds, async () => {
       try {
-        const apiExpenses = await expenseApi.getExpensesByIds(notSyncedExpensesIds);
+        const apiExpenses =
+          await expenseApi.getExpensesByIds(notSyncedExpensesIds);
 
-        const { toCreate, toUpdate, toDelete } =
-          splitNotSyncedExpenses(notSyncedExpenses, apiExpenses);
+        const { toCreate, toUpdate, toDelete } = splitNotSyncedExpenses(
+          notSyncedExpenses,
+          apiExpenses,
+        );
 
         const syncRequest: SyncExpensesDto = {};
 
@@ -174,7 +180,7 @@ export const useExpenseStore = defineStore("expense", () => {
     await loadExpensesFromStorage();
     if (!authStore.isOffline) {
       try {
-        await syncExpenses();
+        await syncExpensesChanges();
         await loadExpensesFromApi();
       } catch (error) {
         console.error("Failed to refresh expenses:", error);
@@ -241,8 +247,10 @@ export const useExpenseStore = defineStore("expense", () => {
       }),
       toDelete: notSyncedExpenses.filter((localExpense) => {
         const apiExpense = apiExpensesById.get(localExpense.id);
-        return !!localExpense.deletedAt && !!apiExpense && !apiExpense.deletedAt;
-      })
+        return (
+          !!localExpense.deletedAt && !!apiExpense && !apiExpense.deletedAt
+        );
+      }),
     };
   }
 
@@ -263,7 +271,7 @@ export const useExpenseStore = defineStore("expense", () => {
     const expense = createExpenseLocally(payload);
 
     if (getNotSyncedExpenses().length > 0) {
-      void syncExpenses().catch((error) => {
+      void syncExpensesChanges().catch((error) => {
         console.error("Failed to sync expenses:", error);
       });
     } else {
@@ -305,7 +313,7 @@ export const useExpenseStore = defineStore("expense", () => {
     const expense = updateExpenseLocally(payload);
 
     if (hasNotSyncedExpensesExcept(payload.id)) {
-      void syncExpenses().catch((error) => {
+      void syncExpensesChanges().catch((error) => {
         console.error("Failed to sync expenses:", error);
       });
     } else {
@@ -356,7 +364,7 @@ export const useExpenseStore = defineStore("expense", () => {
     if (expense === undefined) return;
 
     if (hasNotSyncedExpensesExcept(expenseId)) {
-      void syncExpenses().catch((error) => {
+      void syncExpensesChanges().catch((error) => {
         console.error("Failed to sync expenses:", error);
       });
     } else {
@@ -403,30 +411,39 @@ export const useExpenseStore = defineStore("expense", () => {
     return expenses.value.find((expense) => expense.id === id);
   }
 
-  async function transferAnonymousExpenses() {
-    if (!authStore.userId || authStore.isAnonymous) {
-      return 0;
+  async function transferAnonymousExpenses(): Promise<void> {
+    const currentUserId = authStore.userId;
+
+    if (!currentUserId || authStore.isAnonymous) {
+      return;
     }
 
-    const anonymousExpenses = await expenseStorage.loadExpenses(ANONYMOUS_USER_ID);
-    if (anonymousExpenses.length === 0) {
-      return 0;
-    }
+    await sequentialExpenseOperation.all(async (): Promise<void> => {
+      const anonymousExpenses = await expenseStorage.loadExpenses(ANONYMOUS_USER_ID);
+      if (anonymousExpenses.length === 0) {
+        return;
+      }
 
-    const currentExpenses = await expenseStorage.loadExpenses(authStore.userId);
-    const existingIds = new Set(currentExpenses.map((expense) => expense.id));
-    const transferredExpenses = anonymousExpenses.filter(
-      (expense) => !existingIds.has(expense.id),
-    );
-    await expenseStorage.saveExpenses(authStore.userId, [
-      ...currentExpenses,
-      ...transferredExpenses,
-    ]);
-    await loadExpensesFromStorage();
-    await syncExpenses();
+      await loadExpensesFromStorage();
+      const currentExpensesIds = new Set(
+        expenses.value.map((expense) => expense.id),
+      );
+
+      const transferredExpenses = anonymousExpenses.filter(
+        (expense) => !currentExpensesIds.has(expense.id),
+      );
+
+      if (transferredExpenses.length === 0) {
+        await expenseStorage.saveExpenses(ANONYMOUS_USER_ID, []);
+        return;
+      }
+
+      expenses.value.push(...transferredExpenses);
+      await saveExpensesToStorage();
+    });
+    
+    await syncExpensesChanges();
     await expenseStorage.saveExpenses(ANONYMOUS_USER_ID, []);
-    localStorage.removeItem(ANONYMOUS_MODE_ENABLED_KEY);
-    return transferredExpenses.length;
   }
 
   function initializeOnlineSync() {
