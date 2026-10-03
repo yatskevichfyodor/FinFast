@@ -34,29 +34,44 @@ export function createSequentialByKeys<TKey>() {
   const ALL_KEY = Symbol("ALL");
   const promises = new Map<TKey | typeof ALL_KEY, Promise<void>>();
 
-  async function run(
+  function createDeferred() {
+    let resolve!: () => void;
+    let reject!: (reason?: unknown) => void;
+
+    const promise = new Promise<void>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+
+    return { promise, resolve, reject };
+  }
+
+  function run(
     keys: (TKey | typeof ALL_KEY)[],
     operation: () => Promise<void>,
   ): Promise<void> {
     const uniqueKeys = [...new Set(keys)];
+    const isAll = uniqueKeys.includes(ALL_KEY);
 
     const previousOperations = new Set<Promise<void>>();
 
-    for (const key of uniqueKeys) {
-      const previousOperation = promises.get(key);
-
-      if (previousOperation) {
-        previousOperations.add(previousOperation);
-      }
-    }
-
-    if (uniqueKeys.includes(ALL_KEY)) {
-      // `all()` must wait for every currently running operation.
+    if (isAll) {
+      // ALL waits for every operation that is currently registered,
+      // including a previous ALL.
       for (const promise of promises.values()) {
         previousOperations.add(promise);
       }
     } else {
-      // Keyed operations must wait for a currently running `all()`.
+      // Keyed operation waits for its own keys.
+      for (const key of uniqueKeys) {
+        const previousOperation = promises.get(key);
+
+        if (previousOperation) {
+          previousOperations.add(previousOperation);
+        }
+      }
+
+      // Keyed operation waits for the current ALL barrier.
       const allOperation = promises.get(ALL_KEY);
 
       if (allOperation) {
@@ -64,25 +79,30 @@ export function createSequentialByKeys<TKey>() {
       }
     }
 
-    if (previousOperations.size > 0) {
-      await Promise.all(previousOperations);
-    }
+    const current = createDeferred();
 
-    const currentOperation = operation();
-
+    // Register BEFORE waiting for previous operations.
     for (const key of uniqueKeys) {
-      promises.set(key, currentOperation);
+      promises.set(key, current.promise);
     }
 
-    try {
-      await currentOperation;
-    } finally {
-      for (const key of uniqueKeys) {
-        if (promises.get(key) === currentOperation) {
-          promises.delete(key);
+    void (async () => {
+      try {
+        await Promise.all(previousOperations);
+        await operation();
+        current.resolve();
+      } catch (error) {
+        current.reject(error);
+      } finally {
+        for (const key of uniqueKeys) {
+          if (promises.get(key) === current.promise) {
+            promises.delete(key);
+          }
         }
       }
-    }
+    })();
+
+    return current.promise;
   }
 
   return {
