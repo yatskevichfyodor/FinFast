@@ -89,7 +89,7 @@ function handleAmountChange(amountValue: number, valid: boolean) {
 }
 
 // Mobile step 1: Create expense with amount only
-function handleMobileStep1Submit() {
+async function handleMobileStep1Submit() {
   if (!canSubmitAmount.value || currentAmount.value === null) {
     return;
   }
@@ -106,7 +106,7 @@ function handleMobileStep1Submit() {
     description: description.value || undefined,
   };
 
-  const newExpenseId = expenseStore.createExpense(payload);
+  const newExpenseId = await expenseStore.createExpense(payload);
   createdExpenseId.value = newExpenseId;
 
   // Move to step 2
