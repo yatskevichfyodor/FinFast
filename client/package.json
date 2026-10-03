@@ -8,6 +8,7 @@
     "build": "run-s type-check build-only copy-404",
     "deploy": "npm run build && gh-pages -d dist --no-history",
     "preview": "vite preview",
+    "preview:dev": "vite build --mode development && vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "copy-404": "node scripts/copy-404.mjs"

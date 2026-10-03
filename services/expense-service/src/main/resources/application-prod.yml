@@ -24,4 +24,4 @@ logging:
 finfast:
   auth-service:
     url: ${AUTH_SERVICE_URL}
-  clientUrl: ${CLIENT_URL}
+  clientUrls: ${CLIENT_URL}

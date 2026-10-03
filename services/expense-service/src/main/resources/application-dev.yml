@@ -26,7 +26,7 @@ logging:
 finfast:
   auth-service:
     url: http://localhost:8082
-  clientUrl: http://localhost:5173
+  clientUrls: http://localhost:5173,http://localhost:4173
 
 springdoc:
   api-docs.enabled: true

@@ -2,7 +2,7 @@ quarkus:
   http:
     port: 8082
     cors:
-      origins: http://localhost:5173
+      origins: http://localhost:5173,http://localhost:4173
 
   datasource:
     username: postgres

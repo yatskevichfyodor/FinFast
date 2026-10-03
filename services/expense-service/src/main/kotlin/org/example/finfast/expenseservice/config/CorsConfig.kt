@@ -9,12 +9,17 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 class CorsConfig(
-    @Value("\${finfast.clientUrl}") private val clientUrl: String,
+    @Value("\${finfast.clientUrls}") private val clientUrls: String,
 ) {
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
+        val allowedOriginsList = clientUrls
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+
         val configuration = CorsConfiguration().apply {
-            allowedOrigins = listOf(clientUrl)
+            allowedOrigins = allowedOriginsList
             allowedMethods = listOf(
                 "GET",
                 "POST",
