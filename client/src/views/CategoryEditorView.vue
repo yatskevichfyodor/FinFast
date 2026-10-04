@@ -7,6 +7,7 @@ import mdiIcons from "@iconify-json/mdi/icons.json";
 import simpleIcons from "@iconify-json/simple-icons/icons.json";
 import { refDebounced } from "@vueuse/core";
 import { categoryApi } from "@/services/api/categoryApi";
+import { toVuetifyCategoryIcon } from "@/utils/categoryIcon";
 
 interface IconifyIconsJson {
   icons: Record<string, unknown>;
@@ -388,7 +389,7 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
           >
             <template #prepend
               ><v-icon :color="category.color">{{
-                category.icon
+                toVuetifyCategoryIcon(category.icon)
               }}</v-icon></template
             >
             <v-list-item-title>{{ category.name }}</v-list-item-title>

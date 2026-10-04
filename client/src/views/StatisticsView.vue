@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { formatMonthName } from "@/utils/dateHelpers";
 import { useCategoryStore, useExpenseStore } from "@/stores";
+import { toVuetifyCategoryIcon } from "@/utils/categoryIcon";
 
 interface CategoryStat {
   id: string;
@@ -208,7 +209,7 @@ function getPercentage(amount: number) {
                   '--category-color': category.color,
                 }"
               >
-                <v-icon :icon="category.icon" size="23" />
+                <v-icon :icon="toVuetifyCategoryIcon(category.icon)" size="23" />
               </div>
 
               <!-- Name -->

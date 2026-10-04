@@ -6,6 +6,7 @@ import { parseDate } from "@/utils/dateHelpers";
 import { format, parse } from "date-fns";
 import type { Expense } from "@/types/expense";
 import { useCategoryStore, useExpenseStore } from "@/stores";
+import { toVuetifyCategoryIcon } from "@/utils/categoryIcon";
 
 const router = useRouter();
 const expenseStore = useExpenseStore().value!;
@@ -179,10 +180,10 @@ function editExpense(expense: Expense) {
                   }"
                 >
                   <v-icon
-                    :icon="
+                    :icon="toVuetifyCategoryIcon(
                       categoryStore.getCategoryDisplay(
                         expense.categoryId ?? expense.customCategoryId,
-                      ).icon
+                      ).icon)
                     "
                     size="24"
                   />

@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import type { Category } from '@/types/category'
 import { useCategoryStore } from '@/stores';
+import { toVuetifyCategoryIcon } from "@/utils/categoryIcon";
 
 const props = defineProps<{
   selectedCategoryId: string | null
@@ -129,7 +130,7 @@ watch(displayedCategories, async () => {
               }"
               :style="{ '--category-color': category.color }"
             >
-              <v-icon :icon="category.icon" size="26" />
+              <v-icon :icon="toVuetifyCategoryIcon(category.icon)" size="26" />
             </div>
 
             <div class="category-name">
