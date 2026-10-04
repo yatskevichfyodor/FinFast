@@ -2,7 +2,7 @@ import { reactive, ref } from "vue";
 import type { DataChangeRecord, StoreDataChanges } from "@/types/dataChange";
 import { dataChangesApi } from "@/services/api/dataChangesApi";
 import dataChangesStorage from "@/storage/dataChangesStorage";
-import { createStoreStateGuard } from "@/utils/storeStateGuard";
+import { createLatestOnly } from "@/utils/latestOnly";
 
 function toStoreDto(apiDtos: DataChangeRecord[]): StoreDataChanges {
   return Object.fromEntries(
@@ -19,7 +19,7 @@ function toStoreDto(apiDtos: DataChangeRecord[]): StoreDataChanges {
 export type DataChangesStore = ReturnType<typeof createDataChangesStore>;
 
 export function createDataChangesStore(userId: string) {
-  const { storeStateGuard } = createStoreStateGuard();
+  const runLatest = createLatestOnly();
 
   const dataChanges = ref<StoreDataChanges>();
 
@@ -39,32 +39,28 @@ export function createDataChangesStore(userId: string) {
   }
 
   async function loadDataFromApi() {
-    let apiResult: StoreDataChanges | undefined;
-
-    const isCurrentState = await storeStateGuard(
-      () =>
-        dataChangesApi
-          .getTimestamps()
-          .then(toStoreDto)
-          .catch((error) => {
-            console.error("Failed to load data changes:", error);
-            return undefined;
-          }),
-      (apiDataChanges) => {
-        apiResult = apiDataChanges;
-      },
+    const apiDataChanges = await runLatest(() =>
+      dataChangesApi
+        .getTimestamps()
+        .then(toStoreDto)
+        .catch((error) => console.error("Failed to load data changes:", error)),
     );
-    if (!isCurrentState) return;
 
-    if (apiResult !== undefined) {
-      dataChanges.value = apiResult;
-      dataChangesStorage.save(userId, apiResult);
+    if (apiDataChanges === undefined) {
+      return;
     }
+
+    dataChanges.value = apiDataChanges;
+    saveDataToStorage();
   }
 
-  return reactive({ 
+  function saveDataToStorage() {
+    dataChangesStorage.save(userId, dataChanges.value!);
+  }
+
+  return reactive({
     dataChanges,
     loadDataFromStorage,
-    loadDataFromApi
-  })
-};
+    loadDataFromApi,
+  });
+}

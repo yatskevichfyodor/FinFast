@@ -2,12 +2,12 @@ import { expenseClient } from "@/services/api/http";
 import type { Category, CategoryInput, CustomAndHiddenSystemCategoriesDto, CustomCategory } from "@/types/category";
 
 export const categoryApi = {
-  async getCustomAndHiddenSystemCategories() {
+  async getCustomAndHiddenSystemCategories(): Promise<CustomAndHiddenSystemCategoriesDto> {
     const { data } = await expenseClient.get<CustomAndHiddenSystemCategoriesDto>("/categories");
     return data;
   },
 
-  async getCustomCategories() {
+  async getCustomCategories(): Promise<Category[]> {
     const { data } = await expenseClient.get<Category[]>("/categories/custom");
     return data;
   },
@@ -33,7 +33,7 @@ export const categoryApi = {
     return expenseClient.post(`/categories/custom/${id}/restore`);
   },
   
-  async getSystemHiddenCategoriesIds() {
+  async getSystemHiddenCategoriesIds(): Promise<string[]> {
     const { data } = await expenseClient.get<string[]>("/categories/system/hidden");
     return data;
   },
