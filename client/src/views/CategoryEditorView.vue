@@ -5,7 +5,7 @@ import type { Category, CategoryInput } from "@/types/category";
 import { useCategoryStore } from "@/stores";
 import mdiIcons from "@iconify-json/mdi/icons.json";
 import simpleIcons from "@iconify-json/simple-icons/icons.json";
-import { useDebounce } from "@vueuse/core";
+import { refDebounced } from "@vueuse/core";
 
 interface IconifyIconsJson {
   icons: Record<string, unknown>;
@@ -214,7 +214,7 @@ const iconScroll = ref<HTMLElement | null>(null);
 const canScrollUp = ref(false);
 const canScrollDown = ref(true);
 const iconSearch = ref("");
-const debouncedIconSearch = useDebounce(iconSearch, 200);
+const debouncedIconSearch = refDebounced(iconSearch, 200);
 const visibleIconOptions = computed(() => {
   const query = debouncedIconSearch.value.trim().toLowerCase();
 
