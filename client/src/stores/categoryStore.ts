@@ -147,10 +147,16 @@ export function createCategoryStore(userId: string) {
     saveCache();
   }
 
-  async function removeCustomCategory(id: string) {
-    await categoryApi.deleteCustomCategory(id);
+  async function hideCustomCategory(id: string) {
+    await categoryApi.hideCustomCategory(id);
     const category = customCategories.value.find((it) => it.id === id);
     if (category) category.deleted = true;
+    saveCache();
+  }
+
+  async function removeCustomCategory(id: string) {
+    await categoryApi.deleteCustomCategory(id);
+    customCategories.value = customCategories.value.filter((it) => it.id !== id);
     saveCache();
   }
 
@@ -194,6 +200,7 @@ export function createCategoryStore(userId: string) {
     loadDataFromApi,
     createCustomCategory,
     updateCustomCategory,
+    hideCustomCategory,
     removeCustomCategory,
     restoreCustomCategory,
     hideSystemCategory,

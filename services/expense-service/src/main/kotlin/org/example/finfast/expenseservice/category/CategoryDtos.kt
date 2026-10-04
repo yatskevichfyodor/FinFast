@@ -9,7 +9,7 @@ data class CustomCategoryDto(
     val icon: String,
     val color: String,
     val createdAt: Instant,
-    val deletedAt: Instant?
+    val hiddenAt: Instant?
 )
 
 data class CategoryInputDto(

@@ -55,7 +55,7 @@ class CategoryService(
         validateInput(input)
         val currentUserId = currentUser.id()
         val category = ownedCategory(currentUserId, id)
-        if (category.deletedAt != null) throw InvalidCategoryException("Deleted category cannot be edited")
+        if (category.hiddenAt != null) throw InvalidCategoryException("Hidden category cannot be edited")
         category.name = input.name.trim()
         category.icon = input.icon
         category.color = input.color
@@ -65,11 +65,26 @@ class CategoryService(
     }
 
     @Transactional
+    fun hideCustomCategory(id: UUID) {
+        val currentUserId = currentUser.id()
+        val category = ownedCategory(currentUserId, id)
+        category.hiddenAt = Instant.now()
+        customRepository.save(category)
+        saveCategoriesChangeTimestamp(currentUserId)
+    }
+
+    @Transactional
     fun deleteCustomCategory(id: UUID) {
         val currentUserId = currentUser.id()
         val category = ownedCategory(currentUserId, id)
-        category.deletedAt = Instant.now()
-        customRepository.save(category)
+
+        expenseRepository.findAllByCustomCategoryIdAndDeletedAtIsNull(id)
+            .forEach { expense ->
+                expense.customCategoryId = null
+                expense.categoryId = null
+            }
+
+        customRepository.delete(category)
         saveCategoriesChangeTimestamp(currentUserId)
     }
 
@@ -77,7 +92,7 @@ class CategoryService(
     fun restoreCustomCategory(id: UUID) {
         val currentUserId = currentUser.id()
         val category = ownedCategory(currentUserId, id)
-        category.deletedAt = null
+        category.hiddenAt = null
         customRepository.save(category)
         saveCategoriesChangeTimestamp(currentUserId)
     }
@@ -130,5 +145,5 @@ class CategoryService(
 }
 
 private fun CustomCategory.toDto(category: CustomCategory) = CustomCategoryDto(
-    category.id, category.name, category.icon, category.color, category.createdAt, category.deletedAt
+    category.id, category.name, category.icon, category.color, category.createdAt, category.hiddenAt
 )

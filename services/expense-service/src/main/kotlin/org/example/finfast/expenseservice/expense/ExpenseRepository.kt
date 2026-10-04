@@ -17,4 +17,6 @@ interface ExpenseRepository : JpaRepository<Expense, ExpenseId> {
     fun deleteAllByDeletedAtBefore(before: Instant): Int
 
     fun countByCustomCategoryIdAndDeletedAtIsNull(categoryId: UUID): Long
+
+    fun findAllByCustomCategoryIdAndDeletedAtIsNull(categoryId: UUID): List<Expense>
 }

@@ -22,6 +22,6 @@ class CustomCategory(
     var color: String,
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant,
-    @Column(name = "deleted_at")
-    var deletedAt: Instant? = null
+    @Column(name = "hidden_at")
+    var hiddenAt: Instant? = null
 )

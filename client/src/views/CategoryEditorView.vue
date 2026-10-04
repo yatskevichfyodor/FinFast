@@ -6,6 +6,7 @@ import { useCategoryStore } from "@/stores";
 import mdiIcons from "@iconify-json/mdi/icons.json";
 import simpleIcons from "@iconify-json/simple-icons/icons.json";
 import { refDebounced } from "@vueuse/core";
+import { categoryApi } from "@/services/api/categoryApi";
 
 interface IconifyIconsJson {
   icons: Record<string, unknown>;
@@ -215,6 +216,16 @@ const canScrollUp = ref(false);
 const canScrollDown = ref(true);
 const iconSearch = ref("");
 const debouncedIconSearch = refDebounced(iconSearch, 200);
+const deleteWarning = ref<{
+  category: Category;
+  linkedExpensesCount: number;
+} | null>(null);
+const showDeleteWarning = computed({
+  get: () => !!deleteWarning.value,
+  set: (value: boolean) => {
+    if (!value) deleteWarning.value = null;
+  },
+});
 const visibleIconOptions = computed(() => {
   const query = debouncedIconSearch.value.trim().toLowerCase();
 
@@ -274,6 +285,41 @@ async function save() {
     await store.updateCustomCategory(editingId.value, form.value);
   else await store.createCustomCategory(form.value);
   dialog.value = false;
+}
+
+async function handleDeleteCategory(category: Category) {
+  try {
+    const linkedExpensesCount = await categoryApi.getNumberOfLinkedExpenses(
+      category.id,
+    );
+
+    if (linkedExpensesCount > 0) {
+      deleteWarning.value = {
+        category,
+        linkedExpensesCount,
+      };
+      return;
+    }
+
+    await store.removeCustomCategory(category.id);
+  } catch (error) {
+    console.error("Failed to check linked expenses before delete:", error);
+    await store.removeCustomCategory(category.id);
+  }
+}
+
+async function confirmDeleteCategory(mode: "hide" | "delete") {
+  if (!deleteWarning.value) return;
+
+  const { category } = deleteWarning.value;
+  deleteWarning.value = null;
+
+  if (mode === "hide") {
+    await store.hideCustomCategory(category.id);
+    return;
+  }
+
+  await store.removeCustomCategory(category.id);
 }
 </script>
 
@@ -365,7 +411,7 @@ async function save() {
                   icon="mdi-delete-outline"
                   variant="text"
                   title="Удалить"
-                  @click="store.removeCustomCategory(category.id)"
+                  @click="handleDeleteCategory(category)"
                 />
               </template>
             </template>
@@ -376,6 +422,32 @@ async function save() {
         </div>
       </section>
     </div>
+
+    <v-dialog v-model="showDeleteWarning" max-width="460">
+      <v-card v-if="deleteWarning">
+        <v-card-title class="mx-auto">Удаление категории</v-card-title>
+        <v-card-text>
+          <div class="text-body-1 mb-2">
+            У категории <strong>{{ deleteWarning.category.name }}</strong> есть
+            {{ deleteWarning.linkedExpensesCount }} связанных расходов.
+          </div>
+          <div class="text-body-2 text-medium-emphasis">
+            Вы можете скрыть категорию, не затрагивая существующие платежи, или
+            удалить её — тогда категория будет сброшена у связанных расходов.
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="deleteWarning = null">Отмена</v-btn>
+          <v-btn color="primary" @click="confirmDeleteCategory('hide')">
+            Скрыть
+          </v-btn>
+          <v-btn color="error" @click="confirmDeleteCategory('delete')">
+            Удалить
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <v-dialog v-model="dialog" max-width="520">
       <v-card>

@@ -203,7 +203,7 @@ class ExpenseService(
         }
 
         if (customCategoryId != null &&
-            !customCategoryRepository.existsByIdAndUserIdAndDeletedAtIsNull(customCategoryId, userId)
+            !customCategoryRepository.existsByIdAndUserIdAndHiddenAtIsNull(customCategoryId, userId)
         ) {
             throw InvalidCategoryException("Custom category is not available")
         }

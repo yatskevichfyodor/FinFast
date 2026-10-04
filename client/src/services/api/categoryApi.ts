@@ -25,6 +25,10 @@ export const categoryApi = {
     return data;
   },
 
+  hideCustomCategory(categoryId: string) {
+    return expenseClient.post(`/categories/custom/${categoryId}/hide`);
+  },
+
   deleteCustomCategory(categoryId: string) {
     return expenseClient.delete(`/categories/custom/${categoryId}`);
   },
@@ -33,9 +37,11 @@ export const categoryApi = {
     return expenseClient.post(`/categories/custom/${categoryId}/restore`);
   },
 
-  async getNumberOfLinkedExpenses(categoryId: string): Promise<Number> {
-    const { data } = await expenseClient.get<Number>(`/custom/${categoryId}/count`);
-    return data;
+  async getNumberOfLinkedExpenses(categoryId: string): Promise<number> {
+    const { data } = await expenseClient.get<number>(
+      `/categories/custom/${categoryId}/count`,
+    );
+    return Number(data);
   },
   
   async getSystemHiddenCategoriesIds(): Promise<string[]> {

@@ -20,6 +20,11 @@ class CategoryController(private val service: CategoryService) {
     fun updateCustomCategory(@PathVariable categoryId: UUID, @RequestBody input: CategoryInputDto) =
         ResponseEntity.ok(service.updateCustomCategory(categoryId, input))
 
+    @PostMapping("/custom/{categoryId}/hide")
+    fun hideCustomCategory(@PathVariable categoryId: UUID): ResponseEntity<Void> {
+        service.hideCustomCategory(categoryId); return ResponseEntity.ok().build()
+    }
+
     @DeleteMapping("/custom/{categoryId}")
     fun deleteCustomCategory(@PathVariable categoryId: UUID): ResponseEntity<Void> {
         service.deleteCustomCategory(categoryId); return ResponseEntity.noContent().build()
