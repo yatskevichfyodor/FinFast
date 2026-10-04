@@ -17,20 +17,25 @@ export const categoryApi = {
     return data;
   },
 
-  async updateCustomCategory(id: string, input: CategoryInput) {
+  async updateCustomCategory(categoryId: string, input: CategoryInput) {
     const { data } = await expenseClient.patch<Category>(
-      `/categories/custom/${id}`,
+      `/categories/custom/${categoryId}`,
       input,
     );
     return data;
   },
 
-  deleteCustomCategory(id: string) {
-    return expenseClient.delete(`/categories/custom/${id}`);
+  deleteCustomCategory(categoryId: string) {
+    return expenseClient.delete(`/categories/custom/${categoryId}`);
   },
 
-  restoreCustomCategory(id: string) {
-    return expenseClient.post(`/categories/custom/${id}/restore`);
+  restoreCustomCategory(categoryId: string) {
+    return expenseClient.post(`/categories/custom/${categoryId}/restore`);
+  },
+
+  async getNumberOfLinkedExpenses(categoryId: string): Promise<Number> {
+    const { data } = await expenseClient.get<Number>(`/custom/${categoryId}/count`);
+    return data;
   },
   
   async getSystemHiddenCategoriesIds(): Promise<string[]> {

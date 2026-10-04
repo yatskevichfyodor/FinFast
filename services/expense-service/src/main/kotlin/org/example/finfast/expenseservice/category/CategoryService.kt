@@ -1,6 +1,7 @@
 package org.example.finfast.expenseservice.category
 
 import org.example.finfast.expenseservice.InvalidCategoryException
+import org.example.finfast.expenseservice.expense.ExpenseRepository
 import org.example.finfast.expenseservice.security.CurrentUser
 import org.example.finfast.expenseservice.userdatachange.UserDataChangeService
 import org.example.finfast.expenseservice.userdatachange.UserDataType
@@ -14,6 +15,7 @@ class CategoryService(
     private val currentUser: CurrentUser,
     private val customRepository: CustomCategoryRepository,
     private val hiddenCategoryRepository: HiddenSystemCategoryRepository,
+    private val expenseRepository: ExpenseRepository,
     private val userDataChangeService: UserDataChangeService
 ) {
     @Transactional(readOnly = true)
@@ -99,6 +101,13 @@ class CategoryService(
         val currentUserId = currentUser.id()
         hiddenCategoryRepository.deleteById(UserHiddenSystemCategoryId(currentUserId, id))
         saveCategoriesChangeTimestamp(currentUserId)
+    }
+
+    @Transactional(readOnly = true)
+    fun getNumberOfLinkedExpenses(categoryId: UUID): Long {
+        val currentUserId = currentUser.id()
+        ownedCategory(currentUserId, categoryId)
+        return expenseRepository.countByCustomCategoryIdAndDeletedAtIsNull(categoryId)
     }
 
     private fun ownedCategory(userId: UUID, id: UUID): CustomCategory =

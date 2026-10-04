@@ -16,19 +16,23 @@ class CategoryController(private val service: CategoryService) {
     @PostMapping("/custom")
     fun createCustomCategory(@RequestBody input: CategoryInputDto) = ResponseEntity.status(201).body(service.createCustomCategory(input))
 
-    @PatchMapping("/custom/{id}")
-    fun updateCustomCategory(@PathVariable id: UUID, @RequestBody input: CategoryInputDto) =
-        ResponseEntity.ok(service.updateCustomCategory(id, input))
+    @PatchMapping("/custom/{categoryId}")
+    fun updateCustomCategory(@PathVariable categoryId: UUID, @RequestBody input: CategoryInputDto) =
+        ResponseEntity.ok(service.updateCustomCategory(categoryId, input))
 
-    @DeleteMapping("/custom/{id}")
-    fun deleteCustomCategory(@PathVariable id: UUID): ResponseEntity<Void> {
-        service.deleteCustomCategory(id); return ResponseEntity.noContent().build()
+    @DeleteMapping("/custom/{categoryId}")
+    fun deleteCustomCategory(@PathVariable categoryId: UUID): ResponseEntity<Void> {
+        service.deleteCustomCategory(categoryId); return ResponseEntity.noContent().build()
     }
 
-    @PostMapping("/custom/{id}/restore")
-    fun restoreCustomCategory(@PathVariable id: UUID): ResponseEntity<Void> {
-        service.restoreCustomCategory(id); return ResponseEntity.ok().build()
+    @PostMapping("/custom/{categoryId}/restore")
+    fun restoreCustomCategory(@PathVariable categoryId: UUID): ResponseEntity<Void> {
+        service.restoreCustomCategory(categoryId); return ResponseEntity.ok().build()
     }
+
+    @GetMapping("/custom/{categoryId}/count")
+    fun getHiddenSystemCategories(@PathVariable categoryId: UUID) =
+        ResponseEntity.ok(service.getNumberOfLinkedExpenses(categoryId))
 
     @GetMapping("/system/hidden")
     fun getHiddenSystemCategories() = ResponseEntity.ok(service.getHiddenSystemCategories())

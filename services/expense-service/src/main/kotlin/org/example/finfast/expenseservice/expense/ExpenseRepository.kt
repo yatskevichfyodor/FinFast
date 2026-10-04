@@ -15,4 +15,6 @@ interface ExpenseRepository : JpaRepository<Expense, ExpenseId> {
     @Modifying
     @Query("DELETE FROM Expense e WHERE e.deletedAt IS NOT NULL AND e.deletedAt < :before")
     fun deleteAllByDeletedAtBefore(before: Instant): Int
+
+    fun countByCustomCategoryIdAndDeletedAtIsNull(categoryId: UUID): Long
 }
