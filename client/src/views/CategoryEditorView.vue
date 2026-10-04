@@ -13,18 +13,29 @@ const form = ref<CategoryInput>({
   color: "#607D8B",
 });
 const iconOptions = [
+  // other
   "mdi-tag-outline",
   "mdi-tag",
   "mdi-label",
+
+  // clothes
   "mdi-tshirt-crew",
+
+  // food
   "mdi-food",
   "mdi-food-apple",
   "mdi-food-drumstick",
   "mdi-silverware-fork-knife",
   "mdi-coffee",
   "mdi-cake",
+
+  // shopping
   "mdi-cart",
   "mdi-basket",
+  "mdi-shopping",
+  "mdi-gift",
+
+  // transport
   "mdi-car",
   "mdi-bus",
   "mdi-train",
@@ -33,53 +44,70 @@ const iconOptions = [
   "mdi-airplane",
   "mdi-taxi",
   "mdi-fuel",
+  "mdi-walk",
+  
+  // health
+  "mdi-run",
+  "mdi-heart",
+  "mdi-heart-pulse",
+  "mdi-hospital-box",
+  "mdi-pill",
+
+  // home
   "mdi-home",
   "mdi-office-building",
   "mdi-city",
-  "mdi-bed",
   "mdi-sofa",
+  "mdi-bed",
+
+
+  // stationery
+  "mdi-pencil",
+  "mdi-notebook-outline",
+  "mdi-notebook-edit-outline",
+  "mdi-paperclip",
+  "mdi-file-document-outline",
+  "mdi-file-outline",
+
+  // renovation and building
   "mdi-lightbulb",
   "mdi-water",
+  "mdi-faucet",
   "mdi-tools",
   "mdi-hammer",
   "mdi-wrench",
-  "mdi-faucet",
   "mdi-hammer-wrench",
   "mdi-toolbox",
-  "mdi-ladder",
   "mdi-format-paint",
   "mdi-spray",
   "mdi-truck",
-  "mdi-shopping",
-  "mdi-gift",
+  
+  // finances
   "mdi-cash",
   "mdi-credit-card",
   "mdi-bank",
   "mdi-bitcoin",
   "mdi-chart-line",
-  "mdi-briefcase",
-  "mdi-school",
-  "mdi-school-outline",
-  "mdi-calculator",
-  "mdi-laptop",
-  "mdi-cellphone",
-  "mdi-monitor",
-  "mdi-printer",
+  
+  // entartainment
   "mdi-gamepad-variant",
   "mdi-dice-multiple",
   "mdi-music",
   "mdi-movie",
   "mdi-theater",
+
+
+  "mdi-school",
+  "mdi-calculator",
+  "mdi-laptop",
+  "mdi-cellphone",
+  "mdi-monitor",
+  "mdi-printer",
   "mdi-camera",
   "mdi-image",
   "mdi-guitar-acoustic",
   "mdi-microphone",
-  "mdi-heart",
-  "mdi-heart-pulse",
-  "mdi-hospital-box",
-  "mdi-pill",
   "mdi-dumbbell",
-  "mdi-run",
   "mdi-paw",
   "mdi-dog",
   "mdi-cat",
