@@ -67,9 +67,3 @@ class OutboxEventPublisher @Inject constructor(
         return outboxEventRepository.save(event)
     }
 }
-
-@ConfigMapping(prefix = "finfast.outbox")
-interface OutboxConfig {
-    @WithDefault("5")
-    fun maxAttempts(): Int
-}

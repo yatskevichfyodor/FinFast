@@ -1,5 +1,6 @@
 quarkus:
   http:
+    host: 0.0.0.0
     port: 8082
     cors:
       origins: http://localhost:5173,http://localhost:4173
@@ -10,6 +11,11 @@ quarkus:
     jdbc:
       # DATABASE_HOST will be postgres for local launch in docker container
       url: jdbc:postgresql://${DATABASE_HOST:localhost}:5432/finfast
+mp:
+  messaging:
+    outgoing:
+      user-events-out:
+        enabled: false # disable kafka spam
 
 kafka:
   bootstrap:
@@ -24,8 +30,12 @@ logging:
   level:
     root: INFO
     org.example.finfast: DEBUG
-    org.springframework.security: DEBUG
+    org.apache.kafka: ERROR
+    org.smallrye.reactive.messaging.kafka: ERROR
+    io.smallrye.reactive.messaging.kafka: ERROR
 
 finfast:
   google:
     client-id: 1034212438621-0aqca3sr7q7ps8e3p2fs2e586lhjcp53.apps.googleusercontent.com
+  outbox:
+    enabled: false

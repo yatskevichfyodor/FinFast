@@ -22,6 +22,8 @@ logging:
     org.springframework.security: DEBUG
     com.nimbusds.jose: DEBUG
     org.springframework.security.oauth2.jwt: DEBUG
+    org.apache.kafka: ERROR
+    org.springframework.kafka: ERROR
 
 finfast:
   auth-service:

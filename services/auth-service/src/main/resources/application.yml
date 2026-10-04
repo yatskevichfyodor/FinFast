@@ -43,4 +43,5 @@ finfast:
     key-ttl-minutes: 1440 # 24 hours for old key retention
     rotation-interval: 7d # 7 days for key rotation
   outbox:
+    enabled: true
     max-attempts: 5
