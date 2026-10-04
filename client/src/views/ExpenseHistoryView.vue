@@ -4,13 +4,12 @@ import { useRouter } from "vue-router";
 
 import { parseDate } from "@/utils/dateHelpers";
 import { format, parse } from "date-fns";
-import { useCategoryStore } from "@/stores/categoryStore";
 import type { Expense } from "@/types/expense";
-import { useExpenseStore } from "@/stores";
+import { useCategoryStore, useExpenseStore } from "@/stores";
 
 const router = useRouter();
 const expenseStore = useExpenseStore().value!;
-const categoryStore = useCategoryStore();
+const categoryStore = useCategoryStore().value!;
 
 onMounted(() => {
   void expenseStore.refreshExpenses();
@@ -20,7 +19,7 @@ const deleteDialogOpen = ref(false);
 const expenseToDelete = ref<Expense | null>(null);
 
 const activeExpenses = computed<Expense[]>(() =>
-  expenseStore.expenses.filter((expense) => !expense.deletedAt),
+  expenseStore.expenses.filter(expense => !expense.deletedAt),
 );
 
 function formatDisplayDate(date: string): string {

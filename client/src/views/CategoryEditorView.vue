@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { Icon } from "@iconify/vue";
-import { useCategoryStore } from "@/stores/categoryStore";
 import type { Category, CategoryInput } from "@/types/category";
+import { useCategoryStore } from "@/stores";
 
-const store = useCategoryStore();
+const store = useCategoryStore().value!;
 const dialog = ref(false);
 const editingId = ref<string | null>(null);
 const form = ref<CategoryInput>({

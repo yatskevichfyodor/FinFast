@@ -7,38 +7,49 @@ import { updateAvailable } from "@/services/pwaUpdate";
 import { useAuthStore } from "./stores/authStore";
 import {
   pinia,
+  setCategoryStore,
   setDataChangesStore,
   setExpenseStore,
+  useCategoryStore,
   useDataChangesStore,
   useExpenseStore,
 } from "./stores";
 import { buildPopularCategoryOrder } from "./services/categoryPopularity";
-import { useCategoryStore } from "./stores/categoryStore";
 
 const route = useRoute();
 const showNavigation = computed(() => route.meta.requiresAuth === true);
 const showUserMenu = ref(false);
+const dataChangesStoreReady = ref(false);
+const categoryStoreReady = ref(false);
 const expenseStoreReady = ref(false);
+const storesReady = computed(() => dataChangesStoreReady.value && categoryStoreReady.value && expenseStoreReady.value)
 
 const authStore = useAuthStore(pinia);
-
 const dataChangesStore = useDataChangesStore();
-const categoryStore = useCategoryStore(pinia);
+const categoryStore = useCategoryStore();
 
 async function refreshStores(userId: string | null) {
   setDataChangesStore(userId);
   if (dataChangesStore.value) {
-    dataChangesStore.value.init();
+    dataChangesStore.value.loadDataFromStorage();
+    dataChangesStore.value.loadDataFromApi(); // without wating for completion
+    dataChangesStoreReady.value = true;
+  }
+
+  setCategoryStore(userId);
+  if (categoryStore.value) {
+    await categoryStore.value.loadDataFromStorage();
+    categoryStore.value.loadDataFromApi(); // without wating for completion
+    categoryStoreReady.value = true;
   }
 
   setExpenseStore(userId);
   const expenseStore = useExpenseStore();
   if (expenseStore.value) {
-    await expenseStore.value.init();
+    await expenseStore.value.loadDataFromStorage();
     expenseStoreReady.value = true;
   }
 
-  await categoryStore.init();
   if (expenseStore.value) {
     buildPopularCategoryOrder(expenseStore.value.expenses);
   }
@@ -46,13 +57,15 @@ async function refreshStores(userId: string | null) {
 
 watch(
   () => authStore.userId,
-  refreshStores,
+  async (userId) => {
+    await refreshStores(userId)
+  },
   { immediate: true },
 );
 </script>
 
 <template>
-  <v-app>
+  <v-app v-if="storesReady">
     <RouterView />
     <template v-if="showNavigation">
       <AppNavigation />

@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import type { Category } from '@/types/category'
-import { useCategoryStore } from '@/stores/categoryStore'
+import { useCategoryStore } from '@/stores';
 
 const props = defineProps<{
   selectedCategoryId: string | null
@@ -14,7 +14,7 @@ const emit = defineEmits<{
   'update:selectedCustomCategoryId': [value: string | null]
 }>()
 
-const categoryStore = useCategoryStore()
+const categoryStore = useCategoryStore().value!
 
 const displayedCategories = computed(() => categoryStore.availableCategories)
 

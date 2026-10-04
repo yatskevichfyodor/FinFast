@@ -35,11 +35,7 @@ export function createExpenseStore(userId: string) {
 
   const expenses = ref<Expense[]>([]);
 
-  async function init() {
-    await loadExpensesFromStorage();
-  }
-
-  async function loadExpensesFromStorage() {
+  async function loadDataFromStorage() {
     expenses.value = [];
 
     await storeStateGuard(
@@ -130,7 +126,7 @@ export function createExpenseStore(userId: string) {
   });
 
   async function refreshExpenses() {
-    await loadExpensesFromStorage();
+    await loadDataFromStorage();
     if (!authStore.isOffline) {
       try {
         await syncExpensesChanges();
@@ -376,7 +372,7 @@ export function createExpenseStore(userId: string) {
         return;
       }
 
-      await loadExpensesFromStorage();
+      await loadDataFromStorage();
       const currentExpensesIds = new Set(
         expenses.value.map((expense) => expense.id),
       );
@@ -422,8 +418,7 @@ export function createExpenseStore(userId: string) {
 
   return reactive({ // reactive helps to access expenses directly: expenseStore.expenses instead of expenseStore.expenses.value
     expenses,
-    init,
-    loadExpensesFromStorage,
+    loadDataFromStorage,
     refreshExpenses,
     clearUserExpenses,
     createExpense,

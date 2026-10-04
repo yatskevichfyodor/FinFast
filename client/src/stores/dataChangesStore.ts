@@ -23,12 +23,7 @@ export function createDataChangesStore(userId: string) {
 
   const dataChanges = ref<StoreDataChanges>();
 
-  function init() {
-    loadDataFromLocal();
-    loadDataFromApi();
-  }
-
-  function loadDataFromLocal() {
+  function loadDataFromStorage() {
     dataChanges.value = dataChangesStorage.get(userId);
     dataChanges.value ??= {};
     dataChanges.value.EXPENSE ??= {
@@ -69,6 +64,7 @@ export function createDataChangesStore(userId: string) {
 
   return reactive({ 
     dataChanges,
-    init 
+    loadDataFromStorage,
+    loadDataFromApi
   })
 };

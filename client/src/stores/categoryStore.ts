@@ -1,5 +1,4 @@
-import { computed, ref, watch } from "vue";
-import { defineStore } from "pinia";
+import { computed, reactive, ref, watch } from "vue";
 import { categoryApi } from "@/services/api/categoryApi";
 import {
   DEFAULT_CATEGORY_DISPLAY,
@@ -12,12 +11,14 @@ import { createStoreStateGuard } from "@/utils/storeStateGuard";
 import hiddenSystemCategoryStorage from "@/storage/hiddenSystemCategoryStorage";
 import { useDataChangesStore } from ".";
 
+export type CategoryStore = ReturnType<typeof createCategoryStore>
+
 const LOCAL_STORAGE_LAST_SYNC_KEY = "finfast-categories-last-sync";
 
-export const useCategoryStore = defineStore("category", () => {
+export function createCategoryStore(userId: string) {
   const authStore = useAuthStore();
   const dataChangeStore = useDataChangesStore().value!;
-  const { storeStateGuard } = createStoreStateGuard(() => authStore.userId);
+  const { storeStateGuard } = createStoreStateGuard();
   const customCategories = ref<Category[]>([]);
   const hiddenSystemCategoriesIds = ref<string[]>([]);
   const systemCategories = computed(() => {
@@ -76,33 +77,27 @@ export const useCategoryStore = defineStore("category", () => {
     );
   }
 
-  watch(
-    () => authStore.userId,
-    () => {
-      void init();
-    },
-    { immediate: true },
-  );
+  async function loadDataFromStorage() {
+    customCategories.value = await customCategoryStorage.loadCategories(userId)
+    hiddenSystemCategoriesIds.value = hiddenSystemCategoryStorage.get(userId);
+  }
 
-  async function init() {
-    const currentUserId = authStore.userId;
-    if (!currentUserId) return;
-    const lastSyncDatetime = getLastSyncDatetime(currentUserId);
+  async function loadDataFromApi() {
+    const lastSyncDatetime = getLastSyncDatetime(userId);
     const serverLastCategoryChangeDatetime = getLastCategoryChangeDatetime();
     if (serverHasNewerData(lastSyncDatetime, serverLastCategoryChangeDatetime)) {
-      const apiDataReceived = await loadCategoriesFromApi(currentUserId);
+      const apiDataReceived = await loadCategoriesFromApi();
       if (apiDataReceived) {
-        saveLastSyncDatetime(currentUserId, serverLastCategoryChangeDatetime);
+        saveLastSyncDatetime(userId, serverLastCategoryChangeDatetime);
         return
       }
     }
-    await loadCategoriesFromLocal(currentUserId);
   }
 
   /**
    * @returns true categories were updated with api data, else false
    */
-  async function loadCategoriesFromApi(currentUserId: string): Promise<boolean> {
+  async function loadCategoriesFromApi(): Promise<boolean> {
     let apiResult: CustomAndHiddenSystemCategoriesDto | undefined;
 
     const isCurrentState = await storeStateGuard(
@@ -121,15 +116,10 @@ export const useCategoryStore = defineStore("category", () => {
       return false;
       
     customCategories.value = apiResult.customCategories;
-    customCategoryStorage.saveCategories(currentUserId, apiResult.customCategories);
+    customCategoryStorage.saveCategories(userId, apiResult.customCategories);
     hiddenSystemCategoriesIds.value = apiResult.hiddenSystemCategoriesIds;
-    hiddenSystemCategoryStorage.save(currentUserId, apiResult.hiddenSystemCategoriesIds);
+    hiddenSystemCategoryStorage.save(userId, apiResult.hiddenSystemCategoriesIds);
     return true;
-  }
-
-  async function loadCategoriesFromLocal(currentUserId: string) {
-    customCategories.value = await customCategoryStorage.loadCategories(currentUserId)
-    hiddenSystemCategoriesIds.value = hiddenSystemCategoryStorage.get(currentUserId);
   }
 
   function saveCache() {
@@ -192,10 +182,11 @@ export const useCategoryStore = defineStore("category", () => {
     return getCategoryById(id) ?? DEFAULT_CATEGORY_DISPLAY;
   }
 
-  return {
+  return reactive({
     categories, 
     availableCategories,
-    init,
+    loadDataFromStorage,
+    loadDataFromApi,
     createCustomCategory,
     updateCustomCategory,
     removeCustomCategory,
@@ -203,5 +194,5 @@ export const useCategoryStore = defineStore("category", () => {
     hideSystemCategory,
     restoreSystemCategory,
     getCategoryDisplay,
-  };
-});
+  });
+};

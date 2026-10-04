@@ -1,197 +1,225 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useDropZone } from '@vueuse/core'
-import { useAuthStore } from '@/stores/authStore'
-import { expenseStorage } from '@/storage/indexedDB'
-import { validateJson, mergeExpenses, type ImportFileData } from '@/services/expenseImport'
-import { useExpenseStore } from '@/stores'
+import { ref, watch } from "vue";
+import { useDropZone } from "@vueuse/core";
+import { useAuthStore } from "@/stores/authStore";
+import { expenseStorage } from "@/storage/indexedDB";
+import {
+  validateJson,
+  mergeExpenses,
+  type ImportFileData,
+} from "@/services/expenseImport";
+import { useExpenseStore } from "@/stores";
 
-const props = defineProps<{ modelValue: boolean }>()
+const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
+  (e: "update:modelValue", value: boolean): void;
+}>();
 
 // Сбрасываем сообщения при открытии диалога
-watch(() => props.modelValue, (newValue) => {
-  if (newValue) {
-    resetMessages()
-  }
-})
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      resetMessages();
+    }
+  },
+);
 
-const authStore = useAuthStore()
-const expenseStore = useExpenseStore().value!
+const authStore = useAuthStore();
+const expenseStore = useExpenseStore().value!;
 
-const isLoading = ref(false)
-const errorMessage = ref<string | null>(null)
-const successMessage = ref<string | null>(null)
-const dropZoneRef = ref<HTMLElement | null>(null)
-const fileInput = ref<HTMLInputElement | null>(null)
-const isDragging = ref(false)
+const isLoading = ref(false);
+const errorMessage = ref<string | null>(null);
+const successMessage = ref<string | null>(null);
+const dropZoneRef = ref<HTMLElement | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
+const isDragging = ref(false);
 
 async function handleDrop(files: File[] | null) {
-  if (!files || files.length === 0) return
-  if (isLoading.value) return
+  if (!files || files.length === 0) return;
+  if (isLoading.value) return;
 
-  const file = files[0]
-  if (!file) return
+  const file = files[0];
+  if (!file) return;
 
   // Сбрасываем сообщения перед обработкой
-  resetMessages()
+  resetMessages();
 
-  await processFile(file)
+  await processFile(file);
 }
 
 const { isOverDropZone } = useDropZone(dropZoneRef, {
-  onDrop: handleDrop
-})
+  onDrop: handleDrop,
+});
 
 function handleDragOver(event: DragEvent) {
-  event.preventDefault()
-  event.stopPropagation()
-  isDragging.value = true
+  event.preventDefault();
+  event.stopPropagation();
+  isDragging.value = true;
 }
 
 function handleDragLeave(event: DragEvent) {
-  event.preventDefault()
-  event.stopPropagation()
-  isDragging.value = false
+  event.preventDefault();
+  event.stopPropagation();
+  isDragging.value = false;
 }
 
 function handleDragEnter(event: DragEvent) {
-  event.preventDefault()
-  event.stopPropagation()
-  isDragging.value = true
+  event.preventDefault();
+  event.stopPropagation();
+  isDragging.value = true;
 }
 
 function handleNativeDrop(event: DragEvent) {
-  event.preventDefault()
-  event.stopPropagation()
-  isDragging.value = false
+  event.preventDefault();
+  event.stopPropagation();
+  isDragging.value = false;
 
-  const files = event.dataTransfer?.files
+  const files = event.dataTransfer?.files;
   if (files && files.length > 0) {
-    const fileArray = Array.from(files)
-    handleDrop(fileArray)
+    const fileArray = Array.from(files);
+    handleDrop(fileArray);
   }
 }
 
 function cancel() {
-  resetMessages()
-  emit('update:modelValue', false)
+  resetMessages();
+  emit("update:modelValue", false);
 }
 
 function resetMessages() {
-  errorMessage.value = null
-  successMessage.value = null
+  errorMessage.value = null;
+  successMessage.value = null;
 }
 
 function triggerFileSelect() {
-  resetMessages()
-  fileInput.value?.click()
+  resetMessages();
+  fileInput.value?.click();
 }
 
 async function handleFileSelected(event: Event) {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
 
-  if (!file) return
+  if (!file) return;
 
-  await processFile(file)
+  await processFile(file);
 
   // Сбросим input, чтобы можно было выбрать тот же файл снова
-  target.value = ''
+  target.value = "";
 }
 
 async function processFile(file: File) {
   // Проверка расширения файла
-  if (!file.name.endsWith('.json')) {
-    if (file.name.endsWith('.csv')) {
-      errorMessage.value = 'CSV-файлы предназначены только для просмотра в Excel. Для импорта используйте JSON-файл, экспортированный через меню «Экспорт».'
+  if (!file.name.endsWith(".json")) {
+    if (file.name.endsWith(".csv")) {
+      errorMessage.value =
+        "CSV-файлы предназначены только для просмотра в Excel. Для импорта используйте JSON-файл, экспортированный через меню «Экспорт».";
     } else {
-      errorMessage.value = 'Можно импортировать только JSON-файлы, экспортированные через меню «Экспорт».'
+      errorMessage.value =
+        "Можно импортировать только JSON-файлы, экспортированные через меню «Экспорт».";
     }
-    return
+    return;
   }
 
   try {
-    isLoading.value = true
-    resetMessages()
+    isLoading.value = true;
+    resetMessages();
 
-    const fileContent = await readFile(file)
-    const validation = validateJson(fileContent)
+    const fileContent = await readFile(file);
+    const validation = validateJson(fileContent);
 
     if (validation.error) {
-      errorMessage.value = validation.error
-      return
+      errorMessage.value = validation.error;
+      return;
     }
 
-    const importedData = validation.data as ImportFileData
-    const userId = authStore.userId || 'anonymous'
+    const importedData = validation.data as ImportFileData;
+    const userId = authStore.userId || "anonymous";
 
     // Загружаем существующие расходы
-    const existingExpenses = await expenseStorage.loadExpenses(userId)
+    const existingExpenses = await expenseStorage.loadExpenses(userId);
 
     // Объединяем данные
-    const { merged, added, updated } = mergeExpenses(existingExpenses, importedData.expenses)
+    const { merged, added, updated } = mergeExpenses(
+      existingExpenses,
+      importedData.expenses,
+    );
 
     // Сохраняем объединённые данные
-    await expenseStorage.saveExpenses(userId, merged)
+    await expenseStorage.saveExpenses(userId, merged);
 
-    await expenseStore.loadExpensesFromStorage()
+    await expenseStore.loadDataFromStorage();
 
     // Показываем успешное сообщение
     if (added === 0 && updated === 0) {
-      successMessage.value = 'Импорт завершён. Нет новых данных.'
+      successMessage.value = "Импорт завершён. Нет новых данных.";
     } else if (updated === 0) {
-      successMessage.value = `Импорт успешен! Добавлено ${added} ${pluralExpense(added)}.`
+      successMessage.value = `Импорт успешен! Добавлено ${added} ${pluralExpense(added)}.`;
     } else if (added === 0) {
-      successMessage.value = `Импорт успешен! Обновлено ${updated} ${pluralExpense(updated)}.`
+      successMessage.value = `Импорт успешен! Обновлено ${updated} ${pluralExpense(updated)}.`;
     } else {
-      successMessage.value = `Импорт успешен! Добавлено ${added}, обновлено ${updated} ${pluralExpense(added + updated)}.`
+      successMessage.value = `Импорт успешен! Добавлено ${added}, обновлено ${updated} ${pluralExpense(added + updated)}.`;
     }
 
     // Закрываем диалог через 2 секунды
     setTimeout(() => {
-      emit('update:modelValue', false)
-    }, 2000)
+      emit("update:modelValue", false);
+    }, 2000);
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : 'Неизвестная ошибка при импорте'
-    errorMessage.value = `Ошибка: ${errorMsg}`
+    const errorMsg =
+      error instanceof Error ? error.message : "Неизвестная ошибка при импорте";
+    errorMessage.value = `Ошибка: ${errorMsg}`;
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 function readFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = (e) => {
-      const content = e.target?.result
-      if (typeof content === 'string') {
-        resolve(content)
+      const content = e.target?.result;
+      if (typeof content === "string") {
+        resolve(content);
       } else {
-        reject(new Error('Не удалось прочитать файл'))
+        reject(new Error("Не удалось прочитать файл"));
       }
-    }
-    reader.onerror = () => reject(new Error('Ошибка чтения файла'))
-    reader.readAsText(file)
-  })
+    };
+    reader.onerror = () => reject(new Error("Ошибка чтения файла"));
+    reader.readAsText(file);
+  });
 }
 
 function pluralExpense(count: number): string {
   if (count % 10 === 1 && count % 100 !== 11) {
-    return 'расхода'
+    return "расхода";
   }
-  if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) {
-    return 'расходов'
+  if (
+    count % 10 >= 2 &&
+    count % 10 <= 4 &&
+    (count % 100 < 10 || count % 100 >= 20)
+  ) {
+    return "расходов";
   }
-  return 'расходов'
+  return "расходов";
 }
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" max-width="480" @update:model-value="(v) => emit('update:modelValue', v)">
-    <v-card rounded="xl" class="import-card" @dragover.prevent @dragenter.prevent @dragleave.prevent @drop.prevent>
+  <v-dialog
+    :model-value="modelValue"
+    max-width="480"
+    @update:model-value="(v) => emit('update:modelValue', v)"
+  >
+    <v-card
+      rounded="xl"
+      class="import-card"
+      @dragover.prevent
+      @dragenter.prevent
+      @dragleave.prevent
+      @drop.prevent
+    >
       <div class="import-header">
         <div class="import-icon">
           <v-icon icon="mdi-file-upload-outline" size="25" />
@@ -199,18 +227,33 @@ function pluralExpense(count: number): string {
 
         <div>
           <div class="text-h6 font-weight-bold">Импорт расходов</div>
-          <div class="text-body-2 import-header-subtitle">Загрузите сохранённые данные</div>
+          <div class="text-body-2 import-header-subtitle">
+            Загрузите сохранённые данные
+          </div>
         </div>
       </div>
 
       <v-card-text class="px-5">
         <!-- Успешное сообщение -->
-        <v-alert v-if="successMessage" type="success" variant="tonal" class="mb-4" closable>
+        <v-alert
+          v-if="successMessage"
+          type="success"
+          variant="tonal"
+          class="mb-4"
+          closable
+        >
           {{ successMessage }}
         </v-alert>
 
         <!-- Сообщение об ошибке -->
-        <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-4" closable @click:close="resetMessages">
+        <v-alert
+          v-if="errorMessage"
+          type="error"
+          variant="tonal"
+          class="mb-4"
+          closable
+          @click:close="resetMessages"
+        >
           {{ errorMessage }}
         </v-alert>
 
@@ -223,7 +266,10 @@ function pluralExpense(count: number): string {
           <div
             ref="dropZoneRef"
             class="drop-zone py-8"
-            :class="{ 'drop-zone-active': (isOverDropZone || isDragging) && !isLoading, 'drop-zone-loading': isLoading }"
+            :class="{
+              'drop-zone-active': (isOverDropZone || isDragging) && !isLoading,
+              'drop-zone-loading': isLoading,
+            }"
             @click="triggerFileSelect"
             @dragover="handleDragOver"
             @dragenter="handleDragEnter"
@@ -231,14 +277,35 @@ function pluralExpense(count: number): string {
             @drop="handleNativeDrop"
           >
             <v-icon
-              :icon="isLoading ? 'mdi-loading' : isOverDropZone ? 'mdi-cloud-download' : 'mdi-cloud-upload'"
+              :icon="
+                isLoading
+                  ? 'mdi-loading'
+                  : isOverDropZone
+                    ? 'mdi-cloud-download'
+                    : 'mdi-cloud-upload'
+              "
               size="64"
-              :color="isLoading ? 'primary' : isOverDropZone ? 'primary' : 'medium-emphasis'"
+              :color="
+                isLoading
+                  ? 'primary'
+                  : isOverDropZone
+                    ? 'primary'
+                    : 'medium-emphasis'
+              "
               class="mb-3"
               :class="{ 'spin-animation': isLoading }"
             />
-            <p class="text-body-2" :class="isOverDropZone ? 'text-primary' : 'text-medium-emphasis'">
-              {{ isLoading ? 'Загрузка...' : isOverDropZone ? 'Отпустите файл для загрузки' : 'Перетащите файл или нажмите здесь для выбора' }}
+            <p
+              class="text-body-2"
+              :class="isOverDropZone ? 'text-primary' : 'text-medium-emphasis'"
+            >
+              {{
+                isLoading
+                  ? "Загрузка..."
+                  : isOverDropZone
+                    ? "Отпустите файл для загрузки"
+                    : "Перетащите файл или нажмите здесь для выбора"
+              }}
             </p>
           </div>
 
@@ -257,7 +324,7 @@ function pluralExpense(count: number): string {
           :disabled="isLoading"
           @click="cancel"
         >
-          {{ successMessage ? 'Закрыть' : 'Отмена' }}
+          {{ successMessage ? "Закрыть" : "Отмена" }}
         </v-btn>
       </v-card-actions>
 
@@ -365,6 +432,3 @@ function pluralExpense(count: number): string {
   pointer-events: none;
 }
 </style>
-
-
-
