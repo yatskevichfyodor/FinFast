@@ -7,17 +7,16 @@
     "dev": "vite",
     "type-check": "vue-tsc --build",
     "copy-404": "node scripts/copy-404.mjs",
-    
     "build-only": "vite build",
     "build-only:dev": "vite build --mode development",
-
     "build": "run-s type-check build-only copy-404",
     "build:dev": "run-s type-check build-only:dev",
-
     "preview": "vite preview",
     "preview:dev": "npm run build:dev && vite preview"
   },
   "dependencies": {
+    "@iconify-json/mdi": "^1.2.3",
+    "@iconify-json/simple-icons": "^1.2.98",
     "@iconify/vue": "^5.0.3",
     "@mdi/font": "^7.4.47",
     "@types/lodash-es": "^4.17.12",

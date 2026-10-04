@@ -3,6 +3,13 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { Icon } from "@iconify/vue";
 import type { Category, CategoryInput } from "@/types/category";
 import { useCategoryStore } from "@/stores";
+import mdiIcons from "@iconify-json/mdi/icons.json";
+import simpleIcons from "@iconify-json/simple-icons/icons.json";
+import { useDebounce } from "@vueuse/core";
+
+interface IconifyIconsJson {
+  icons: Record<string, unknown>;
+}
 
 const store = useCategoryStore().value!;
 const dialog = ref(false);
@@ -12,143 +19,190 @@ const form = ref<CategoryInput>({
   icon: "mdi-tag-outline",
   color: "#607D8B",
 });
-const iconOptions = [
+const popularIconOptions = [
   // other
-  "mdi-tag-outline",
-  "mdi-tag",
-  "mdi-label",
+  "mdi:dots-horizontal-circle",
+  "mdi:tag-outline",
+  "mdi:tag",
+  "mdi:label",
 
   // clothes
-  "mdi-tshirt-crew",
+  "mdi:tshirt-crew",
 
   // food
-  "mdi-food",
-  "mdi-food-apple",
-  "mdi-food-drumstick",
-  "mdi-silverware-fork-knife",
-  "mdi-coffee",
-  "mdi-cake",
+  "mdi:food",
+  "mdi:food-apple",
+  "mdi:food-drumstick",
+  "mdi:silverware-fork-knife",
+  "mdi:coffee",
+  "mdi:cake",
 
   // shopping
-  "mdi-cart",
-  "mdi-basket",
-  "mdi-shopping",
-  "mdi-gift",
+  "mdi:cart",
+  "mdi:basket",
+  "mdi:shopping",
+  "mdi:gift",
 
   // transport
-  "mdi-car",
-  "mdi-bus",
-  "mdi-train",
-  "mdi-bike",
-  "mdi-scooter",
-  "mdi-airplane",
-  "mdi-taxi",
-  "mdi-fuel",
-  "mdi-walk",
-  
+  "mdi:car",
+  "mdi:bus",
+  "mdi:train",
+  "mdi:bike",
+  "mdi:scooter",
+  "mdi:airplane",
+  "mdi:taxi",
+  "mdi:fuel",
+  "mdi:walk",
+
   // health
-  "mdi-run",
-  "mdi-heart",
-  "mdi-heart-pulse",
-  "mdi-hospital-box",
-  "mdi-pill",
+  "mdi:run",
+  "mdi:heart",
+  "mdi:heart-pulse",
+  "mdi:hospital-box",
+  "mdi:pill",
 
   // home
-  "mdi-home",
-  "mdi-office-building",
-  "mdi-city",
-  "mdi-sofa",
-  "mdi-bed",
-
+  "mdi:home",
+  "mdi:office-building",
+  "mdi:city",
+  "mdi:sofa",
+  "mdi:bed",
 
   // stationery
-  "mdi-pencil",
-  "mdi-notebook-outline",
-  "mdi-notebook-edit-outline",
-  "mdi-paperclip",
-  "mdi-file-document-outline",
-  "mdi-file-outline",
+  "mdi:notebook-outline",
+  "mdi:notebook-edit-outline",
+  "mdi:paperclip",
+  "mdi:file-document-outline",
+  "mdi:file-outline",
 
   // renovation and building
-  "mdi-lightbulb",
-  "mdi-water",
-  "mdi-faucet",
-  "mdi-tools",
-  "mdi-hammer",
-  "mdi-wrench",
-  "mdi-hammer-wrench",
-  "mdi-toolbox",
-  "mdi-format-paint",
-  "mdi-spray",
-  "mdi-truck",
-  
+  "mdi:lightbulb",
+  "mdi:water",
+  "mdi:faucet",
+  "mdi:tools",
+  "mdi:hammer",
+  "mdi:wrench",
+  "mdi:hammer-wrench",
+  "mdi:toolbox",
+  "mdi:format-paint",
+  "mdi:spray",
+  "mdi:truck",
+
   // finances
-  "mdi-cash",
-  "mdi-credit-card",
-  "mdi-bank",
-  "mdi-bitcoin",
-  "mdi-chart-line",
-  
+  "mdi:cash",
+  "mdi:credit-card",
+  "mdi:bank",
+  "mdi:bitcoin",
+  "mdi:chart-line",
+
   // entartainment
-  "mdi-gamepad-variant",
-  "mdi-dice-multiple",
-  "mdi-music",
-  "mdi-movie",
-  "mdi-theater",
+  "mdi:gamepad-variant",
+  "mdi:dice-multiple",
+  "mdi:music",
+  "mdi:movie",
+  "mdi:theater",
 
-
-  "mdi-school",
-  "mdi-calculator",
-  "mdi-laptop",
-  "mdi-cellphone",
-  "mdi-monitor",
-  "mdi-printer",
-  "mdi-camera",
-  "mdi-image",
-  "mdi-guitar-acoustic",
-  "mdi-microphone",
-  "mdi-dumbbell",
-  "mdi-paw",
-  "mdi-dog",
-  "mdi-cat",
-  "mdi-baby-face-outline",
-  "mdi-flower",
-  "mdi-tree",
-  "mdi-leaf",
-  "mdi-earth",
-  "mdi-weather-sunny",
-  "mdi-weather-cloudy",
-  "mdi-beach",
-  "mdi-map-marker",
-  "mdi-calendar",
-  "mdi-clock-outline",
-  "mdi-bell",
-  "mdi-lock",
-  "mdi-key",
-  "mdi-shield-check",
-  "mdi-alert-circle",
+  "mdi:school",
+  "mdi:calculator",
+  "mdi:laptop",
+  "mdi:cellphone",
+  "mdi:monitor",
+  "mdi:printer",
+  "mdi:camera",
+  "mdi:image",
+  "mdi:guitar-acoustic",
+  "mdi:microphone",
+  "mdi:dumbbell",
+  "mdi:paw",
+  "mdi:dog",
+  "mdi:cat",
+  "mdi:baby-face-outline",
+  "mdi:flower",
+  "mdi:tree",
+  "mdi:leaf",
+  "mdi:earth",
+  "mdi:weather-sunny",
+  "mdi:weather-cloudy",
+  "mdi:beach",
+  "mdi:map-marker",
+  "mdi:calendar",
+  "mdi:clock-outline",
+  "mdi:bell",
+  "mdi:lock",
+  "mdi:key",
+  "mdi:shield-check",
+  "mdi:alert-circle",
+  "mdi:youtube",
+  "mdi:whatsapp",
+  "mdi:github",
   "simple-icons:discord",
   "simple-icons:steam",
-  "mdi-youtube",
-  "mdi-whatsapp",
   "simple-icons:telegram",
-  "mdi-github",
-  "mdi-account-group",
-  "mdi-account",
-  "mdi-star",
-  "mdi-dots-horizontal-circle",
+  "mdi:account-group",
+  "mdi:account",
+  "mdi:star",
+];
+const simpleIconOptions = Object.keys(
+  (simpleIcons as IconifyIconsJson).icons,
+).map((name) => `simple-icons:${name}`);
+
+const mdiIconOptions = Object.keys((mdiIcons as IconifyIconsJson).icons).map(
+  (name) => `mdi:${name}`,
+);
+
+const allIconOptions: string[] = [
+  ...popularIconOptions,
+  ...simpleIconOptions.filter((icon) => !popularIconOptions.includes(icon)),
+  ...mdiIconOptions.filter((icon) => !popularIconOptions.includes(icon)),
 ];
 const colorOptions = [
-  "#F44336",
+  // red
+  "#EF5350",
+  "#E53935",
+
+  // orange
   "#FF7043",
+  "#FB8C00",
+
+  // yellow
   "#FFCA28",
+  "#FDD835",
+
+  // green
   "#66BB6A",
+  "#43A047",
+
+  // teal
   "#26A69A",
+  "#00897B",
+
+  // cyan
+  "#26C6DA",
+  "#00ACC1",
+
+  // blue
   "#42A5F5",
+  "#1E88E5",
+
+  // indigo
   "#5C6BC0",
+  "#3949AB",
+
+  // purple
   "#AB47BC",
+  "#8E24AA",
+
+  // pink
   "#EC407A",
-  "#607D8B",
+  "#D81B60",
+
+  // brown
+  "#8D6E63",
+  "#6D4C41",
+
+  // gray
+  "#78909C",
+  "#546E7A",
 ];
 const systemCategories = computed(() =>
   store.categories.filter((category) => category.system),
@@ -159,6 +213,19 @@ const customCategories = computed(() =>
 const iconScroll = ref<HTMLElement | null>(null);
 const canScrollUp = ref(false);
 const canScrollDown = ref(true);
+const iconSearch = ref("");
+const debouncedIconSearch = useDebounce(iconSearch, 200);
+const visibleIconOptions = computed(() => {
+  const query = debouncedIconSearch.value.trim().toLowerCase();
+
+  if (!query) {
+    return popularIconOptions;
+  }
+
+  return allIconOptions
+    .filter((icon) => icon.replace("mdi:", "").toLowerCase().includes(query))
+    .slice(0, 100);
+});
 
 function updateIconScrollState() {
   const element = iconScroll.value;
@@ -203,7 +270,8 @@ function openEdit(category: Category) {
 
 async function save() {
   if (!form.value.name.trim()) return;
-  if (editingId.value) await store.updateCustomCategory(editingId.value, form.value);
+  if (editingId.value)
+    await store.updateCustomCategory(editingId.value, form.value);
   else await store.createCustomCategory(form.value);
   dialog.value = false;
 }
@@ -318,6 +386,17 @@ async function save() {
           <v-text-field v-model="form.name" label="Название" autofocus />
           <div class="text-caption mb-2">Иконка</div>
           <div class="icon-picker mb-5">
+            <v-text-field
+              v-model="iconSearch"
+              label="Поиск иконки"
+              placeholder="Например, car, food, hammer..."
+              prepend-inner-icon="mdi-magnify"
+              variant="outlined"
+              density="compact"
+              clearable
+              hide-details
+              class="mb-3"
+            />
             <button
               v-if="canScrollUp"
               class="icon-scroll-indicator icon-scroll-indicator--top"
@@ -334,7 +413,7 @@ async function save() {
             >
               <div class="option-grid">
                 <v-btn
-                  v-for="icon in iconOptions"
+                  v-for="icon in visibleIconOptions"
                   :key="icon"
                   icon
                   variant="text"
@@ -342,13 +421,11 @@ async function save() {
                   @click="form.icon = icon"
                 >
                   <Icon
-                    v-if="icon.includes(':')"
                     :icon="icon"
                     :color="form.color"
                     width="24"
                     height="24"
                   />
-                  <v-icon v-else :color="form.color">{{ icon }}</v-icon>
                 </v-btn>
               </div>
             </div>
