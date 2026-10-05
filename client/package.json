@@ -19,7 +19,6 @@
     "preview:dev": "npm run build:dev && vite preview"
   },
   "dependencies": {
-    "@iconify/vue": "^5.0.3",
     "@mdi/font": "^7.4.47",
     "@types/lodash-es": "^4.17.12",
     "@vueuse/core": "^14.4.0",

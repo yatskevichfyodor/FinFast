@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
-import { Icon } from "@iconify/vue";
 import type { Category, CategoryInput } from "@/types/category";
 import { useCategoryStore } from "@/stores";
 import { refDebounced } from "@vueuse/core";
 import { categoryApi } from "@/services/api/categoryApi";
-import { toVuetifyCategoryIcon } from "@/utils/categoryIcon";
 import mdiIconNames from "@/assets/icon-names/mdi.json"
 import simpleIconNames from "@/assets/icon-names/simple-icons.json"
 
@@ -19,129 +17,129 @@ const form = ref<CategoryInput>({
 });
 const popularIconOptions = [
   // other
-  "mdi:dots-horizontal-circle",
-  "mdi:tag-outline",
-  "mdi:tag",
-  "mdi:label",
+  "mdi-dots-horizontal-circle",
+  "mdi-tag-outline",
+  "mdi-tag",
+  "mdi-label",
 
   // clothes
-  "mdi:tshirt-crew",
+  "mdi-tshirt-crew",
 
   // food
-  "mdi:food",
-  "mdi:food-apple",
-  "mdi:food-drumstick",
-  "mdi:silverware-fork-knife",
-  "mdi:coffee",
-  "mdi:cake",
+  "mdi-food",
+  "mdi-food-apple",
+  "mdi-food-drumstick",
+  "mdi-silverware-fork-knife",
+  "mdi-coffee",
+  "mdi-cake",
 
   // shopping
-  "mdi:cart",
-  "mdi:basket",
-  "mdi:shopping",
-  "mdi:gift",
+  "mdi-cart",
+  "mdi-basket",
+  "mdi-shopping",
+  "mdi-gift",
 
   // transport
-  "mdi:car",
-  "mdi:bus",
-  "mdi:train",
-  "mdi:bike",
-  "mdi:scooter",
-  "mdi:airplane",
-  "mdi:taxi",
-  "mdi:fuel",
-  "mdi:walk",
+  "mdi-car",
+  "mdi-bus",
+  "mdi-train",
+  "mdi-bike",
+  "mdi-scooter",
+  "mdi-airplane",
+  "mdi-taxi",
+  "mdi-fuel",
+  "mdi-walk",
 
   // health
-  "mdi:run",
-  "mdi:heart",
-  "mdi:heart-pulse",
-  "mdi:hospital-box",
-  "mdi:pill",
+  "mdi-run",
+  "mdi-heart",
+  "mdi-heart-pulse",
+  "mdi-hospital-box",
+  "mdi-pill",
 
   // home
-  "mdi:home",
-  "mdi:office-building",
-  "mdi:city",
-  "mdi:sofa",
-  "mdi:bed",
+  "mdi-home",
+  "mdi-office-building",
+  "mdi-city",
+  "mdi-sofa",
+  "mdi-bed",
 
   // stationery
-  "mdi:notebook-outline",
-  "mdi:notebook-edit-outline",
-  "mdi:paperclip",
-  "mdi:file-document-outline",
-  "mdi:file-outline",
+  "mdi-notebook-outline",
+  "mdi-notebook-edit-outline",
+  "mdi-paperclip",
+  "mdi-file-document-outline",
+  "mdi-file-outline",
 
   // renovation and building
-  "mdi:lightbulb",
-  "mdi:water",
-  "mdi:faucet",
-  "mdi:tools",
-  "mdi:hammer",
-  "mdi:wrench",
-  "mdi:hammer-wrench",
-  "mdi:toolbox",
-  "mdi:format-paint",
-  "mdi:spray",
-  "mdi:truck",
+  "mdi-lightbulb",
+  "mdi-water",
+  "mdi-faucet",
+  "mdi-tools",
+  "mdi-hammer",
+  "mdi-wrench",
+  "mdi-hammer-wrench",
+  "mdi-toolbox",
+  "mdi-format-paint",
+  "mdi-spray",
+  "mdi-truck",
 
   // finances
-  "mdi:cash",
-  "mdi:credit-card",
-  "mdi:bank",
-  "mdi:bitcoin",
-  "mdi:chart-line",
+  "mdi-cash",
+  "mdi-credit-card",
+  "mdi-bank",
+  "mdi-bitcoin",
+  "mdi-chart-line",
 
   // entartainment
-  "mdi:gamepad-variant",
-  "mdi:dice-multiple",
-  "mdi:music",
-  "mdi:movie",
-  "mdi:theater",
+  "mdi-gamepad-variant",
+  "mdi-dice-multiple",
+  "mdi-music",
+  "mdi-movie",
+  "mdi-theater",
 
-  "mdi:school",
-  "mdi:calculator",
-  "mdi:laptop",
-  "mdi:cellphone",
-  "mdi:monitor",
-  "mdi:printer",
-  "mdi:camera",
-  "mdi:image",
-  "mdi:guitar-acoustic",
-  "mdi:microphone",
-  "mdi:dumbbell",
-  "mdi:paw",
-  "mdi:dog",
-  "mdi:cat",
-  "mdi:baby-face-outline",
-  "mdi:flower",
-  "mdi:tree",
-  "mdi:leaf",
-  "mdi:earth",
-  "mdi:weather-sunny",
-  "mdi:weather-cloudy",
-  "mdi:beach",
-  "mdi:map-marker",
-  "mdi:calendar",
-  "mdi:clock-outline",
-  "mdi:bell",
-  "mdi:lock",
-  "mdi:key",
-  "mdi:shield-check",
-  "mdi:alert-circle",
-  "mdi:youtube",
-  "mdi:whatsapp",
-  "mdi:github",
-  "simple-icons:discord",
-  "simple-icons:steam",
-  "simple-icons:telegram",
-  "mdi:account-group",
-  "mdi:account",
-  "mdi:star",
+  "mdi-school",
+  "mdi-calculator",
+  "mdi-laptop",
+  "mdi-cellphone",
+  "mdi-monitor",
+  "mdi-printer",
+  "mdi-camera",
+  "mdi-image",
+  "mdi-guitar-acoustic",
+  "mdi-microphone",
+  "mdi-dumbbell",
+  "mdi-paw",
+  "mdi-dog",
+  "mdi-cat",
+  "mdi-baby-face-outline",
+  "mdi-flower",
+  "mdi-tree",
+  "mdi-leaf",
+  "mdi-earth",
+  "mdi-weather-sunny",
+  "mdi-weather-cloudy",
+  "mdi-beach",
+  "mdi-map-marker",
+  "mdi-calendar",
+  "mdi-clock-outline",
+  "mdi-bell",
+  "mdi-lock",
+  "mdi-key",
+  "mdi-shield-check",
+  "mdi-alert-circle",
+  "mdi-youtube",
+  "mdi-whatsapp",
+  "mdi-github",
+  "simple-icons-discord",
+  "simple-icons-steam",
+  "simple-icons-telegram",
+  "mdi-account-group",
+  "mdi-account",
+  "mdi-star",
 ];
-const mdiIconOptions = simpleIconNames.map(name => `simple-icons:${name}`);
-const simpleIconOptions = mdiIconNames.map(name => `mdi:${name}`);
+const mdiIconOptions = simpleIconNames.map(name => `simple-icons-${name}`);
+const simpleIconOptions = mdiIconNames.map(name => `mdi-${name}`);
 
 const allIconOptions: string[] = [
   ...popularIconOptions,
@@ -227,7 +225,7 @@ const visibleIconOptions = computed(() => {
 
   return allIconOptions
     .filter((icon) => {
-      const name = icon.split(":")[1] ?? icon;
+      const name = icon.split("-")[-1] ?? icon;
       return name.toLowerCase().includes(query);
     })
     .slice(0, 100);
@@ -382,9 +380,7 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
             :class="{ 'text-medium-emphasis': category.deleted }"
           >
             <template #prepend
-              ><v-icon :color="category.color">{{
-                toVuetifyCategoryIcon(category.icon)
-              }}</v-icon></template
+              ><v-icon :color="category.color">{{category.icon}}</v-icon></template
             >
             <v-list-item-title>{{ category.name }}</v-list-item-title>
             <template #append>
@@ -487,7 +483,7 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
                   :class="{ selected: form.icon === icon }"
                   @click="form.icon = icon"
                 >
-                  <Icon
+                  <v-icon
                     :icon="icon"
                     :color="form.color"
                     width="24"
