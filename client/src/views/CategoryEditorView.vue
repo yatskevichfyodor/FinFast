@@ -3,15 +3,11 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { Icon } from "@iconify/vue";
 import type { Category, CategoryInput } from "@/types/category";
 import { useCategoryStore } from "@/stores";
-import mdiIcons from "@iconify-json/mdi/icons.json";
-import simpleIcons from "@iconify-json/simple-icons/icons.json";
 import { refDebounced } from "@vueuse/core";
 import { categoryApi } from "@/services/api/categoryApi";
 import { toVuetifyCategoryIcon } from "@/utils/categoryIcon";
-
-interface IconifyIconsJson {
-  icons: Record<string, unknown>;
-}
+import mdiIconNames from "@/assets/icon-names/mdi.json"
+import simpleIconNames from "@/assets/icon-names/simple-icons.json"
 
 const store = useCategoryStore().value!;
 const dialog = ref(false);
@@ -144,13 +140,8 @@ const popularIconOptions = [
   "mdi:account",
   "mdi:star",
 ];
-const simpleIconOptions = Object.keys(
-  (simpleIcons as IconifyIconsJson).icons,
-).map((name) => `simple-icons:${name}`);
-
-const mdiIconOptions = Object.keys((mdiIcons as IconifyIconsJson).icons).map(
-  (name) => `mdi:${name}`,
-);
+const mdiIconOptions = simpleIconNames.map(name => `simple-icons:${name}`);
+const simpleIconOptions = mdiIconNames.map(name => `mdi:${name}`);
 
 const allIconOptions: string[] = [
   ...popularIconOptions,
@@ -235,7 +226,10 @@ const visibleIconOptions = computed(() => {
   }
 
   return allIconOptions
-    .filter((icon) => icon.replace("mdi:", "").toLowerCase().includes(query))
+    .filter((icon) => {
+      const name = icon.split(":")[1] ?? icon;
+      return name.toLowerCase().includes(query);
+    })
     .slice(0, 100);
 });
 
