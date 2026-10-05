@@ -10,13 +10,19 @@ import { customCategoryStorage } from "@/storage/indexedDB/customCategoryStorage
 import hiddenSystemCategoryStorage from "@/storage/hiddenSystemCategoryStorage";
 import { useDataChangesStore } from ".";
 import { createLatestOnly } from "@/utils/latestOnly";
+import { createUserEntryStorage } from "@/utils/localStorage";
 
 export type CategoryStore = ReturnType<typeof createCategoryStore>;
 
-const LOCAL_STORAGE_LAST_SYNC_KEY = "finfast-categories-last-sync";
+const LOCAL_STORAGE_LAST_SYNC_DATETIME_KEY =
+  "finfast-categories-last-sync-datetime";
 
 export function createCategoryStore(userId: string) {
   const runLatest = createLatestOnly();
+  const categoriesLastSyncDatetimeStorage = createUserEntryStorage<string>(
+    LOCAL_STORAGE_LAST_SYNC_DATETIME_KEY,
+    userId,
+  );
 
   const authStore = useAuthStore();
   const dataChangeStore = useDataChangesStore().value!;
@@ -41,11 +47,11 @@ export function createCategoryStore(userId: string) {
     ),
   );
 
-  const getLastSyncKey = (userId: string) =>
-    `${LOCAL_STORAGE_LAST_SYNC_KEY}:${userId}`;
-
-  function getLastSyncDatetime(userId: string): Date | undefined {
-    const lastSyncDatetimeString = localStorage.getItem(getLastSyncKey(userId));
+  /**
+   * @returns saved version of dataChangesStore.dataChanges.CATEGORY
+   */
+  function getLastSyncDatetime(): Date | undefined {
+    const lastSyncDatetimeString = categoriesLastSyncDatetimeStorage.get();
     if (!lastSyncDatetimeString) return undefined;
     const lastSyncDatetime = new Date(lastSyncDatetimeString);
     return Number.isNaN(lastSyncDatetime.getTime())
@@ -53,14 +59,7 @@ export function createCategoryStore(userId: string) {
       : lastSyncDatetime;
   }
 
-  function saveLastSyncDatetime(userId: string, datetime?: Date) {
-    localStorage.setItem(
-      getLastSyncKey(userId),
-      datetime ? datetime.toISOString() : "",
-    );
-  }
-
-  function getLastCategoryChangeDatetime(): Date | undefined {
+  function getServerLastCategoryChangeDatetime(): Date | undefined {
     const serverLastCategoryChangeDatetimeString =
       dataChangeStore.dataChanges?.CATEGORY?.changedAt;
     return serverLastCategoryChangeDatetimeString
@@ -84,14 +83,19 @@ export function createCategoryStore(userId: string) {
   }
 
   async function loadDataFromApi() {
-    const lastSyncDatetime = getLastSyncDatetime(userId);
-    const serverLastCategoryChangeDatetime = getLastCategoryChangeDatetime();
+    const lastSyncDatetime = getLastSyncDatetime();
+    const serverLastCategoryChangeDatetime =
+      getServerLastCategoryChangeDatetime();
     if (
       serverHasNewerData(lastSyncDatetime, serverLastCategoryChangeDatetime)
     ) {
       const apiDataReceived = await loadCategoriesFromApi();
       if (apiDataReceived) {
-        saveLastSyncDatetime(userId, serverLastCategoryChangeDatetime);
+        categoriesLastSyncDatetimeStorage.save(
+          serverLastCategoryChangeDatetime
+            ? serverLastCategoryChangeDatetime.toISOString()
+            : "",
+        );
         return;
       }
     }
@@ -156,7 +160,9 @@ export function createCategoryStore(userId: string) {
 
   async function removeCustomCategory(id: string) {
     await categoryApi.deleteCustomCategory(id);
-    customCategories.value = customCategories.value.filter((it) => it.id !== id);
+    customCategories.value = customCategories.value.filter(
+      (it) => it.id !== id,
+    );
     saveCache();
   }
 
