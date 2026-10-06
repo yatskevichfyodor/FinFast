@@ -13,12 +13,26 @@ export interface CustomCategory {
   name: string;
   icon: string;
   color: string;
+  hiddenAt?: string
 }
 
-export interface CategoryInput {
+export interface CustomCategoryInput {
   name: string;
   icon: string;
   color: string;
+}
+
+export interface CustomCategoryCreateDto {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+}
+
+export interface CustomCategoryPatchDto {
+  name?: string;
+  icon?: string;
+  color?: string;
 }
 
 export interface CustomAndHiddenSystemCategoriesDto {

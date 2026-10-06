@@ -1,9 +1,18 @@
 import { expenseClient } from "@/services/api/http";
-import type { Category, CategoryInput, CustomAndHiddenSystemCategoriesDto, CustomCategory } from "@/types/category";
+import type {
+  Category,
+  CustomAndHiddenSystemCategoriesDto,
+  CustomCategoryCreateDto,
+  CustomCategory,
+  CustomCategoryPatchDto,
+} from "@/types/category";
 
 export const categoryApi = {
   async getCustomAndHiddenSystemCategories(): Promise<CustomAndHiddenSystemCategoriesDto> {
-    const { data } = await expenseClient.get<CustomAndHiddenSystemCategoriesDto>("/categories");
+    const { data } =
+      await expenseClient.get<CustomAndHiddenSystemCategoriesDto>(
+        "/categories",
+      );
     return data;
   },
 
@@ -12,13 +21,18 @@ export const categoryApi = {
     return data;
   },
 
-  async createCustomCategory(input: CustomCategory) {
-    const { data } = await expenseClient.post<Category>("/categories/custom", input);
+  async createCustomCategory(
+    input: CustomCategoryCreateDto,
+  ): Promise<CustomCategory> {
+    const { data } = await expenseClient.post<CustomCategory>(
+      "/categories/custom",
+      input,
+    );
     return data;
   },
 
-  async updateCustomCategory(categoryId: string, input: CategoryInput) {
-    const { data } = await expenseClient.patch<Category>(
+  async updateCustomCategory(categoryId: string, input: CustomCategoryPatchDto): Promise<CustomCategory> {
+    const { data } = await expenseClient.patch<CustomCategory>(
       `/categories/custom/${categoryId}`,
       input,
     );
@@ -43,9 +57,11 @@ export const categoryApi = {
     );
     return Number(data);
   },
-  
+
   async getSystemHiddenCategoriesIds(): Promise<string[]> {
-    const { data } = await expenseClient.get<string[]>("/categories/system/hidden");
+    const { data } = await expenseClient.get<string[]>(
+      "/categories/system/hidden",
+    );
     return data;
   },
 

@@ -50,7 +50,7 @@ export function migrateToV5(transaction: IDBTransaction) {
 
   request.onerror = () => {
     console.error(
-      '[IndexedDB] Migration to v4 failed:',
+      '[IndexedDB] Migration to v5 failed:',
       request.error
     )
   }

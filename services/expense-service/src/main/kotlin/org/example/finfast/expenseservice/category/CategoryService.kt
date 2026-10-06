@@ -145,5 +145,5 @@ class CategoryService(
 }
 
 private fun CustomCategory.toDto(category: CustomCategory) = CustomCategoryDto(
-    category.id, category.name, category.icon, category.color, category.createdAt, category.hiddenAt
+    category.id, category.name, category.icon, category.color, category.hiddenAt
 )

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
-import type { Category, CategoryInput } from "@/types/category";
+import type { CustomCategory, CustomCategoryInput } from "@/types/category";
 import { useCategoryStore } from "@/stores";
 import { refDebounced } from "@vueuse/core";
 import { categoryApi } from "@/services/api/categoryApi";
@@ -10,7 +10,7 @@ import simpleIconNames from "@/assets/icon-names/simple-icons.json"
 const store = useCategoryStore().value!;
 const dialog = ref(false);
 const editingId = ref<string | null>(null);
-const form = ref<CategoryInput>({
+const form = ref<CustomCategoryInput>({
   name: "",
   icon: "mdi-tag-outline",
   color: "#607D8B",
@@ -195,19 +195,15 @@ const colorOptions = [
   "#78909C",
   "#546E7A",
 ];
-const systemCategories = computed(() =>
-  store.categories.filter((category) => category.system),
-);
-const customCategories = computed(() =>
-  store.categories.filter((category) => !category.system),
-);
+const systemCategories = store.systemCategories
+const customCategories = store.customCategories
 const iconScroll = ref<HTMLElement | null>(null);
 const canScrollUp = ref(false);
 const canScrollDown = ref(true);
 const iconSearch = ref("");
 const debouncedIconSearch = refDebounced(iconSearch, 200);
 const deleteWarning = ref<{
-  category: Category;
+  category: CustomCategory;
   linkedExpensesCount: number;
 } | null>(null);
 const showDeleteWarning = computed({
@@ -262,7 +258,7 @@ function openCreate() {
   dialog.value = true;
 }
 
-function openEdit(category: Category) {
+function openEdit(category: CustomCategory) {
   editingId.value = category.id;
   form.value = {
     name: category.name,
@@ -280,7 +276,7 @@ async function save() {
   dialog.value = false;
 }
 
-async function handleDeleteCategory(category: Category) {
+async function handleDeleteCategory(category: CustomCategory) {
   try {
     const linkedExpensesCount = await categoryApi.getNumberOfLinkedExpenses(
       category.id,
@@ -377,7 +373,7 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
           <v-list-item
             v-for="category in customCategories"
             :key="category.id"
-            :class="{ 'text-medium-emphasis': category.deleted }"
+            :class="{ 'text-medium-emphasis': category.hiddenAt }"
           >
             <template #prepend
               ><v-icon :color="category.color">{{category.icon}}</v-icon></template
@@ -385,7 +381,7 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
             <v-list-item-title>{{ category.name }}</v-list-item-title>
             <template #append>
               <v-btn
-                v-if="category.deleted"
+                v-if="category.hiddenAt"
                 icon="mdi-restore"
                 variant="text"
                 title="Восстановить"

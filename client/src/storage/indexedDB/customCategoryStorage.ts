@@ -1,16 +1,16 @@
 import { toRaw } from "vue";
 import { openDatabase } from "./indexedDB";
 import { CUSTOM_CATEGORIES_STORE_NAME } from "./indexedDB";
-import type { Category } from "@/types/category";
+import type { CustomCategory } from "@/types/category";
 
 interface CategoryRecord {
   userId: string;
   categoryId: string;
-  category: Category;
+  category: CustomCategory;
 }
 
 export const customCategoryStorage = {
-  async loadCategories(userId: string): Promise<Category[]> {
+  async loadCategories(userId: string): Promise<CustomCategory[]> {
     const database = await openDatabase();
 
     return new Promise((resolve, reject) => {
@@ -29,7 +29,7 @@ export const customCategoryStorage = {
     });
   },
 
-  async saveCategories(userId: string, categories: Category[]): Promise<void> {
+  async saveCategories(userId: string, categories: CustomCategory[]): Promise<void> {
     const database = await openDatabase();
 
     return new Promise((resolve, reject) => {

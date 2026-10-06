@@ -39,7 +39,7 @@ async function refreshStores(userId: string | null) {
   setCategoryStore(userId);
   if (categoryStore.value) {
     await categoryStore.value.loadDataFromStorage();
-    categoryStore.value.loadDataFromApi(); // without wating for completion
+    categoryStore.value.syncLocalChangesWithApi(); // without wating for completion
     categoryStoreReady.value = true;
   }
 

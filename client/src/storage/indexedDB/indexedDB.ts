@@ -1,8 +1,9 @@
 import { once } from "lodash-es";
 import { migrateToV5 } from "./migrations/v5";
+import { migrateToV7 } from "./migrations/v7";
 
 const DATABASE_NAME = "finfast";
-const DATABASE_VERSION = 6;
+const DATABASE_VERSION = 7;
 
 export const EXPENSES_STORE_NAME = "expenses";
 export const CUSTOM_CATEGORIES_STORE_NAME = "custom_categories";
@@ -30,6 +31,10 @@ export const openDatabase = once(async function (): Promise<IDBDatabase> {
 
       if (oldVersion < 5 && transaction) {
         migrateToV5(transaction);
+      }
+
+      if (oldVersion < 7 && transaction) {
+        migrateToV7(transaction);
       }
 
       // add future migrations here like this:

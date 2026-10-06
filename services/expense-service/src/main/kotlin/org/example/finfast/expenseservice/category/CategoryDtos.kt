@@ -8,7 +8,6 @@ data class CustomCategoryDto(
     val name: String,
     val icon: String,
     val color: String,
-    val createdAt: Instant,
     val hiddenAt: Instant?
 )
 
