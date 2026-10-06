@@ -49,7 +49,7 @@ const months = computed<MonthStat[]>(() => {
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
     const monthKey = `${year}-${String(month).padStart(2, "0")}`;
-    const categoryId = expense.categoryId ?? "__uncategorized__";
+    const categoryId = expense.customCategoryId ?? expense.categoryId ?? "__uncategorized__";
     const group = monthGroups.get(monthKey) ?? {
       year,
       month,
