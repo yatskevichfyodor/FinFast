@@ -4,10 +4,9 @@ import type { CustomCategory, CustomCategoryInput } from "@/types/category";
 import { useCategoryStore } from "@/stores";
 import { refDebounced } from "@vueuse/core";
 import { categoryApi } from "@/services/api/categoryApi";
-import mdiIconNames from "@/assets/icon-names/mdi.json"
-import simpleIconNames from "@/assets/icon-names/simple-icons.json"
 
 const store = useCategoryStore().value!;
+
 const dialog = ref(false);
 const editingId = ref<string | null>(null);
 const form = ref<CustomCategoryInput>({
@@ -138,14 +137,25 @@ const popularIconOptions = [
   "mdi-account",
   "mdi-star",
 ];
-const mdiIconOptions = simpleIconNames.map(name => `simple-icons-${name}`);
-const simpleIconOptions = mdiIconNames.map(name => `mdi-${name}`);
+const allIconOptions = ref<string[]>([]);
+const iconSearch = ref("");
+const debouncedIconSearch = refDebounced(iconSearch, 200);
+const visibleIconOptions = computed(() => {
+  const query = debouncedIconSearch.value.trim().toLowerCase();
 
-const allIconOptions: string[] = [
-  ...popularIconOptions,
-  ...simpleIconOptions.filter((icon) => !popularIconOptions.includes(icon)),
-  ...mdiIconOptions.filter((icon) => !popularIconOptions.includes(icon)),
-];
+  if (!query) {
+    return popularIconOptions;
+  }
+
+  return allIconOptions.value
+    .filter((icon) => {
+      const name = icon.split("-").at(-1) ?? icon;
+      return name.toLowerCase().includes(query);
+    })
+    .slice(0, 100);
+});
+
+
 const colorOptions = [
   // red
   "#EF5350",
@@ -200,8 +210,6 @@ const customCategories = store.customCategories
 const iconScroll = ref<HTMLElement | null>(null);
 const canScrollUp = ref(false);
 const canScrollDown = ref(true);
-const iconSearch = ref("");
-const debouncedIconSearch = refDebounced(iconSearch, 200);
 const deleteWarning = ref<{
   category: CustomCategory;
   linkedExpensesCount: number;
@@ -212,20 +220,38 @@ const showDeleteWarning = computed({
     if (!value) deleteWarning.value = null;
   },
 });
-const visibleIconOptions = computed(() => {
-  const query = debouncedIconSearch.value.trim().toLowerCase();
 
-  if (!query) {
-    return popularIconOptions;
+async function loadIconOptions() {
+  if (allIconOptions.value.length > 0) {
+    return;
   }
 
-  return allIconOptions
-    .filter((icon) => {
-      const name = icon.split("-")[-1] ?? icon;
-      return name.toLowerCase().includes(query);
-    })
-    .slice(0, 100);
-});
+  const [
+    { default: mdiIconNames },
+    { default: simpleIconNames },
+  ] = await Promise.all([
+    import("@/assets/icon-names/mdi.json"),
+    import("@/assets/icon-names/simple-icons.json"),
+  ]);
+
+  const mdiIconOptions = simpleIconNames.map(
+    (name) => `simple-icons-${name}`,
+  );
+
+  const simpleIconOptions = mdiIconNames.map(
+    (name) => `mdi-${name}`,
+  );
+
+  allIconOptions.value = [
+    ...popularIconOptions,
+    ...simpleIconOptions.filter(
+      (icon) => !popularIconOptions.includes(icon),
+    ),
+    ...mdiIconOptions.filter(
+      (icon) => !popularIconOptions.includes(icon),
+    ),
+  ];
+}
 
 function updateIconScrollState() {
   const element = iconScroll.value;
@@ -252,13 +278,15 @@ watch(dialog, async (isOpen) => {
 onMounted(() => window.addEventListener("resize", updateIconScrollState));
 onUnmounted(() => window.removeEventListener("resize", updateIconScrollState));
 
-function openCreate() {
+async function openCreate() {
+  await loadIconOptions();
   editingId.value = null;
   form.value = { name: "", icon: "mdi-tag-outline", color: "#607D8B" };
   dialog.value = true;
 }
 
-function openEdit(category: CustomCategory) {
+async function openEdit(category: CustomCategory) {
+  await loadIconOptions();
   editingId.value = category.id;
   form.value = {
     name: category.name,

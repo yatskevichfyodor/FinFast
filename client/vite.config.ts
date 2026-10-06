@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import vuetify from 'vite-plugin-vuetify'
 import { VitePWA } from 'vite-plugin-pwa'
-import { format } from 'date-fns'
+import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -54,7 +54,14 @@ export default defineConfig(({ mode }) => ({
         clientsClaim: true,
         skipWaiting: true,
       }
-    })
+    }),
+    visualizer({
+      filename: "dist/stats.html",
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
+      template: "treemap", // Report type: sunburst, treemap, treemap-3d, network, raw-data, list, markdown, flamegraph.
+    }),
   ],
   resolve: {
     alias: {
