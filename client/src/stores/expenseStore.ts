@@ -150,15 +150,27 @@ export function createExpenseStore(userId: string) {
         expenses.value.map((expense) => [expense.id, expense]),
       );
 
+      const expensesToDeleteLocallyIds = new Set();
       apiExpenses.forEach((apiExpense) => {
         const local = localExpensesById.get(apiExpense.id);
         const mapped = parseApiExpense(apiExpense);
-        if (local) {
+        if (!local) {
+          if (!mapped.deletedAt) {
+            expenses.value.push(mapped);
+          }
+          return;
+        }
+
+        if (mapped.deletedAt) {
+          expensesToDeleteLocallyIds.add(mapped.id);
+          return;
+        }
+
+        if (local.isSynced) {
           Object.assign(local, mapped);
-        } else {
-          expenses.value.push(mapped);
         }
       });
+      expenses.value = expenses.value.filter(it => !expensesToDeleteLocallyIds.has(it.id));
 
       await saveExpensesToStorage();
     });
