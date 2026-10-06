@@ -41,7 +41,7 @@ const months = computed<MonthStat[]>(() => {
   >();
 
   activeExpenses.value.forEach((expense) => {
-    const date = new Date(expense.createdAt);
+    const date = new Date(expense.paymentDate ?? expense.createdAt);
     if (Number.isNaN(date.getTime())) {
       return;
     }
