@@ -7,22 +7,25 @@ import { updateAvailable } from "@/services/pwaUpdate";
 import { useAuthStore } from "./stores/authStore";
 import {
   pinia,
+  setCategoryOrderStore,
   setCategoryStore,
   setDataChangesStore,
   setExpenseStore,
+  useCategoryOrderStore,
   useCategoryStore,
   useDataChangesStore,
   useExpenseStore,
 } from "./stores";
-import { buildPopularCategoryOrder } from "./services/categoryPopularity";
 
 const route = useRoute();
 const showNavigation = computed(() => route.meta.requiresAuth === true);
 const showUserMenu = ref(false);
+
 const dataChangesStoreReady = ref(false);
 const categoryStoreReady = ref(false);
 const expenseStoreReady = ref(false);
-const storesReady = computed(() => dataChangesStoreReady.value && categoryStoreReady.value && expenseStoreReady.value)
+const categoryOrderStoreReady = ref(false);
+const storesReady = computed(() => dataChangesStoreReady.value && categoryStoreReady.value && expenseStoreReady.value && categoryOrderStoreReady.value)
 
 const authStore = useAuthStore(pinia);
 const dataChangesStore = useDataChangesStore();
@@ -50,8 +53,11 @@ async function refreshStores(userId: string | null) {
     expenseStoreReady.value = true;
   }
 
-  if (expenseStore.value) {
-    buildPopularCategoryOrder(expenseStore.value.expenses);
+  setCategoryOrderStore(userId);
+  const categoryOrderStore = useCategoryOrderStore();
+  if (categoryOrderStore.value) {
+    await categoryOrderStore.value.getCategoryOrder();
+    categoryOrderStoreReady.value = true;
   }
 }
 

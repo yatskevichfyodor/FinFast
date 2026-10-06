@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { sortBy } from 'lodash-es'
 
 import type { Category } from '@/types/category'
-import { useCategoryStore } from '@/stores';
+import { useCategoryOrderStore, useCategoryStore } from '@/stores';
 
 const props = defineProps<{
   selectedCategoryId: string | null
@@ -15,8 +16,19 @@ const emit = defineEmits<{
 }>()
 
 const categoryStore = useCategoryStore().value!
+const categoryOrderStore = useCategoryOrderStore().value!
 
-const displayedCategories = computed(() => categoryStore.availableCategories)
+const categoryOrder: string[] | null = categoryOrderStore.getCategoryOrder();
+
+const displayedCategories = computed(() => 
+  sortBy(
+    categoryStore.availableCategories,
+    (category) => {
+      const index = categoryOrder?.indexOf(category.id) ?? -1;
+      return index === -1 ? Infinity : index;
+    },
+  )
+)
 
 const scrollElement = ref<HTMLElement | null>(null)
 const canScrollLeft = ref(false)
