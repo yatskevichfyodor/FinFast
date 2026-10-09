@@ -168,6 +168,53 @@ Default ports:
 * Auth Service: `http://localhost:8082`
 * Expense Service: `http://localhost:8081`
 
+#### HTTPS on a local network (mobile testing)
+
+Use this setup to open the development app on a phone connected to the same Wi-Fi network. Replace `192.168.0.234` below with the computer's current LAN IP address, and keep it consistent in the certificate, client environment, and service CORS settings.
+
+Generate a certificate for that IP with [mkcert](https://github.com/FiloSottile/mkcert). From the repository root, run:
+
+```powershell
+cd certs
+mkcert -install
+mkcert -cert-file finfast.pem -key-file finfast-key.pem 192.168.0.234
+```
+
+`mkcert -install` installs the local CA on the development computer. To avoid browser certificate warnings on the phone, install the CA certificate (`rootCA.pem` from `mkcert -CAROOT`) on the phone and trust it. Do not copy or share `rootCA-key.pem`.
+
+Start PostgreSQL and Kafka (if they are not already running) in a separate terminal from the repository root:
+
+```powershell
+cd docker
+docker volume create finfast_postgres-data
+docker compose -f docker-compose.dev.yml up db kafka kafka-init
+```
+
+Then start each service in its own terminal from the repository root:
+
+```powershell
+cd services/auth-service
+.\gradlew.bat quarkusDev -Dquarkus.profile=dev-https
+```
+
+Auth Service HTTPS: `https://192.168.0.234:8443`.
+
+```powershell
+cd services/expense-service
+.\gradlew.bat bootRun --args="--spring.profiles.active=dev-https"
+```
+
+Expense Service HTTPS: `https://192.168.0.234:8333`.
+
+Start the Vite development server in another terminal from the repository root:
+
+```powershell
+cd client
+npm run dev -- --config vite.development-https.config.ts --mode development-https
+```
+
+Open `https://192.168.0.234:5273/finfast/` on the phone. The phone and development computer must be on the same network, and the computer's firewall must allow inbound traffic on ports `5273`, `8333`, and `8443`. If using another IP, update it in `client/.env.development-https`, `services/auth-service/src/main/resources/application-dev-https.yml`, and the Expense Service `finfast.clientUrls` CORS setting (currently in `services/expense-service/src/main/resources/application-dev.yml`) as well as regenerating the certificate.
+
 ## Production Deployment
 
 Production deployments are triggered by pushing to the `production` branch.
