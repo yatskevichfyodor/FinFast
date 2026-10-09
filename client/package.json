@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:mobile": "vite --config vite.mobile.config.ts --mode development-https",
     "type-check": "vue-tsc --build",
     "copy-404": "node scripts/copy-404.mjs",
     "generate-icon-names": "node scripts/generate-icon-names.mjs",

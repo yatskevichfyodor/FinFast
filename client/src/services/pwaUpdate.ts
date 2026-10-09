@@ -1,6 +1,10 @@
 import { ref } from 'vue'
 import { registerSW } from 'virtual:pwa-register'
 
+if (!navigator.serviceWorker) {
+  throw Error("Service worker is undefined, make sure you are using http or localhost");
+}
+
 const updateAvailable = ref(false)
 
 let initialized = false

@@ -83,13 +83,30 @@ watch(
 </script>
 
 <template>
-  <v-app v-if="storesReady">
-    <RouterView />
-    <template v-if="showNavigation">
-      <AppNavigation />
-      <div class="menu-button-container">
-        <v-badge v-if="updateAvailable" dot color="error" location="top right">
+  <v-app>
+    <template v-if="storesReady">
+      <RouterView />
+      <template v-if="showNavigation">
+        <AppNavigation />
+        <div class="menu-button-container">
+          <v-badge
+            v-if="updateAvailable"
+            dot
+            color="error"
+            location="top right"
+          >
+            <v-btn
+              icon="mdi-menu"
+              variant="text"
+              size="x-small"
+              class="menu-button"
+              title="Меню пользователя"
+              aria-label="Меню пользователя"
+              @click="showUserMenu = !showUserMenu"
+            />
+          </v-badge>
           <v-btn
+            v-else
             icon="mdi-menu"
             variant="text"
             size="x-small"
@@ -98,21 +115,14 @@ watch(
             aria-label="Меню пользователя"
             @click="showUserMenu = !showUserMenu"
           />
-        </v-badge>
-        <v-btn
-          v-else
-          icon="mdi-menu"
-          variant="text"
-          size="x-small"
-          class="menu-button"
-          title="Меню пользователя"
-          aria-label="Меню пользователя"
-          @click="showUserMenu = !showUserMenu"
-        />
-      </div>
-    </template>
+        </div>
+      </template>
 
-    <UserMenu v-if="expenseStoreReady" v-model="showUserMenu" />
+      <UserMenu v-if="expenseStoreReady" v-model="showUserMenu" />
+    </template>
+    <template v-else>
+        Stores haven't been loaded
+    </template>
   </v-app>
 </template>
 

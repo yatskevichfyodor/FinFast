@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Backend - https" type="CompoundRunConfigurationType">
+    <toRun name="AuthApp - https" type="GradleRunConfiguration" />
+    <toRun name="EpenseApp - https" type="SpringBootApplicationConfigurationType" />
+    <method v="2" />
+  </configuration>
+</component>

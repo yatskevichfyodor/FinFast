@@ -1,59 +1,54 @@
-import { fileURLToPath, URL } from 'node:url'
+import { fileURLToPath, URL } from "node:url";
 
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
-import vuetify from 'vite-plugin-vuetify'
-import { VitePWA } from 'vite-plugin-pwa'
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import vueDevTools from "vite-plugin-vue-devtools";
+import vuetify from "vite-plugin-vuetify";
+import { VitePWA } from "vite-plugin-pwa";
 import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
   define: {
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString())
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
   plugins: [
     vue(),
-    ...(mode === 'development' ? [vueDevTools()] : []),
+    ...(mode === "development" ? [vueDevTools()] : []),
     vuetify({ autoImport: true }),
     VitePWA({
-      registerType: 'prompt',
+      registerType: "prompt",
 
-      includeAssets: [
-        'favicon.png',
-        'byn-symbol.webp'
-      ],
+      includeAssets: ["favicon.png", "byn-symbol.webp"],
 
       manifest: {
-        name: 'FinFast',
-        short_name: 'FinFast',
-        description: 'Персональный трекер расходов',
-        theme_color: '#4a7ba7',
-        background_color: '#ffffff',
-        display: 'standalone',
+        name: "FinFast",
+        short_name: "FinFast",
+        description: "Персональный трекер расходов",
+        theme_color: "#4a7ba7",
+        background_color: "#ffffff",
+        display: "standalone",
 
         icons: [
           {
-            src: 'favicon.png',
-            sizes: '192x192',
-            type: 'image/png'
+            src: "favicon.png",
+            sizes: "192x192",
+            type: "image/png",
           },
           {
-            src: 'favicon.png',
-            sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
+            src: "favicon.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+        ],
       },
 
       workbox: {
-        globPatterns: [
-          '**/*.{js,css,html,ico,png,webp,svg}'
-        ],
+        globPatterns: ["**/*.{js,css,html,ico,png,webp,svg}"],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
-      }
+      },
     }),
     visualizer({
       filename: "dist/stats.html",
@@ -65,24 +60,19 @@ export default defineConfig(({ mode }) => ({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
-  base: '/FinFast/',
+  base: "/FinFast/",
   build: {
-    minify: 'terser',
+    minify: "terser",
     terserOptions: {
       compress: {
         drop_console: false,
-        pure_funcs: [
-          'console.log',
-          'console.debug',
-          'console.warn'
-        ],
-        drop_debugger: true
-      }
+        pure_funcs: ["console.log", "console.debug", "console.warn"],
+        drop_debugger: true,
+      },
     },
-    sourcemap: false
-  }
-}))
-
+    sourcemap: false,
+  },
+}));
