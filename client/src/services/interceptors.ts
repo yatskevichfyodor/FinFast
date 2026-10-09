@@ -1,4 +1,5 @@
 import {
+  AUTH_BASE_URL,
   authClient,
   dataChangesClient,
   expenseClient,
@@ -8,20 +9,21 @@ import tokenStorage from "@/storage/tokenStorage";
 import type { AxiosInstance } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 import { pinia } from "@/stores";
+import axios from "axios";
 
 const clients = [authClient, expenseClient, dataChangesClient];
 
 const authStore = useAuthStore(pinia);
 
 const PUBLIC_AUTH_REQUESTS = new Set([
-  "/auth/login",
-  "/auth/register",
-  "/auth/refresh",
-  "/auth/google",
+  `/auth/login`,
+  `/auth/register`,
+  `/auth/refresh`,
+  `/auth/google`,
 ]);
 
-function isPublicAuthRequest(url: string): boolean {
-  return PUBLIC_AUTH_REQUESTS.has(url);
+function isPublicAuthRequest(baseUrl: string, url: string): boolean {
+  return baseUrl === AUTH_BASE_URL && PUBLIC_AUTH_REQUESTS.has(url);
 }
 
 function redirectToLogin() {
@@ -37,7 +39,7 @@ function redirectToLogin() {
 
 function setupRequestInterceptor(client: AxiosInstance) {
   client.interceptors.request.use(async (config) => {
-    if (isPublicAuthRequest(config.url ?? "")) {
+    if (isPublicAuthRequest(config.baseURL!, config.url ?? "")) {
       return config;
     }
 
@@ -51,6 +53,7 @@ function setupRequestInterceptor(client: AxiosInstance) {
       return config;
     }
 
+    // refresh expired token before request
     if (authStore.isAccessTokenExpired()) {
       await refreshTokens();
       accessToken = authStore.accessToken;
@@ -71,7 +74,7 @@ function setupResponseInterceptor(client: AxiosInstance) {
 
       if (
         error.response?.status !== 401 ||
-        isPublicAuthRequest(requestUrl) ||
+        isPublicAuthRequest(error.config.baseURL, requestUrl) ||
         isRetry
       ) {
         return Promise.reject(error);
@@ -98,7 +101,12 @@ async function refreshTokens() {
     await authStore.refresh();
   } catch (error) {
     console.log("Refresh tokens request error: ", error);
-    throw error;
+    // if user sent invalid refresh token, then redirect to login
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      redirectToLogin();
+    } else {
+      throw error;
+    }
   }
 }
 

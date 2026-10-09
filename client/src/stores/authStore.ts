@@ -12,8 +12,9 @@ const REFRESH_TOKEN_KEY = "finfast-refresh-token";
 const USER_ID_KEY = "finfast-user-id";
 const USERNAME_KEY = "finfast-username";
 const OFFLINE_MODE_KEY = "finfast-offline-mode";
-const ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY = "finfast-access-token-expiration-timestamp";
-export const ANONYMOUS_MODE_ENABLED_KEY = "finfast-anonymous-mode-enabled"
+const ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY =
+  "finfast-access-token-expiration-timestamp";
+export const ANONYMOUS_MODE_ENABLED_KEY = "finfast-anonymous-mode-enabled";
 export const ANONYMOUS_USER_ID = "anonymous";
 
 interface TokenClaims {
@@ -168,17 +169,25 @@ export const useAuthStore = defineStore("auth", () => {
     password: string,
     signal?: AbortSignal,
   ) {
-    const tokens = await authApi.login(
-      { username: loginUsername, password },
-      signal,
-    );
-    saveTokens(tokens);
-    await loadCurrentUser();
+    try {
+      saveTokens(
+        await authApi.login({ username: loginUsername, password }, signal),
+      );
+      await loadCurrentUser();
+    } catch (error) {
+      console.error("User login error: ", error);
+      throw error;
+    }
   }
 
   async function loginWithGoogle(credential: string) {
-    saveTokens(await authApi.loginWithGoogle(credential));
-    await loadCurrentUser();
+    try {
+      saveTokens(await authApi.loginWithGoogle(credential));
+      await loadCurrentUser();
+    } catch (error) {
+      console.error("User google-login error: ", error);
+      throw error;
+    }
   }
 
   async function linkGoogleAccount(credential: string) {
@@ -224,19 +233,19 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   const refresh = singleFlight(async () => {
-    if (!refreshToken.value) {
-      throw new Error("Refresh token is missing");
-    }
-
     const currentRefreshToken = refreshToken.value;
 
     if (!currentRefreshToken) {
       throw new Error("Refresh token is missing");
     }
 
-    const tokens = await authApi.refresh(currentRefreshToken);
-    saveTokens(tokens);
-    await loadCurrentUser();
+    try {
+      saveTokens(await authApi.refresh(currentRefreshToken));
+      await loadCurrentUser();
+    } catch (error) {
+      console.error("Error during tokens refresh: ", error);
+      throw error;
+    }
   });
 
   async function logout() {

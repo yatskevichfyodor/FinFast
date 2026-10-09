@@ -26,7 +26,13 @@ const dataChangesStoreReady = ref(false);
 const categoryStoreReady = ref(false);
 const expenseStoreReady = ref(false);
 const categoryOrderStoreReady = ref(false);
-const storesReady = computed(() => dataChangesStoreReady.value && categoryStoreReady.value && expenseStoreReady.value && categoryOrderStoreReady.value)
+const storesReady = computed(
+  () =>
+    dataChangesStoreReady.value &&
+    categoryStoreReady.value &&
+    expenseStoreReady.value &&
+    categoryOrderStoreReady.value,
+);
 
 const authStore = useAuthStore(pinia);
 const dataChangesStore = useDataChangesStore();
@@ -42,35 +48,35 @@ async function refreshStores(userId: string | null) {
   if (dataChangesStore.value) {
     dataChangesStore.value.loadDataFromStorage();
     dataChangesStore.value.loadDataFromApi(); // without wating for completion
-    dataChangesStoreReady.value = true;
   }
+  dataChangesStoreReady.value = true;
 
   setCategoryStore(userId);
   if (categoryStore.value) {
     await categoryStore.value.loadDataFromStorage();
     categoryStore.value.syncLocalChangesWithApi(); // without wating for completion
-    categoryStoreReady.value = true;
   }
+  categoryStoreReady.value = true;
 
   setExpenseStore(userId);
   const expenseStore = useExpenseStore();
   if (expenseStore.value) {
     await expenseStore.value.loadDataFromStorage();
-    expenseStoreReady.value = true;
   }
+  expenseStoreReady.value = true;
 
   setCategoryOrderStore(userId);
   const categoryOrderStore = useCategoryOrderStore();
   if (categoryOrderStore.value) {
     await categoryOrderStore.value.getCategoryOrder();
-    categoryOrderStoreReady.value = true;
   }
+  categoryOrderStoreReady.value = true;
 }
 
 watch(
   () => authStore.userId,
   async (userId) => {
-    await refreshStores(userId)
+    await refreshStores(userId);
   },
   { immediate: true },
 );

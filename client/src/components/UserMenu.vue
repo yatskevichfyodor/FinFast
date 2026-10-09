@@ -1,107 +1,115 @@
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
-import ExportDialog from '@/components/ExportDialog.vue'
-import ImportDialog from '@/components/ImportDialog.vue'
-import LogoutConfirmationDialog from '@/components/LogoutConfirmationDialog.vue'
-import AccountDialog from '@/components/AccountDialog.vue'
-import { updateAvailable, updatePwa } from '@/services/pwaUpdate'
-import { format } from 'date-fns/format'
-import { useExpenseStore } from '@/stores'
+import { ref, watch, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/authStore";
+import ExportDialog from "@/components/ExportDialog.vue";
+import ImportDialog from "@/components/ImportDialog.vue";
+import LogoutConfirmationDialog from "@/components/LogoutConfirmationDialog.vue";
+import AccountDialog from "@/components/AccountDialog.vue";
+import { updateAvailable, updatePwa } from "@/services/pwaUpdate";
+import { format } from "date-fns/format";
+import { useExpenseStore } from "@/stores";
 
-const props = defineProps<{ modelValue: boolean }>()
+const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
+  (e: "update:modelValue", value: boolean): void;
+}>();
 
-const router = useRouter()
-const authStore = useAuthStore()
-const expenseStore = useExpenseStore().value!
+const router = useRouter();
+const authStore = useAuthStore();
+const expenseStore = useExpenseStore().value!;
 
-const localOpen = ref(props.modelValue)
-const showExportDialog = ref(false)
-const showImportDialog = ref(false)
-const showLogoutDialog = ref(false)
-const showAccountDialog = ref(false)
-const pendingExpensesCount = computed(() => expenseStore.getNotSyncedExpensesCount())
-const shouldShowLogin = computed(() => !authStore.isAuthenticated || authStore.isAnonymous)
+const localOpen = ref(props.modelValue);
+const showExportDialog = ref(false);
+const showImportDialog = ref(false);
+const showLogoutDialog = ref(false);
+const showAccountDialog = ref(false);
+const pendingExpensesCount = computed(() =>
+  expenseStore ? expenseStore.getNotSyncedExpensesCount() : null,
+);
+const shouldShowLogin = computed(
+  () => !authStore.isAuthenticated || authStore.isAnonymous,
+);
 
 const buildInfo = computed(() => {
-  const buildNumber = import.meta.env.VITE_BUILD_NUMBER || 'dev'
-  const gitCommit = import.meta.env.VITE_GIT_COMMIT || 'local'
-  const shortCommit = gitCommit.length > 7 ? gitCommit.substring(0, 7) : gitCommit
-  return `Build #${buildNumber} · ${shortCommit} · ${format(new Date(__BUILD_TIME__), 'yyyy.MM.dd. HH:mm')}`
-})
+  const buildNumber = import.meta.env.VITE_BUILD_NUMBER || "dev";
+  const gitCommit = import.meta.env.VITE_GIT_COMMIT || "local";
+  const shortCommit =
+    gitCommit.length > 7 ? gitCommit.substring(0, 7) : gitCommit;
+  return `Build #${buildNumber} · ${shortCommit} · ${format(new Date(__BUILD_TIME__), "yyyy.MM.dd. HH:mm")}`;
+});
 
-watch(() => props.modelValue, v => (localOpen.value = v))
-watch(localOpen, v => emit('update:modelValue', v))
+watch(
+  () => props.modelValue,
+  (v) => (localOpen.value = v),
+);
+watch(localOpen, (v) => emit("update:modelValue", v));
 
 onMounted(() => {
   if (authStore.accessToken && !authStore.isAnonymous) {
-    void authStore.loadCurrentUser()
+    void authStore.loadCurrentUser();
   }
-})
+});
 
 function closeMenu() {
-  localOpen.value = false
+  localOpen.value = false;
 }
 
 function openExport() {
-  closeMenu()
-  showExportDialog.value = true
+  closeMenu();
+  showExportDialog.value = true;
 }
 
 function openImport() {
-  closeMenu()
-  showImportDialog.value = true
+  closeMenu();
+  showImportDialog.value = true;
 }
 
 async function logout() {
   if (shouldShowLogin.value) {
-    await goToLogin()
-    return
+    await goToLogin();
+    return;
   }
 
-  if (pendingExpensesCount.value > 0) {
-    closeMenu()
-    showLogoutDialog.value = true
-    return
+  if (pendingExpensesCount.value && pendingExpensesCount.value > 0) {
+    closeMenu();
+    showLogoutDialog.value = true;
+    return;
   }
 
-  await completeLogout()
+  await completeLogout();
 }
 
 async function completeLogout() {
-  closeMenu()
-  showLogoutDialog.value = false
-  await authStore.logout()
-  await router.replace({ name: 'login' })
+  closeMenu();
+  showLogoutDialog.value = false;
+  await authStore.logout();
+  await router.replace({ name: "login" });
 }
 
 async function goToLogin() {
-  closeMenu()
-  await authStore.logout()
-  await router.replace({ name: 'login' })
+  closeMenu();
+  await authStore.logout();
+  await router.replace({ name: "login" });
 }
 
 function openAccountDialog() {
-  closeMenu()
-  showAccountDialog.value = true
+  closeMenu();
+  showAccountDialog.value = true;
 }
 
 async function openCategories() {
-  closeMenu()
-  await router.push({ name: 'categories' })
+  closeMenu();
+  await router.push({ name: "categories" });
 }
 
 async function updateApplication() {
-  await updatePwa()
+  await updatePwa();
 }
 
 function handleBackdropClick(event: MouseEvent) {
   if (event.target === event.currentTarget) {
-    closeMenu()
+    closeMenu();
   }
 }
 </script>
@@ -117,11 +125,19 @@ function handleBackdropClick(event: MouseEvent) {
         <Transition name="menu-slide">
           <div v-show="localOpen" class="user-menu">
             <div class="menu-header">
-              <v-avatar class="menu-avatar" color="light-blue-lighten-5" size="46">
-                <v-icon color="light-blue-darken-2" size="28">mdi-account</v-icon>
+              <v-avatar
+                class="menu-avatar"
+                color="light-blue-lighten-5"
+                size="46"
+              >
+                <v-icon color="light-blue-darken-2" size="28"
+                  >mdi-account</v-icon
+                >
               </v-avatar>
               <div class="menu-user-info">
-                <span class="menu-username">{{ authStore.username || 'Пользователь' }}</span>
+                <span class="menu-username">{{
+                  authStore.username || "Пользователь"
+                }}</span>
               </div>
             </div>
 
@@ -142,7 +158,9 @@ function handleBackdropClick(event: MouseEvent) {
                 <v-divider class="my-2" />
               </div>
 
-              <template v-if="authStore.isAuthenticated && !authStore.isAnonymous">
+              <template
+                v-if="authStore.isAuthenticated && !authStore.isAnonymous"
+              >
                 <v-btn
                   variant="text"
                   class="menu-button"
@@ -157,37 +175,31 @@ function handleBackdropClick(event: MouseEvent) {
                 <v-divider class="my-2" />
               </template>
 
-              <v-btn
-                variant="text"
-                class="menu-button"
-                @click="openCategories"
-              >
+              <v-btn variant="text" class="menu-button" @click="openCategories">
                 <template #prepend>
-                    <v-icon class="menu-icon" color="teal-darken-1">mdi-tag-multiple</v-icon>
+                  <v-icon class="menu-icon" color="teal-darken-1"
+                    >mdi-tag-multiple</v-icon
+                  >
                 </template>
                 Категории
               </v-btn>
 
               <v-divider class="my-2" />
 
-              <v-btn
-                variant="text"
-                class="menu-button"
-                @click="openImport"
-              >
+              <v-btn variant="text" class="menu-button" @click="openImport">
                 <template #prepend>
-                  <v-icon class="menu-icon menu-icon-import">mdi-file-upload-outline</v-icon>
+                  <v-icon class="menu-icon menu-icon-import"
+                    >mdi-file-upload-outline</v-icon
+                  >
                 </template>
                 Импорт расходов
               </v-btn>
 
-              <v-btn
-                variant="text"
-                class="menu-button"
-                @click="openExport"
-              >
+              <v-btn variant="text" class="menu-button" @click="openExport">
                 <template #prepend>
-                  <v-icon class="menu-icon menu-icon-export">mdi-file-download-outline</v-icon>
+                  <v-icon class="menu-icon menu-icon-export"
+                    >mdi-file-download-outline</v-icon
+                  >
                 </template>
                 Экспорт расходов
               </v-btn>
@@ -201,12 +213,16 @@ function handleBackdropClick(event: MouseEvent) {
               >
                 <template #prepend>
                   <v-icon
-                    :class="shouldShowLogin ? 'menu-icon menu-icon-login' : 'menu-icon menu-icon-logout'"
+                    :class="
+                      shouldShowLogin
+                        ? 'menu-icon menu-icon-login'
+                        : 'menu-icon menu-icon-logout'
+                    "
                   >
-                    {{ shouldShowLogin ? 'mdi-login' : 'mdi-logout' }}
+                    {{ shouldShowLogin ? "mdi-login" : "mdi-logout" }}
                   </v-icon>
                 </template>
-                {{ shouldShowLogin ? 'Войти' : 'Выйти' }}
+                {{ shouldShowLogin ? "Войти" : "Выйти" }}
               </v-btn>
               <div class="menu-build-info">{{ buildInfo }}</div>
             </div>
@@ -217,11 +233,13 @@ function handleBackdropClick(event: MouseEvent) {
 
     <ExportDialog v-model="showExportDialog" />
     <ImportDialog v-model="showImportDialog" />
-    <LogoutConfirmationDialog
-      v-model="showLogoutDialog"
-      :pending-expenses-count="pendingExpensesCount"
-      @confirm="completeLogout"
-    />
+    <template v-if="pendingExpensesCount">
+      <LogoutConfirmationDialog
+        v-model="showLogoutDialog"
+        :pending-expenses-count="pendingExpensesCount"
+        @confirm="completeLogout"
+      />
+    </template>
     <AccountDialog v-model="showAccountDialog" />
   </Teleport>
 </template>

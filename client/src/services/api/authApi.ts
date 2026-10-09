@@ -34,7 +34,7 @@ export const authApi = {
   async login(request: LoginRequest, signal?: AbortSignal): Promise<TokenResponse> {
     const { data } = await authClient.post<TokenResponse>('/auth/login', request, {
       signal,
-      timeout: 65000
+      timeout: 70000
     })
     return data
   },
