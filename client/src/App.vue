@@ -16,6 +16,7 @@ import {
   useDataChangesStore,
   useExpenseStore,
 } from "./stores";
+import availabilityService from "./services/availabilityService";
 
 const route = useRoute();
 const showNavigation = computed(() => route.meta.requiresAuth === true);
@@ -30,6 +31,11 @@ const storesReady = computed(() => dataChangesStoreReady.value && categoryStoreR
 const authStore = useAuthStore(pinia);
 const dataChangesStore = useDataChangesStore();
 const categoryStore = useCategoryStore();
+
+// ping services to wake them up
+if (!authStore.isOffline) {
+  availabilityService.wakeUpServices();
+}
 
 async function refreshStores(userId: string | null) {
   setDataChangesStore(userId);

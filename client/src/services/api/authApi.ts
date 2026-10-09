@@ -75,7 +75,7 @@ export const authApi = {
 
   async isAvailable(): Promise<boolean> {
     try {
-      await authClient.get('/health', { timeout: 20000 })
+      await authClient.get('/health', { timeout: 70000 })
       return true
     } catch {
       return false

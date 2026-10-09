@@ -1,12 +1,18 @@
 import axios from "axios";
 import { expenseClient } from "@/services/api/http";
-import type { CreateExpenseDto, ApiResponseExpenseDto, SyncExpensesDto, UpdateExpenseDto } from "@/types/expense";
-
+import type {
+  CreateExpenseDto,
+  ApiResponseExpenseDto,
+  SyncExpensesDto,
+  UpdateExpenseDto,
+} from "@/types/expense";
 
 export const expenseApi = {
   async getExpense(id: string): Promise<ApiResponseExpenseDto | undefined> {
     try {
-      const { data } = await expenseClient.get<ApiResponseExpenseDto>(`/expenses/${id}`);
+      const { data } = await expenseClient.get<ApiResponseExpenseDto>(
+        `/expenses/${id}`,
+      );
       return data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -23,9 +29,12 @@ export const expenseApi = {
     }
 
     try {
-      const { data } = await expenseClient.get<ApiResponseExpenseDto[]>("/expenses", {
-        params: { ids: ids.join(",") },
-      });
+      const { data } = await expenseClient.get<ApiResponseExpenseDto[]>(
+        "/expenses",
+        {
+          params: { ids: ids.join(",") },
+        },
+      );
       return data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -37,7 +46,8 @@ export const expenseApi = {
   },
 
   async getExpenses(): Promise<ApiResponseExpenseDto[]> {
-    const { data } = await expenseClient.get<ApiResponseExpenseDto[]>("/expenses");
+    const { data } =
+      await expenseClient.get<ApiResponseExpenseDto[]>("/expenses");
     return data;
   },
 
@@ -49,10 +59,7 @@ export const expenseApi = {
     await expenseClient.post("/expenses/sync", request);
   },
 
-  async updateExpense(
-    id: string,
-    updates: UpdateExpenseDto,
-  ): Promise<void> {
+  async updateExpense(id: string, updates: UpdateExpenseDto): Promise<void> {
     await expenseClient.patch(`/expenses/${id}`, updates);
   },
 
@@ -65,6 +72,15 @@ export const expenseApi = {
       }
 
       throw error;
+    }
+  },
+
+  async isAvailable(): Promise<boolean> {
+    try {
+      await expenseClient.get("/health", { timeout: 70000 });
+      return true;
+    } catch {
+      return false;
     }
   },
 };
