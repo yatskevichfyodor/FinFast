@@ -30,6 +30,9 @@ const isDeletingAccount = ref(false)
 const deleteConfirmed = ref(false)
 const googleLinkMessage = ref('')
 const googleLinkError = ref('')
+const passkeyMessage = ref('')
+const passkeyError = ref('')
+const isLinkingPasskey = ref(false)
 const isGoogleSignInConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
 
 editedUsername.value = authStore.username ?? ''
@@ -155,6 +158,20 @@ async function linkGoogleAccount(credential: string) {
     googleLinkMessage.value = 'Аккаунт Google успешно привязан'
   } catch (error) {
     googleLinkError.value = getGoogleLinkErrorMessage(error)
+  }
+}
+
+async function linkPasskey() {
+  passkeyMessage.value = ''
+  passkeyError.value = ''
+  isLinkingPasskey.value = true
+  try {
+    await authStore.linkPasskey()
+    passkeyMessage.value = 'Passkey успешно привязан'
+  } catch (error) {
+    passkeyError.value = getRequestErrorMessage(error, 'Не удалось привязать passkey')
+  } finally {
+    isLinkingPasskey.value = false
   }
 }
 
@@ -388,15 +405,38 @@ function getRequestErrorMessage(
               </template>
             </div>
           </div>
+
+          <div class="info-card">
+            <div class="card-header">
+              <v-icon class="card-icon" :color="authStore.passkeyLinked ? '#2e7d32' : '#9e9e9e'">mdi-fingerprint</v-icon>
+              <span class="card-label">Passkey</span>
+              <v-chip :color="authStore.passkeyLinked ? 'success' : 'default'" size="x-small" variant="tonal" class="status-chip">
+                {{ authStore.passkeyLinked ? 'Привязан' : 'Не привязан' }}
+              </v-chip>
+            </div>
+            <div class="card-content">
+              <v-btn v-if="!authStore.passkeyLinked" block size="small" variant="tonal" color="#1976d2" :loading="isLinkingPasskey" @click="linkPasskey">
+                <v-icon size="16" start>mdi-fingerprint</v-icon>
+                Привязать passkey
+              </v-btn>
+              <div v-else class="google-placeholder">Используйте passkey для входа без пароля</div>
+            </div>
+          </div>
         </div>
 
         <!-- Google Alerts -->
-        <div v-if="googleLinkMessage || googleLinkError" class="alerts-container">
+        <div v-if="googleLinkMessage || googleLinkError || passkeyMessage || passkeyError" class="alerts-container">
           <v-alert v-if="googleLinkMessage" density="compact" type="success" variant="tonal" class="custom-alert">
             {{ googleLinkMessage }}
           </v-alert>
           <v-alert v-if="googleLinkError" density="compact" type="error" variant="tonal" class="custom-alert">
             {{ googleLinkError }}
+          </v-alert>
+          <v-alert v-if="passkeyMessage" density="compact" type="success" variant="tonal" class="custom-alert">
+            {{ passkeyMessage }}
+          </v-alert>
+          <v-alert v-if="passkeyError" density="compact" type="error" variant="tonal" class="custom-alert">
+            {{ passkeyError }}
           </v-alert>
         </div>
 

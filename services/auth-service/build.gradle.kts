@@ -42,6 +42,7 @@ dependencies {
     implementation("io.quarkus:quarkus-security")
     implementation("io.quarkus:quarkus-messaging-kafka")
     implementation("io.quarkus:quarkus-scheduler")
+    implementation("io.quarkus:quarkus-security-webauthn")
     implementation("com.nimbusds:nimbus-jose-jwt:10.9.1")
     implementation("com.google.api-client:google-api-client:2.8.1")
     implementation("com.google.api-client:google-api-client-gson:2.8.1")

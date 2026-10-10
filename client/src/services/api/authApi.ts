@@ -16,6 +16,7 @@ export interface UserResponse {
   email?: string
   googleLinked: boolean
   hasPassword: boolean
+  passkeyLinked: boolean
 }
 
 export interface TokenResponse {
@@ -42,6 +43,21 @@ export const authApi = {
   async loginWithGoogle(credential: string): Promise<TokenResponse> {
     const { data } = await authClient.post<TokenResponse>('/auth/google', { credential })
     return data
+  },
+
+  async registerPasskey(username: string): Promise<TokenResponse> {
+    const { registerPasskey } = await import('@/services/passkey')
+    return registerPasskey(username)
+  },
+
+  async loginWithPasskey(username?: string): Promise<TokenResponse> {
+    const { loginWithPasskey } = await import('@/services/passkey')
+    return loginWithPasskey(username)
+  },
+
+  async linkPasskey(username: string): Promise<void> {
+    const { registerPasskeyForCurrentUser } = await import('@/services/passkey')
+    await registerPasskeyForCurrentUser(username)
   },
 
   async linkGoogleAccount(credential: string): Promise<UserResponse> {

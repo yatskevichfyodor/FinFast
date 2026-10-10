@@ -11,3 +11,6 @@ quarkus:
       certificate:
         files: ../../certs/finfast.pem
         key-files: ../../certs/finfast-key.pem
+  webauthn:
+    enabled: true
+    origins: http://localhost:5173,https://192.168.0.234:5273

@@ -12,6 +12,7 @@ import org.example.finfast.auth.dto.UserResponse
 import org.example.finfast.auth.outbox.OutboxEventPublisher
 import org.example.finfast.auth.repository.RefreshTokenRepository
 import org.example.finfast.auth.repository.UserRepository
+import org.example.finfast.auth.repository.WebAuthnCredentialRepository
 import java.time.Instant
 import java.util.*
 
@@ -21,14 +22,15 @@ class AccountService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val googleTokenVerifier: GoogleTokenVerifier,
     private val outboxEventPublisher: OutboxEventPublisher,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val webAuthnCredentialRepository: WebAuthnCredentialRepository
 ) {
     @Transactional
     fun currentUser(userId: UUID): UserResponse {
         val user = userRepository.findByIdOptional(userId).orElseThrow {
             IllegalArgumentException("User not found")
         }
-        return UserResponse.fromUser(user)
+        return response(user)
     }
 
     @Transactional
@@ -42,7 +44,7 @@ class AccountService(
         user.googleSubject = identity.subject
         user.googleEmail = identity.email
         userRepository.save(user)
-        return UserResponse.fromUser(user)
+        return response(user)
     }
 
     @Transactional
@@ -51,7 +53,7 @@ class AccountService(
         require(user.passwordHash != null) { "Нельзя отвязать Google: задайте пароль для аккаунта" }
         user.googleSubject = null
         user.googleEmail = null
-        return UserResponse.fromUser(user)
+        return response(user)
     }
 
     @Transactional
@@ -62,7 +64,7 @@ class AccountService(
         val existingUser = userRepository.findByUsername(username)
         require(existingUser == null || existingUser.id == user.id) { "Это имя пользователя уже занято" }
         user.username = username
-        return UserResponse.fromUser(user)
+        return response(user)
     }
 
     @Transactional
@@ -70,7 +72,7 @@ class AccountService(
         require(request.password.length >= 8) { "Пароль должен содержать не менее 8 символов" }
         val user = userRepository.findByIdOptional(userId).orElseThrow { IllegalArgumentException("User not found") }
         user.passwordHash = BcryptUtil.bcryptHash(request.password)
-        return UserResponse.fromUser(user)
+        return response(user)
     }
 
     @Transactional
@@ -89,4 +91,7 @@ class AccountService(
         refreshTokenRepository.deleteAllByUserId(user.id)
         userRepository.delete(user)
     }
+
+    private fun response(user: org.example.finfast.auth.entity.User): UserResponse =
+        UserResponse.fromUser(user, webAuthnCredentialRepository.existsByUserId(user.id))
 }

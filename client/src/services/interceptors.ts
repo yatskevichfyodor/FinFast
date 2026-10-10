@@ -20,6 +20,10 @@ const PUBLIC_AUTH_REQUESTS = new Set([
   `/auth/register`,
   `/auth/refresh`,
   `/auth/google`,
+  `/auth/passkey/register`,
+  `/auth/passkey/login`,
+  `/q/webauthn/register-options-challenge`,
+  `/q/webauthn/login-options-challenge`,
 ]);
 
 function isPublicAuthRequest(baseUrl: string, url: string): boolean {

@@ -12,6 +12,7 @@ import org.example.finfast.auth.dto.LoginRequest
 import org.example.finfast.auth.dto.LogoutRequest
 import org.example.finfast.auth.dto.RefreshRequest
 import org.example.finfast.auth.dto.RegisterRequest
+import org.example.finfast.auth.dto.TokenResponse
 
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
@@ -27,11 +28,11 @@ class AuthResource @Inject constructor(
 
     @POST
     @Path("/login")
-    fun login(request: LoginRequest) = authService.login(request)
+    fun login(request: LoginRequest): TokenResponse = authService.login(request)
 
     @POST
     @Path("/google")
-    fun loginWithGoogle(request: GoogleIdTokenRequest) = authService.loginWithGoogle(request)
+    fun loginWithGoogle(request: GoogleIdTokenRequest): TokenResponse = authService.loginWithGoogle(request)
 
     @POST
     @Path("/refresh")

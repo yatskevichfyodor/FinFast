@@ -4,11 +4,15 @@
 
 Auth Service — отдельное Kotlin/Quarkus приложение (`services/auth-service`), а не часть Spring Boot Expense Service. Он предоставляет REST API регистрации, логина, Google-входа, обновления/отзыва refresh token, получения профиля и управления учётной записью. Frontend-вызовы и DTO находятся в `client/src/services/api/authApi.ts`; auth state — в `client/src/stores/authStore.ts`; HTTP clients/interceptors — в `client/src/services/api/http.ts` и `client/src/services/interceptors.ts`.
 
-Endpoints в `AuthResource` и `AccountResource` включают `/auth/register`, `/auth/login`, `/auth/google`, `/auth/refresh`, `/auth/logout`, JWKS и защищённые `/auth/me` операции профиля, пароля, привязки Google и удаления аккаунта. Сверять фактические DTO/HTTP semantics с ресурсами перед изменением контракта.
+Passkey flow использует `/auth/passkey/register`, `/auth/passkey/login` и защищённый `/auth/passkey/link`; challenges выдаются Quarkus WebAuthn endpoints. После успешной WebAuthn-проверки auth-service возвращает ту же пару access/refresh tokens, что и при других способах входа. Привязка passkey берёт user ID из Bearer principal, не из payload. WebAuthn credential records хранятся в `webauthn_credentials` (Flyway V5), FK связан с `users`, credential ID глобально уникален.
+
+Поскольку frontend и auth-service могут быть на разных доменах, WebAuthn challenge требует credentialed cross-origin запросов и доступной браузеру challenge cookie; production настроен на SameSite=None и HTTPS. Блокировка third-party cookies браузером либо несогласованный CLIENT_URL/RP ID могут сорвать ceremony; для надёжного production-потока сервисы следует размещать на совместимой схеме origin/site.
+
+Endpoints в `AuthResource` и `AccountResource` включают `/auth/register`, `/auth/login`, `/auth/google`, `/auth/refresh`, `/auth/logout`, JWKS и защищённые `/auth/me` операции профиля, пароля, привязки Google и удаления аккаунта. Passkey endpoints описаны выше. Сверять фактические DTO/HTTP semantics с ресурсами перед изменением контракта.
 
 ## Токены и проверка
 
-- Password login и Google sign-in возвращают access и refresh token. Google credential проверяется backend с настроенным Google client ID; frontend не должен считать credential проверенным до ответа сервиса.
+- Password login, Google sign-in и passkey login/registration возвращают access и refresh token. Google credential проверяется backend с настроенным Google client ID; frontend не должен считать credential проверенным до ответа сервиса. Passkey assertion и registration response проверяются auth-service через WebAuthnSecurity.
 - Auth Service публикует JWKS endpoint, подписывает JWT; конфигурация задаёт issuer `finfast-api` и access-token lifetime 900 секунд. Expense Service проверяет JWT signature через JWKS auth-service и issuer.
 - Refresh tokens хранятся сервером в форме хеша; refresh/logout API принимают refresh token. Не хранить пароль в localStorage/IndexedDB и не переносить доверие к user ID из произвольного клиентского payload.
 - Frontend хранит access token, refresh token, user ID/username и срок access token в localStorage. Interceptors прикладывают Bearer token, обновляют его по локальной отметке срока или 401 через single-flight refresh, повторяют исходный запрос один раз. Из interceptor flows исключены только `/auth/login`, `/auth/register`, `/auth/refresh` и `/auth/google`; `/auth/logout` не входит в этот список и проходит обычную обработку interceptors.

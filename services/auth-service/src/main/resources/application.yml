@@ -9,6 +9,7 @@ quarkus:
       enabled: true
       methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
       headers: Content-Type,Authorization
+      access-control-allow-credentials: true
 
   datasource:
     db-kind: postgresql

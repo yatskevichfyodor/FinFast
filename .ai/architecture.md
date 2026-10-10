@@ -26,7 +26,7 @@ FinFast — клиентское приложение для учёта расх
 
 ## Высокоуровневая авторизация
 
-Auth Service проверяет парольные credentials либо Google ID token, выдаёт короткоживущий access JWT и refresh token. На frontend токены и идентификатор пользователя хранятся в localStorage. Axios interceptors добавляют Bearer access token, обновляют токены при локально выявленном истечении срока или 401 и повторяют запрос один раз. Expense Service валидирует access token через JWKS и использует аутентифицированный principal для изоляции пользовательских записей.
+Auth Service проверяет парольные credentials, Google ID token либо WebAuthn/passkey assertion, выдаёт короткоживущий access JWT и refresh token. Passkey registration/login проходят серверную challenge/signature verification; привязка дополнительного passkey к существующему аккаунту защищена текущим Bearer principal. Для Expense Service passkey не является токеном: frontend использует обычный access JWT, валидируемый через JWKS. На frontend токены и идентификатор пользователя хранятся в localStorage. Axios interceptors добавляют Bearer access token, обновляют токены при локально выявленном истечении срока или 401 и повторяют запрос один раз. Expense Service валидирует access token через JWKS и использует аутентифицированный principal для изоляции пользовательских записей.
 
 Гостевой режим — клиентский профиль `anonymous` без backend identity; он хранит расходы локально и не должен трактоваться backend как authenticated account. Детали и фактические ограничения описаны в [authentication.md](authentication.md).
 

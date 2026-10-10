@@ -83,7 +83,8 @@ class AuthService(
         }
     }
 
-    private fun issueTokens(user: User): TokenResponse {
+    @Transactional
+    fun issueTokens(user: User): TokenResponse {
         val refresh = ByteArray(64).also(random::nextBytes)
         val refreshValue = Base64.getUrlEncoder().withoutPadding().encodeToString(refresh)
         refreshTokenRepository.save(

@@ -8,6 +8,8 @@ import java.util.UUID
 
 @ApplicationScoped
 class UserRepository : PanacheRepositoryBase<User, UUID> {
+    fun existsByUsername(username: String): Boolean = findByUsername(username) != null
+
     fun findByUsername(username: String): User? = find("username", username).firstResult()
 
     fun findByGoogleSubject(subject: String): User? = find("googleSubject", subject).firstResult()

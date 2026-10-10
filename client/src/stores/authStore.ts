@@ -63,6 +63,7 @@ export const useAuthStore = defineStore("auth", () => {
   const isAnonymous = ref(false);
   const googleLinked = ref(false);
   const hasPassword = ref(false);
+  const passkeyLinked = ref(false);
   let storeInitialized = false;
 
   function setUserFromClaims(claims: TokenClaims) {
@@ -118,6 +119,7 @@ export const useAuthStore = defineStore("auth", () => {
     isAnonymous.value = true;
     googleLinked.value = false;
     hasPassword.value = false;
+    passkeyLinked.value = false;
     isOffline.value = true;
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
@@ -190,6 +192,22 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  async function loginWithPasskey(loginUsername?: string) {
+    saveTokens(await authApi.loginWithPasskey(loginUsername));
+    await loadCurrentUser();
+  }
+
+  async function registerWithPasskey(newUsername: string) {
+    saveTokens(await authApi.registerPasskey(newUsername));
+    await loadCurrentUser();
+  }
+
+  async function linkPasskey() {
+    if (!username.value) throw new Error("Имя пользователя не загружено");
+    await authApi.linkPasskey(username.value);
+    await loadCurrentUser();
+  }
+
   async function linkGoogleAccount(credential: string) {
     applyUser(await authApi.linkGoogleAccount(credential));
   }
@@ -210,6 +228,7 @@ export const useAuthStore = defineStore("auth", () => {
     email.value = user.email || null;
     googleLinked.value = user.googleLinked;
     hasPassword.value = user.hasPassword;
+    passkeyLinked.value = user.passkeyLinked;
     localStorage.setItem(USER_ID_KEY, user.id);
     localStorage.setItem(USERNAME_KEY, user.username);
   }
@@ -221,6 +240,7 @@ export const useAuthStore = defineStore("auth", () => {
       email.value = null;
       googleLinked.value = false;
       hasPassword.value = false;
+      passkeyLinked.value = false;
       return;
     }
 
@@ -256,6 +276,7 @@ export const useAuthStore = defineStore("auth", () => {
     isAnonymous.value = false;
     googleLinked.value = false;
     hasPassword.value = false;
+    passkeyLinked.value = false;
     userId.value = null;
     username.value = null;
     email.value = null;
@@ -285,10 +306,14 @@ export const useAuthStore = defineStore("auth", () => {
     isAnonymous,
     googleLinked,
     hasPassword,
+    passkeyLinked,
     isAccessTokenExpired,
     register,
     login,
     loginWithGoogle,
+    loginWithPasskey,
+    registerWithPasskey,
+    linkPasskey,
     linkGoogleAccount,
     unlinkGoogleAccount,
     updateProfile,

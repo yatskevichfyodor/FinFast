@@ -145,6 +145,36 @@ async function loginWithGoogle(credential: string) {
   }
 }
 
+async function loginWithPasskey() {
+  errorMessage.value = ''
+  isSubmitting.value = true
+  try {
+    await authStore.loginWithPasskey(username.value.trim() || undefined)
+    await continueAfterLogin()
+  } catch (error) {
+    errorMessage.value = getErrorMessage(error)
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+async function registerWithPasskey() {
+  errorMessage.value = ''
+  if (!username.value.trim()) {
+    errorMessage.value = 'Введите логин для регистрации passkey'
+    return
+  }
+  isSubmitting.value = true
+  try {
+    await authStore.registerWithPasskey(username.value)
+    await continueAfterLogin()
+  } catch (error) {
+    errorMessage.value = getErrorMessage(error)
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
 function handleGoogleError(message: string) {
   errorMessage.value = message
 }
@@ -361,6 +391,20 @@ onMounted(() => {
             @error="handleGoogleError"
           />
         </template>
+
+        <v-btn
+          v-if="!isOfflineMode"
+          class="mt-3"
+          block
+          variant="outlined"
+          color="primary"
+          :loading="isSubmitting"
+          :disabled="isSubmitting"
+          @click="isRegistration ? registerWithPasskey() : loginWithPasskey()"
+        >
+          <v-icon start icon="mdi-fingerprint" />
+          {{ isRegistration ? 'Зарегистрироваться с passkey' : 'Войти с passkey' }}
+        </v-btn>
 
         <v-card-actions class="justify-center mt-3">
           <v-btn

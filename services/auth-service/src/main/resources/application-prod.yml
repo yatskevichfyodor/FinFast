@@ -16,6 +16,21 @@ quarkus:
         pem:
           certs: /etc/secrets/aiven-ca.pem
 
+  webauthn:
+    enabled: true
+    origins: https://yatskevichfyodor.github.io
+    cookie-same-site: none
+
+    relying-party:
+      id: yatskevichfyodor.github.io
+      name: FinFast
+
+    resident-key: required
+    user-verification: required
+
+    enable-registration-endpoint: false
+    enable-login-endpoint: false
+
 kafka:
   bootstrap:
     servers: ${KAFKA_BOOTSTRAP_SERVERS}
