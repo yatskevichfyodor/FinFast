@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
-import baseConfig from './vite.config'
+import baseConfig from './vite.config.ts'
 
 export default defineConfig(async (env) => {
   const config =
