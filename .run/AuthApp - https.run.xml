@@ -4,7 +4,7 @@
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/services/auth-service" />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value="-Dquarkus.profile=dev-https" />
+      <option name="scriptParameters" value="-Dquarkus.profile=dev-https -Dquarkus.config.profile.parent=dev" />
       <option name="taskDescriptions">
         <list />
       </option>
