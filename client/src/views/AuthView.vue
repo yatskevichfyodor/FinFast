@@ -7,6 +7,7 @@ import { expenseStorage } from '@/storage/indexedDB'
 import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { useExpenseStore } from '@/stores'
+import { isGoogleSignInAvailable } from '@/utils/auth'
 
 const route = useRoute()
 const router = useRouter()
@@ -149,6 +150,7 @@ async function loginWithPasskey() {
   errorMessage.value = ''
   isSubmitting.value = true
   try {
+    debugger;
     await authStore.loginWithPasskey(username.value.trim() || undefined)
     await continueAfterLogin()
   } catch (error) {
@@ -384,7 +386,7 @@ onMounted(() => {
           </v-btn>
         </v-form>
 
-        <template v-if="!isOfflineMode && !isCheckingService && isGoogleSignInConfigured">
+        <template v-if="!isOfflineMode && !isCheckingService && isGoogleSignInConfigured && isGoogleSignInAvailable()">
           <div class="auth-divider"><span>или</span></div>
           <GoogleSignInButton
             @credential="loginWithGoogle"

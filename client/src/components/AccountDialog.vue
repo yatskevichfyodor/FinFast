@@ -6,6 +6,7 @@ import { isAxiosError } from 'axios'
 import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { useExpenseStore } from '@/stores'
+import { isGoogleSignInAvailable } from '@/utils/auth'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -391,7 +392,7 @@ function getRequestErrorMessage(
                   </div>
                 </div>
               </template>
-              <template v-else-if="!authStore.googleLinked && isGoogleSignInConfigured">
+              <template v-else-if="!authStore.googleLinked && isGoogleSignInConfigured && isGoogleSignInAvailable()">
                 <div class="google-link-container">
                   <GoogleSignInButton
                     hint="Привяжите аккаунт Google для входа без пароля"
