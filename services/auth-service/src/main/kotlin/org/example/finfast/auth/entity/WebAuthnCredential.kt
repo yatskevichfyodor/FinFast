@@ -16,8 +16,7 @@ import java.util.*
 class WebAuthnCredential(
 
     @Id
-    @GeneratedValue
-    val id: UUID? = null,
+    val id: UUID = UUID.randomUUID(),
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(

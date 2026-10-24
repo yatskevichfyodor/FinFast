@@ -114,7 +114,6 @@ class PasskeyService(
         val user = userRepository.findByIdOptional(userId).orElseThrow()
         credentialRepository.persist(
             WebAuthnCredential(
-                id = UUID.randomUUID(),
                 user = user,
                 credentialId = data.credentialId,
                 publicKey = data.publicKey,

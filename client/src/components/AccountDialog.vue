@@ -170,6 +170,7 @@ async function linkPasskey() {
     await authStore.linkPasskey()
     passkeyMessage.value = 'Passkey успешно привязан'
   } catch (error) {
+    console.error('Не удалось привязать passkey', error);
     passkeyError.value = getRequestErrorMessage(error, 'Не удалось привязать passkey')
   } finally {
     isLinkingPasskey.value = false

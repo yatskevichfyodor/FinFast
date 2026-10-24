@@ -8,6 +8,17 @@ quarkus:
       certificate:
         files: ../../certs/finfast-local.pem
         key-files: ../../certs/finfast-local-key.pem
+
   webauthn:
     enabled: true
     origins: http://localhost:5173,https://192.168.0.234:5273,https://finfast.test
+
+    relying-party:
+      id: finfast.test
+      name: FinFast
+
+    resident-key: required
+    user-verification: required
+
+    enable-registration-endpoint: false
+    enable-login-endpoint: false

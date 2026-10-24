@@ -119,11 +119,11 @@ export async function registerPasskeyForCurrentUser(username: string, displayNam
 function registrationForm(username: string, registration: Awaited<ReturnType<typeof registrationClientSteps>>) {
   return new URLSearchParams({
     username,
-    id: registration.id,
-    rawId: registration.rawId,
-    'response.attestationObject': registration.response.attestationObject,
-    'response.clientDataJSON': registration.response.clientDataJSON,
-    type: registration.type
+    webAuthnId: registration.id,
+    webAuthnRawId: registration.rawId,
+    webAuthnResponseAttestationObject: registration.response.attestationObject,
+    webAuthnResponseClientDataJSON: registration.response.clientDataJSON,
+    webAuthnType: registration.type
   })
 }
 
@@ -131,12 +131,12 @@ export async function loginWithPasskey(username?: string) {
   const login = await loginClientSteps(username)
   const form = new URLSearchParams({
     id: login.id,
-    rawId: login.rawId,
-    'response.clientDataJSON': login.response.clientDataJSON,
-    'response.authenticatorData': login.response.authenticatorData,
-    'response.signature': login.response.signature,
-    'response.userHandle': login.response.userHandle,
-    type: login.type
+    webAuthnRawId: login.rawId,
+    webAuthnResponseClientDataJSON: login.response.clientDataJSON,
+    webAuthnResponseAuthenticatorData: login.response.authenticatorData,
+    webAuthnResponseSignature: login.response.signature,
+    webAuthnResponseUserHandle: login.response.userHandle,
+    webAuthnType: login.type
   })
   const { data } = await authClient.post('/auth/passkey/login', form, {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
