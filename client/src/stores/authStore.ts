@@ -6,6 +6,7 @@ import {
   type UserResponse,
 } from "@/services/api/authApi";
 import { singleFlight } from "@/utils/singleFlight";
+import { passkeyApi } from "@/services/api/passkeyApi";
 
 const ACCESS_TOKEN_KEY = "finfast-access-token";
 const REFRESH_TOKEN_KEY = "finfast-refresh-token";
@@ -193,24 +194,24 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   async function loginWithPasskey(loginUsername?: string) {
-    const tokens: TokenResponse = await authApi.loginWithPasskey(loginUsername)
+    const tokens: TokenResponse = await passkeyApi.loginWithPasskey(loginUsername)
     saveTokens(tokens);
     await loadCurrentUser();
   }
 
   async function registerWithPasskey(newUsername: string) {
-    saveTokens(await authApi.registerPasskey(newUsername));
+    saveTokens(await passkeyApi.registerUserWithPasskey(newUsername));
     await loadCurrentUser();
   }
 
   async function linkPasskey() {
     if (!username.value) throw new Error("Имя пользователя не загружено");
-    await authApi.linkPasskey(username.value);
+    await passkeyApi.registerPasskeyForCurrentUser(username.value);
     await loadCurrentUser();
   }
 
   async function unlinkPasskey() {
-    await authApi.unlinkPasskey();
+    await passkeyApi.unlinkPasskey();
     await loadCurrentUser();
   }
 

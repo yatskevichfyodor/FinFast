@@ -8,6 +8,7 @@ import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { useExpenseStore } from '@/stores'
 import { isGoogleSignInAvailable } from '@/utils/auth'
+import { push } from 'notivue'
 
 const route = useRoute()
 const router = useRouter()
@@ -44,7 +45,7 @@ async function checkAuthService() {
   isCheckingService.value = false
 }
 
-function getErrorMessage(error: unknown): string {
+function getErrorMessage(error: any): string {
   if (isAxiosError(error)) {
     if (error.code === 'ERR_CANCELED') {
       return ''
@@ -74,6 +75,10 @@ function getErrorMessage(error: unknown): string {
     if (error.response.status === 409 && isRegistration.value) {
       return 'Пользователь с таким именем уже зарегистрирован'
     }
+  }
+
+  if (error.message) {
+    return error.message;
   }
 
   return isRegistration.value
@@ -150,7 +155,10 @@ async function loginWithPasskey() {
   errorMessage.value = ''
   isSubmitting.value = true
   try {
+    push.info("делаем запрос логин")
     await authStore.loginWithPasskey(username.value.trim() || undefined)
+    
+    errorMessage.value = "готово,"
     await continueAfterLogin()
   } catch (error) {
     console.error("Login with passkey error: ", errorMessage.value)

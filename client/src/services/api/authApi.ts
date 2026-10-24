@@ -46,22 +46,6 @@ export const authApi = {
     return data
   },
 
-  async registerPasskey(username: string): Promise<TokenResponse> {
-    return passkeyApi.registerUserWithPasskey(username)
-  },
-
-  async loginWithPasskey(username?: string): Promise<TokenResponse> {
-    return passkeyApi.loginWithPasskey(username)
-  },
-
-  async linkPasskey(username: string): Promise<void> {
-    await passkeyApi.registerPasskeyForCurrentUser(username)
-  },
-
-  async unlinkPasskey(): Promise<void> {
-    await authClient.delete('/auth/passkey/unlink')
-  },
-
   async linkGoogleAccount(credential: string): Promise<UserResponse> {
     const { data } = await authClient.post<UserResponse>('/auth/me/google', { credential })
     return data

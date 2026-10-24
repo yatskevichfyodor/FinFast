@@ -17,6 +17,7 @@ import {
   useExpenseStore,
 } from "./stores";
 import availabilityService from "./services/availabilityService";
+import { Notivue, Notification } from "notivue";
 
 const route = useRoute();
 const showNavigation = computed(() => route.meta.requiresAuth === true);
@@ -84,6 +85,9 @@ watch(
 
 <template>
   <v-app>
+    <Notivue v-slot="item">
+      <Notification :item="item" />
+    </Notivue>
     <template v-if="storesReady">
       <RouterView />
       <template v-if="showNavigation">
@@ -120,9 +124,7 @@ watch(
 
       <UserMenu v-if="expenseStoreReady" v-model="showUserMenu" />
     </template>
-    <template v-else>
-        Stores haven't been loaded
-    </template>
+    <template v-else> Stores haven't been loaded </template>
   </v-app>
 </template>
 

@@ -1,4 +1,5 @@
 import { authClient } from "@/services/api/http";
+import { push } from "notivue";
 
 interface PublicKeyOptions {
   challenge: string;
@@ -100,7 +101,8 @@ async function loginClientSteps(username?: string) {
       withCredentials: true,
     },
   );
-  const credential = (await navigator.credentials.get({
+  push.success('Hi! I am your first notification!')
+  const credentialRequestOptions = {
     publicKey: {
       ...options,
       challenge: decode(options.challenge),
@@ -109,7 +111,14 @@ async function loginClientSteps(username?: string) {
         id: decode(item.id),
       })),
     },
-  })) as PublicKeyCredential | null;
+  };
+
+  let credential
+  try {
+    credential = (await navigator.credentials.get(credentialRequestOptions)) as PublicKeyCredential | null;
+  } catch (error) {
+  }
+  
   if (
     !credential ||
     !(credential.response instanceof AuthenticatorAssertionResponse)
@@ -185,5 +194,9 @@ export const passkeyApi = {
       withCredentials: true,
     });
     return data;
+  },
+  
+  async unlinkPasskey(): Promise<void> {
+    await authClient.delete('/auth/passkey/unlink')
   },
 };

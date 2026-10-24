@@ -61,7 +61,9 @@ class PasskeyResource @Inject constructor(
     fun login(
         @BeanParam userLoginResponse: WebAuthnLoginResponse,
         routingContext: RoutingContext
-    ): TokenResponse = passkeyService.login(userLoginResponse, routingContext)
+    ): TokenResponse {
+        return passkeyService.login(userLoginResponse, routingContext)
+    }
 
     private fun currentUserId(): UUID {
         val subject = securityIdentity.principal?.name?.takeIf { it.isNotBlank() }
