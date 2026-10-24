@@ -150,7 +150,6 @@ async function loginWithPasskey() {
   errorMessage.value = ''
   isSubmitting.value = true
   try {
-    debugger;
     await authStore.loginWithPasskey(username.value.trim() || undefined)
     await continueAfterLogin()
   } catch (error) {

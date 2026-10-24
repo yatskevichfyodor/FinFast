@@ -1,4 +1,5 @@
 import { authClient } from '@/services/api/http'
+import { passkeyApi } from '@/services/api/passkeyApi'
 
 export interface RegisterRequest {
   username: string
@@ -46,18 +47,15 @@ export const authApi = {
   },
 
   async registerPasskey(username: string): Promise<TokenResponse> {
-    const { registerPasskey } = await import('@/services/passkey')
-    return registerPasskey(username)
+    return passkeyApi.registerUserWithPasskey(username)
   },
 
   async loginWithPasskey(username?: string): Promise<TokenResponse> {
-    const { loginWithPasskey } = await import('@/services/passkey')
-    return loginWithPasskey(username)
+    return passkeyApi.loginWithPasskey(username)
   },
 
   async linkPasskey(username: string): Promise<void> {
-    const { registerPasskeyForCurrentUser } = await import('@/services/passkey')
-    await registerPasskeyForCurrentUser(username)
+    await passkeyApi.registerPasskeyForCurrentUser(username)
   },
 
   async unlinkPasskey(): Promise<void> {
