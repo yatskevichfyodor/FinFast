@@ -16,8 +16,8 @@ export default defineConfig(async (env) => {
       port: 5273,
       strictPort: true,
       https: {
-        cert: readFileSync('../certs/finfast.pem'),
-        key: readFileSync('../certs/finfast-key.pem'),
+        cert: readFileSync('../certs/finfast-local.pem'),
+        key: readFileSync('../certs/finfast-local-key.pem'),
       },
     },
   }

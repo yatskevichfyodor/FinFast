@@ -154,6 +154,7 @@ async function loginWithPasskey() {
     await authStore.loginWithPasskey(username.value.trim() || undefined)
     await continueAfterLogin()
   } catch (error) {
+    console.error("Login with passkey error: ", errorMessage.value)
     errorMessage.value = getErrorMessage(error)
   } finally {
     isSubmitting.value = false

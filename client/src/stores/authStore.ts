@@ -193,7 +193,8 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   async function loginWithPasskey(loginUsername?: string) {
-    saveTokens(await authApi.loginWithPasskey(loginUsername));
+    const tokens: TokenResponse = await authApi.loginWithPasskey(loginUsername)
+    saveTokens(tokens);
     await loadCurrentUser();
   }
 

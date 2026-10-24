@@ -37,10 +37,10 @@ class HttpsConfig {
             ).normalize()
 
             certificate.certificateFile =
-                certDir.resolve("finfast.pem").toAbsolutePath().toString()
+                certDir.resolve("finfast-local.pem").toAbsolutePath().toString()
 
             certificate.certificateKeyFile =
-                certDir.resolve("finfast-key.pem").toAbsolutePath().toString()
+                certDir.resolve("finfast-local-key.pem").toAbsolutePath().toString()
 
             sslHostConfig.addCertificate(certificate)
             connector.addSslHostConfig(sslHostConfig)
