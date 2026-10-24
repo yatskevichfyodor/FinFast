@@ -15,4 +15,7 @@ class WebAuthnCredentialRepository : PanacheRepositoryBase<WebAuthnCredential, U
 
     fun existsByUserId(userId: UUID): Boolean =
         count("user.id", userId) > 0
+
+    fun deleteAllByUserId(userId: UUID) =
+        delete("user.id", userId)
 }

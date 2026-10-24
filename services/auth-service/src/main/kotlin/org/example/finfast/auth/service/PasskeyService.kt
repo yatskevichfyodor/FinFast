@@ -43,6 +43,18 @@ class PasskeyService(
     }
 
     @Transactional
+    fun unlinkPasskey(userId: UUID) {
+        val user = getUserById(userId)
+        if (user.passwordHash == null && user.googleSubject == null) {
+            throw WebApplicationException(
+                "Нельзя отвязать passkey: сначала добавьте пароль или привяжите Google",
+                409
+            )
+        }
+        credentialRepository.deleteAllByUserId(user.id)
+    }
+
+    @Transactional
     fun registerUser(
         username: String,
         userRegisterResponse: WebAuthnRegisterResponse,

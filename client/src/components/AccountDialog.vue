@@ -19,6 +19,7 @@ const expenseStore = useExpenseStore().value!
 
 const showPasswordForm = ref(false)
 const showUnlinkGoogleDialog = ref(false)
+const showUnlinkPasskeyDialog = ref(false)
 const showDeleteAccountDialog = ref(false)
 const isEditingUsername = ref(false)
 const editedUsername = ref('')
@@ -34,6 +35,7 @@ const googleLinkError = ref('')
 const passkeyMessage = ref('')
 const passkeyError = ref('')
 const isLinkingPasskey = ref(false)
+const isUnlinkingPasskey = ref(false)
 const isGoogleSignInConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
 
 editedUsername.value = authStore.username ?? ''
@@ -72,6 +74,11 @@ function togglePasswordForm() {
 function openUnlinkGoogleDialog() {
   accountError.value = ''
   showUnlinkGoogleDialog.value = true
+}
+
+function openUnlinkPasskeyDialog() {
+  passkeyError.value = ''
+  showUnlinkPasskeyDialog.value = true
 }
 
 function openDeleteAccountDialog() {
@@ -174,6 +181,21 @@ async function linkPasskey() {
     passkeyError.value = getRequestErrorMessage(error, 'Не удалось привязать passkey')
   } finally {
     isLinkingPasskey.value = false
+  }
+}
+
+async function unlinkPasskey() {
+  passkeyMessage.value = ''
+  passkeyError.value = ''
+  isUnlinkingPasskey.value = true
+  try {
+    await authStore.unlinkPasskey()
+    passkeyMessage.value = 'Passkey успешно отвязан'
+    showUnlinkPasskeyDialog.value = false
+  } catch (error) {
+    passkeyError.value = getRequestErrorMessage(error, 'Не удалось отвязать passkey')
+  } finally {
+    isUnlinkingPasskey.value = false
   }
 }
 
@@ -421,7 +443,23 @@ function getRequestErrorMessage(
                 <v-icon size="16" start>mdi-fingerprint</v-icon>
                 Привязать passkey
               </v-btn>
-              <div v-else class="google-placeholder">Используйте passkey для входа без пароля</div>
+              <div v-else class="passkey-linked-content">
+                <div class="google-placeholder">Используйте passkey для входа без пароля</div>
+                <v-btn
+                  size="small"
+                  variant="tonal"
+                  color="#d32f2f"
+                  :disabled="!authStore.hasPassword && !authStore.googleLinked"
+                  class="mt-3"
+                  @click="openUnlinkPasskeyDialog"
+                >
+                  <v-icon size="16" start>mdi-link-variant-off</v-icon>
+                  Отвязать
+                </v-btn>
+                <div v-if="!authStore.hasPassword && !authStore.googleLinked" class="google-placeholder">
+                  Добавьте пароль или привяжите Google, чтобы отвязать passkey.
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -470,6 +508,14 @@ function getRequestErrorMessage(
       <v-card-title>Отвязать Google?</v-card-title>
       <v-card-text>После этого вход через Google станет недоступен. Вы сможете войти по имени пользователя и паролю.</v-card-text>
       <v-card-actions><v-spacer /><v-btn :disabled="isSavingAccount" @click="showUnlinkGoogleDialog = false">Отмена</v-btn><v-btn color="primary" :loading="isSavingAccount" @click="unlinkGoogleAccount">Отвязать</v-btn></v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="showUnlinkPasskeyDialog" max-width="420" persistent>
+    <v-card>
+      <v-card-title>Отвязать passkey?</v-card-title>
+      <v-card-text>Этот passkey больше нельзя будет использовать для входа. Убедитесь, что у вас настроен другой способ входа.</v-card-text>
+      <v-card-actions><v-spacer /><v-btn :disabled="isUnlinkingPasskey" @click="showUnlinkPasskeyDialog = false">Отмена</v-btn><v-btn color="primary" :loading="isUnlinkingPasskey" @click="unlinkPasskey">Отвязать</v-btn></v-card-actions>
     </v-card>
   </v-dialog>
 

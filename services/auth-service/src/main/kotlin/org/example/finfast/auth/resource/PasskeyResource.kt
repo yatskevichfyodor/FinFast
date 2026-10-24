@@ -7,6 +7,7 @@ import io.quarkus.security.webauthn.WebAuthnRegisterResponse
 import jakarta.inject.Inject
 import jakarta.ws.rs.BeanParam
 import jakarta.ws.rs.Consumes
+import jakarta.ws.rs.DELETE
 import jakarta.ws.rs.POST
 import jakarta.ws.rs.Path
 import jakarta.ws.rs.Produces
@@ -35,6 +36,14 @@ class PasskeyResource @Inject constructor(
     ): Response {
         passkeyService.linkPasskey(currentUserId(), userRegisterResponse, routingContext)
         return Response.ok().build()
+    }
+
+    @DELETE
+    @Path("/unlink")
+    @Authenticated
+    fun unlinkPasskey(): Response {
+        passkeyService.unlinkPasskey(currentUserId())
+        return Response.noContent().build()
     }
 
     @POST

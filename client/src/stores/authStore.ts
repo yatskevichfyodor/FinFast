@@ -209,6 +209,11 @@ export const useAuthStore = defineStore("auth", () => {
     await loadCurrentUser();
   }
 
+  async function unlinkPasskey() {
+    await authApi.unlinkPasskey();
+    await loadCurrentUser();
+  }
+
   async function linkGoogleAccount(credential: string) {
     applyUser(await authApi.linkGoogleAccount(credential));
   }
@@ -315,6 +320,7 @@ export const useAuthStore = defineStore("auth", () => {
     loginWithPasskey,
     registerWithPasskey,
     linkPasskey,
+    unlinkPasskey,
     linkGoogleAccount,
     unlinkGoogleAccount,
     updateProfile,
