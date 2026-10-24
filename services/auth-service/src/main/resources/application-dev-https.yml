@@ -3,11 +3,11 @@ quarkus:
     host: 0.0.0.0
     port: 8082
     cors:
-      origins: http://localhost:5173,https://192.168.0.234:5273,https://finfast.test:5273
+      origins: http://localhost:5173,https://192.168.0.234:5273,https://finfast.test
     ssl: # comment out this section if no need to use https port
       certificate:
         files: ../../certs/finfast-local.pem
         key-files: ../../certs/finfast-local-key.pem
   webauthn:
     enabled: true
-    origins: http://localhost:5173,https://192.168.0.234:5273,https://finfast.test:5273
+    origins: http://localhost:5173,https://192.168.0.234:5273,https://finfast.test

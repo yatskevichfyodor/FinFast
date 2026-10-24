@@ -6,4 +6,4 @@ ssl: # comment out this section if no need to use https port
 finfast:
   auth-service:
     url: http://localhost:8082
-  clientUrls: "https://192.168.0.234:5273,http://localhost:5173,https://finfast.test:5273"
+  clientUrls: "https://192.168.0.234:5273,http://localhost:5173,https://finfast.test"
