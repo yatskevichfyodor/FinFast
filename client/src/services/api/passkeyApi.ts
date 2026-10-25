@@ -1,5 +1,4 @@
 import { authClient } from "@/services/api/http";
-import displayDebugMessage from "@/utils/displayDebugMessage";
 
 interface PublicKeyOptions {
   challenge: string;
@@ -102,8 +101,6 @@ async function loginClientSteps(username?: string) {
     },
   );
 
-  displayDebugMessage('options', options)
-
   const credentialRequestOptions = {
     publicKey: {
       ...options,
@@ -115,14 +112,12 @@ async function loginClientSteps(username?: string) {
     },
   };
 
-  displayDebugMessage(credentialRequestOptions)
-
   let credential
   try {
     credential = (await navigator.credentials.get(credentialRequestOptions)) as PublicKeyCredential | null;
   } catch (error) {
     if (error instanceof Error && error.name === 'NotAllowedError') {
-      throw new Error("Аутентификация с помощью ключа доступа была отменена, отклонена или завершилась по истечении времени. Проверьте настройки менеджера паролей.");
+      throw new Error("Аутентификация с помощью ключа доступа была отменена. Попробуйте заново либо проверьте настройки менеджера паролей.");
     }
     throw new Error("Не удалось подтвердить passkey. Проверьте настройки менеджера паролей.");
   }
@@ -133,8 +128,6 @@ async function loginClientSteps(username?: string) {
   ) {
     throw new Error("Не удалось подтвердить passkey.");
   }
-  
-  displayDebugMessage('credential', credential)
 
   return {
     id: credential.id,
@@ -207,6 +200,30 @@ export const passkeyApi = {
   },
   
   async unlinkPasskey(): Promise<void> {
-    await authClient.delete('/auth/passkey/unlink')
+    const { data } = await authClient.delete<{
+      rpId: string;
+      credentialIds: string[];
+    }>('/auth/passkey/unlink')
+
+    const signalUnknownCredential = (
+      window.PublicKeyCredential as typeof PublicKeyCredential & {
+        signalUnknownCredential?: (options: {
+          rpId: string;
+          credentialId: string;
+        }) => Promise<void>;
+      } | undefined
+    )?.signalUnknownCredential
+
+    if (!signalUnknownCredential) {
+      return
+    }
+
+    await Promise.all(data.credentialIds.map(async (credentialId) => {
+      try {
+        await signalUnknownCredential({ rpId: data.rpId, credentialId })
+      } catch {
+        // The signal is best-effort; server-side unlink has already succeeded.
+      }
+    }))
   },
 };

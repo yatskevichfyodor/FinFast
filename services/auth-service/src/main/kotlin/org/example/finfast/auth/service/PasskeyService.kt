@@ -5,6 +5,7 @@ import io.quarkus.security.webauthn.WebAuthnLoginResponse
 import io.quarkus.security.webauthn.WebAuthnRegisterResponse
 import io.quarkus.security.webauthn.WebAuthnSecurity
 import io.vertx.ext.web.RoutingContext
+import org.eclipse.microprofile.config.inject.ConfigProperty
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.transaction.Transactional
 import jakarta.ws.rs.WebApplicationException
@@ -21,6 +22,8 @@ class PasskeyService(
     private val credentialRepository: WebAuthnCredentialRepository,
     private val webAuthnSecurity: WebAuthnSecurity,
     private val authService: AuthService,
+    @ConfigProperty(name = "quarkus.webauthn.relying-party.id")
+    private val relyingPartyId: String,
 ) {
     @Transactional
     fun linkPasskey(
@@ -43,7 +46,7 @@ class PasskeyService(
     }
 
     @Transactional
-    fun unlinkPasskey(userId: UUID) {
+    fun unlinkPasskey(userId: UUID): PasskeyUnlinkResult {
         val user = getUserById(userId)
         if (user.passwordHash == null && user.googleSubject == null) {
             throw WebApplicationException(
@@ -51,7 +54,9 @@ class PasskeyService(
                 409
             )
         }
+        val credentialIds = credentialRepository.findByUserId(user.id).map { it.credentialId }
         credentialRepository.deleteAllByUserId(user.id)
+        return PasskeyUnlinkResult(relyingPartyId, credentialIds)
     }
 
     @Transactional
@@ -137,3 +142,8 @@ class PasskeyService(
     }
 
 }
+
+data class PasskeyUnlinkResult(
+    val rpId: String,
+    val credentialIds: List<String>,
+)

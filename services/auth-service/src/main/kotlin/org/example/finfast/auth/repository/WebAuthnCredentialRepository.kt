@@ -10,6 +10,9 @@ class WebAuthnCredentialRepository : PanacheRepositoryBase<WebAuthnCredential, U
     fun findByUsername(username: String): List<WebAuthnCredential> =
         find("user.username", username).list()
 
+    fun findByUserId(userId: UUID): List<WebAuthnCredential> =
+        find("user.id", userId).list()
+
     fun findByCredentialId(credentialId: String): WebAuthnCredential? =
         find("credentialId", credentialId).firstResult()
 

@@ -42,8 +42,8 @@ class PasskeyResource @Inject constructor(
     @Path("/unlink")
     @Authenticated
     fun unlinkPasskey(): Response {
-        passkeyService.unlinkPasskey(currentUserId())
-        return Response.noContent().build()
+        val result = passkeyService.unlinkPasskey(currentUserId())
+        return Response.ok(result).build()
     }
 
     @POST

@@ -8,7 +8,6 @@ import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { useExpenseStore } from '@/stores'
 import { isGoogleSignInAvailable } from '@/utils/auth'
-import displayDebugMessage from '@/utils/displayDebugMessage'
 
 const route = useRoute()
 const router = useRouter()
@@ -46,6 +45,7 @@ async function checkAuthService() {
 }
 
 function getErrorMessage(error: any): string {
+  debugger;
   if (isAxiosError(error)) {
     if (error.code === 'ERR_CANCELED') {
       return ''
@@ -61,7 +61,8 @@ function getErrorMessage(error: any): string {
 
     const responseMessage = error.response?.data?.message
     if (typeof responseMessage === 'string' && responseMessage.length > 0) {
-      return responseMessage
+      if (responseMessage === 'Passkey authentication failed' && error.response.status === 401)
+      return 'Этот ключ доступа не подходит для аккаунта. Если вы отвязали его ранее, удалите его из менеджера паролей и войдите другим способом.'
     }
 
     if (error.response.status >= 500) {
@@ -161,7 +162,6 @@ async function loginWithPasskey() {
     await continueAfterLogin()
   } catch (error) {
     console.error("Login with passkey error: ", errorMessage.value)
-    displayDebugMessage(error);
     errorMessage.value = getErrorMessage(error)
   } finally {
     isSubmitting.value = false
