@@ -8,7 +8,7 @@ import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { useExpenseStore } from '@/stores'
 import { isGoogleSignInAvailable } from '@/utils/auth'
-import { push } from 'notivue'
+import displayDebugMessage from '@/utils/displayDebugMessage'
 
 const route = useRoute()
 const router = useRouter()
@@ -155,13 +155,13 @@ async function loginWithPasskey() {
   errorMessage.value = ''
   isSubmitting.value = true
   try {
-    push.info("делаем запрос логин")
     await authStore.loginWithPasskey(username.value.trim() || undefined)
     
     errorMessage.value = "готово,"
     await continueAfterLogin()
   } catch (error) {
     console.error("Login with passkey error: ", errorMessage.value)
+    displayDebugMessage(error);
     errorMessage.value = getErrorMessage(error)
   } finally {
     isSubmitting.value = false

@@ -1,5 +1,5 @@
 import { authClient } from "@/services/api/http";
-import { push } from "notivue";
+import displayDebugMessage from "@/utils/displayDebugMessage";
 
 interface PublicKeyOptions {
   challenge: string;
@@ -101,7 +101,9 @@ async function loginClientSteps(username?: string) {
       withCredentials: true,
     },
   );
-  push.success('Hi! I am your first notification!')
+
+  displayDebugMessage('options', options)
+
   const credentialRequestOptions = {
     publicKey: {
       ...options,
@@ -113,18 +115,26 @@ async function loginClientSteps(username?: string) {
     },
   };
 
+  displayDebugMessage(credentialRequestOptions)
+
   let credential
   try {
     credential = (await navigator.credentials.get(credentialRequestOptions)) as PublicKeyCredential | null;
   } catch (error) {
+    if (error instanceof Error && error.name === 'NotAllowedError') {
+      throw new Error("Аутентификация с помощью ключа доступа была отменена, отклонена или завершилась по истечении времени. Проверьте настройки менеджера паролей.");
+    }
+    throw new Error("Не удалось подтвердить passkey. Проверьте настройки менеджера паролей.");
   }
   
   if (
     !credential ||
     !(credential.response instanceof AuthenticatorAssertionResponse)
   ) {
-    throw new Error("Не удалось подтвердить passkey");
+    throw new Error("Не удалось подтвердить passkey.");
   }
+  
+  displayDebugMessage('credential', credential)
 
   return {
     id: credential.id,

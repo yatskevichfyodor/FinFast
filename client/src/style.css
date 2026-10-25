@@ -4,3 +4,8 @@ body,
   height: 100%;
   margin: 0;
 }
+
+.Notivue__content-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
