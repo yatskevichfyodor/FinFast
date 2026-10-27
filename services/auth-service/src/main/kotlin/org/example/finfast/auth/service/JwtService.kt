@@ -39,6 +39,66 @@ class JwtService(
         return signed.serialize()
     }
 
+    fun createPasskeyChallengeState(
+        purpose: String,
+        subject: String,
+        username: String?,
+        challenge: String
+    ): Pair<String, UUID> {
+        val stateId = UUID.randomUUID()
+        val now = Instant.now()
+        val activeKey = rsaKeyProvider.getActiveKey()
+        val claimsBuilder = JWTClaimsSet.Builder()
+            .issuer(issuer)
+            .subject(subject)
+            .issueTime(Date.from(now))
+            .expirationTime(Date.from(now.plusSeconds(300)))
+            .jwtID(stateId.toString())
+            .claim("purpose", purpose)
+            .claim("challenge", challenge)
+        if (username != null) claimsBuilder.claim("username", username)
+        val signed = SignedJWT(
+            JWSHeader.Builder(JWSAlgorithm.RS256).keyID(activeKey.keyId).build(),
+            claimsBuilder.build()
+        )
+        signed.sign(RSASSASigner(activeKey.keyPair.private))
+        return signed.serialize() to stateId
+    }
+
+    fun verifyPasskeyChallengeState(
+        state: String,
+        purpose: String,
+        subject: String,
+        username: String?
+    ): PasskeyChallengeClaims {
+        try {
+            val signed = SignedJWT.parse(state)
+            val keyId = signed.header.keyID ?: throw IllegalArgumentException("Missing signing key")
+            val storedKey = rsaKeyProvider.getKeyById(keyId)
+                ?: throw IllegalArgumentException("Unknown signing key")
+            if (!signed.verify(RSASSAVerifier(storedKey.keyPair.public as RSAPublicKey))) {
+                throw IllegalArgumentException("Invalid state signature")
+            }
+            val claims = signed.jwtClaimsSet
+            val expiresAt = claims.expirationTime?.toInstant()
+                ?: throw IllegalArgumentException("Missing expiration")
+            val stateId = claims.jwtid?.let(UUID::fromString)
+                ?: throw IllegalArgumentException("Missing state id")
+            val actualUsername = claims.getStringClaim("username")
+            if (expiresAt.isBefore(Instant.now()) || claims.issuer != issuer || claims.subject != subject ||
+                claims.getStringClaim("purpose") != purpose || actualUsername != username
+            ) {
+                throw IllegalArgumentException("Invalid challenge state")
+            }
+            val challenge = claims.getStringClaim("challenge")
+                ?.takeIf { it.isNotBlank() }
+                ?: throw IllegalArgumentException("Missing challenge")
+            return PasskeyChallengeClaims(stateId, challenge)
+        } catch (exception: Exception) {
+            throw WebApplicationException("Invalid or expired passkey challenge", 400)
+        }
+    }
+
     @Transactional
     fun parseSubject(token: String): String {
         val signed = SignedJWT.parse(token)
@@ -59,3 +119,5 @@ class JwtService(
             ?: throw WebApplicationException("Token subject is missing", 401)
     }
 }
+
+data class PasskeyChallengeClaims(val stateId: UUID, val challenge: String)

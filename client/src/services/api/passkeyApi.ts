@@ -2,6 +2,7 @@ import { authClient } from "@/services/api/http";
 
 interface PublicKeyOptions {
   challenge: string;
+  challengeState?: string;
   timeout?: number;
   rp?: PublicKeyCredentialRpEntity;
   user?: { id: string; name: string; displayName: string };
@@ -43,19 +44,26 @@ function assertSupported() {
 
 async function registrationClientSteps(
   username: string,
-  displayName = username,
+  displayName: string,
+  statelessPurpose: "register" | "link",
 ) {
   assertSupported();
   const { data: options } = await authClient.get<PublicKeyOptions>(
-    "/q/webauthn/register-options-challenge",
+    statelessPurpose === "link"
+      ? "/auth/passkey/link/register-options"
+      : "/auth/passkey/register-options",
     {
       params: { username, displayName },
-      withCredentials: true,
+      withCredentials: false,
     },
   );
+  const { challengeState, ...publicKeyOptions } = options;
+  if (!challengeState) {
+    throw new Error("Сервер не вернул challenge state");
+  }
   const credential = (await navigator.credentials.create({
     publicKey: {
-      ...options,
+      ...publicKeyOptions,
       challenge: decode(options.challenge),
       rp: options.rp ?? { name: "FinFast", id: window.location.hostname },
       user: options.user
@@ -88,22 +96,27 @@ async function registrationClientSteps(
       clientDataJSON: encode(credential.response.clientDataJSON),
     },
     type: credential.type,
+    challengeState,
   };
 }
 
 async function loginClientSteps(username?: string) {
   assertSupported();
   const { data: options } = await authClient.get<PublicKeyOptions>(
-    "/q/webauthn/login-options-challenge",
+    "/auth/passkey/login-options",
     {
       params: username ? { username } : undefined,
-      withCredentials: true,
+      withCredentials: false,
     },
   );
+  const { challengeState, ...publicKeyOptions } = options;
+  if (!challengeState) {
+    throw new Error("Сервер не вернул challenge state");
+  }
 
   const credentialRequestOptions = {
     publicKey: {
-      ...options,
+      ...publicKeyOptions,
       challenge: decode(options.challenge),
       allowCredentials: options.allowCredentials?.map((item) => ({
         ...item,
@@ -141,6 +154,7 @@ async function loginClientSteps(username?: string) {
         : "",
     },
     type: credential.type,
+    challengeState,
   };
 }
 
@@ -155,16 +169,17 @@ function registrationForm(
     webAuthnResponseAttestationObject: registration.response.attestationObject,
     webAuthnResponseClientDataJSON: registration.response.clientDataJSON,
     webAuthnType: registration.type,
+    challengeState: registration.challengeState ?? "",
   });
 }
 
 export const passkeyApi = {
   async registerUserWithPasskey(username: string, displayName = username) {
-    const registration = await registrationClientSteps(username, displayName);
+    const registration = await registrationClientSteps(username, displayName, "register");
     const form = registrationForm(username, registration);
     const { data } = await authClient.post("/auth/passkey/register", form, {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      withCredentials: true,
+      withCredentials: false,
     });
     return data;
   },
@@ -173,11 +188,11 @@ export const passkeyApi = {
     username: string,
     displayName = username,
   ) {
-    const registration = await registrationClientSteps(username, displayName);
+    const registration = await registrationClientSteps(username, displayName, "link");
     const form = registrationForm(username, registration);
     await authClient.post("/auth/passkey/link", form, {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      withCredentials: true,
+      withCredentials: false,
     });
   },
 
@@ -191,10 +206,12 @@ export const passkeyApi = {
       webAuthnResponseSignature: login.response.signature,
       webAuthnResponseUserHandle: login.response.userHandle,
       webAuthnType: login.type,
+      challengeState: login.challengeState ?? "",
+      ...(username ? { username } : {}),
     });
     const { data } = await authClient.post("/auth/passkey/login", form, {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      withCredentials: true,
+      withCredentials: false,
     });
     return data;
   },

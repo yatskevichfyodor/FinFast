@@ -22,6 +22,10 @@ const PUBLIC_AUTH_REQUESTS = new Set([
   `/auth/google`,
   `/auth/passkey/register`,
   `/auth/passkey/login`,
+  `/auth/passkey/register-options`,
+  `/auth/passkey/login-options`,
+  `/auth/passkey/register-options`,
+  `/auth/passkey/login-options`,
   `/q/webauthn/register-options-challenge`,
   `/q/webauthn/login-options-challenge`,
 ]);

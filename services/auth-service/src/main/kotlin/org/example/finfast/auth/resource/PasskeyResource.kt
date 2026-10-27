@@ -8,8 +8,10 @@ import jakarta.inject.Inject
 import jakarta.ws.rs.BeanParam
 import jakarta.ws.rs.Consumes
 import jakarta.ws.rs.DELETE
+import jakarta.ws.rs.GET
 import jakarta.ws.rs.POST
 import jakarta.ws.rs.Path
+import jakarta.ws.rs.QueryParam
 import jakarta.ws.rs.Produces
 import jakarta.ws.rs.WebApplicationException
 import jakarta.ws.rs.core.MediaType
@@ -26,15 +28,57 @@ class PasskeyResource @Inject constructor(
     private val securityIdentity: SecurityIdentity,
     private val passkeyService: PasskeyService,
 ) {
+    @GET
+    @Path("/link/register-options")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Authenticated
+    fun linkRegistrationOptions(
+        @QueryParam("displayName") displayName: String?,
+        routingContext: RoutingContext
+    ): Response {
+        routingContext.request().headers().remove("Cookie")
+        val options = passkeyService.createLinkOptions(currentUserId(), displayName, routingContext)
+        routingContext.response().headers().remove("Set-Cookie")
+        return Response.ok(options).build()
+    }
+
+    @GET
+    @Path("/register-options")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun registrationOptions(
+        @QueryParam("username") username: String,
+        @QueryParam("displayName") displayName: String?,
+        routingContext: RoutingContext
+    ): Response {
+        routingContext.request().headers().remove("Cookie")
+        val options = passkeyService.createRegistrationOptions(username, displayName, routingContext)
+        routingContext.response().headers().remove("Set-Cookie")
+        return Response.ok(options).build()
+    }
+
+    @GET
+    @Path("/login-options")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun loginOptions(
+        @QueryParam("username") username: String?,
+        routingContext: RoutingContext
+    ): Response {
+        routingContext.request().headers().remove("Cookie")
+        val options = passkeyService.createLoginOptions(username, routingContext)
+        routingContext.response().headers().remove("Set-Cookie")
+        return Response.ok(options).build()
+    }
+
     @POST
     @Path("/link")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Authenticated
     fun linkPasskey(
         @BeanParam userRegisterResponse: WebAuthnRegisterResponse,
+        @RestForm("challengeState") challengeState: String,
         routingContext: RoutingContext
     ): Response {
-        passkeyService.linkPasskey(currentUserId(), userRegisterResponse, routingContext)
+        passkeyService.linkPasskey(currentUserId(), userRegisterResponse, challengeState, routingContext)
         return Response.ok().build()
     }
 
@@ -51,18 +95,21 @@ class PasskeyResource @Inject constructor(
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     fun registerUser(
         @RestForm username: String,
+        @RestForm("challengeState") challengeState: String,
         @BeanParam userRegisterResponse: WebAuthnRegisterResponse,
         context: RoutingContext
-    ): TokenResponse = passkeyService.registerUser(username, userRegisterResponse, context)
+    ): TokenResponse = passkeyService.registerUser(username, userRegisterResponse, challengeState, context)
 
     @POST
     @Path("/login")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     fun login(
+        @RestForm username: String?,
+        @RestForm("challengeState") challengeState: String,
         @BeanParam userLoginResponse: WebAuthnLoginResponse,
         routingContext: RoutingContext
     ): TokenResponse {
-        return passkeyService.login(userLoginResponse, routingContext)
+        return passkeyService.login(username, challengeState, userLoginResponse, routingContext)
     }
 
     private fun currentUserId(): UUID {
