@@ -35,7 +35,6 @@ class PasskeyService(
     private val credentialRepository: WebAuthnCredentialRepository,
     private val webAuthnSecurity: WebAuthnSecurity,
     private val authService: AuthService,
-    private val jwtService: JwtService,
     private val challengeRepository: PasskeyChallengeRepository,
     @ConfigProperty(name = "quarkus.webauthn.relying-party.id")
     private val relyingPartyId: String,
@@ -51,7 +50,7 @@ class PasskeyService(
         val optionsJson = JsonObject(webAuthnSecurity.toJsonString(options))
         val challenge = optionsJson.getString("challenge")
             ?: throw IllegalStateException("WebAuthn challenge was not generated")
-        optionsJson.put("challengeState", issueChallengeState("link", user.id.toString(), user.username, challenge))
+        optionsJson.put("challengeId", issueChallenge("link", user.id.toString(), user.username, challenge))
         return optionsJson
     }
 
@@ -73,8 +72,8 @@ class PasskeyService(
         val challenge = json.getString("challenge")
             ?: throw IllegalStateException("WebAuthn challenge was not generated")
         json.put(
-            "challengeState",
-            issueChallengeState("register", "register:$normalizedUsername", normalizedUsername, challenge)
+            "challengeId",
+            issueChallenge("register", normalizedUsername, normalizedUsername, challenge)
         )
         return json
     }
@@ -88,8 +87,8 @@ class PasskeyService(
         val challenge = json.getString("challenge")
             ?: throw IllegalStateException("WebAuthn challenge was not generated")
         json.put(
-            "challengeState",
-            issueChallengeState("login", normalizedUsername ?: "discoverable", normalizedUsername, challenge)
+            "challengeId",
+            issueChallenge("login", normalizedUsername ?: "discoverable", normalizedUsername, challenge)
         )
         return json
     }
@@ -98,7 +97,8 @@ class PasskeyService(
     fun linkPasskey(
         userId: UUID,
         userRegisterResponse: WebAuthnRegisterResponse,
-        challengeState: String,
+        challengeId: UUID,
+        challenge: String,
         routingContext: RoutingContext
     ) {
         val user = getUserById(userId)
@@ -106,11 +106,15 @@ class PasskeyService(
             throw WebApplicationException("Invalid passkey registration response", 400)
         }
 
-        val state = jwtService.verifyPasskeyChallengeState(
-            challengeState, "link", user.id.toString(), user.username
+        val savedChallenge = requireChallenge(challengeId, challenge, "link", user.id.toString(), user.username)
+        val credentialRecord = verifyRegistration(
+            user.username, userRegisterResponse, savedChallenge.challenge, routingContext
         )
-        val credentialRecord = verifyRegistration(user.username, userRegisterResponse, state.challenge, routingContext)
-        if (!challengeRepository.consume(state.stateId)) {
+        if (!challengeRepository.consume(
+                savedChallenge.id, savedChallenge.challenge, savedChallenge.purpose,
+                savedChallenge.subject, savedChallenge.username
+            )
+        ) {
             throw WebApplicationException("Passkey challenge was already used or expired", 400)
         }
 
@@ -138,7 +142,8 @@ class PasskeyService(
     fun registerUser(
         username: String,
         userRegisterResponse: WebAuthnRegisterResponse,
-        challengeState: String,
+        challengeId: UUID,
+        challenge: String,
         routingContext: RoutingContext
     ): TokenResponse {
         if (!userRegisterResponse.isSet || !userRegisterResponse.isValid) {
@@ -150,11 +155,17 @@ class PasskeyService(
         }
         if (userRepository.existsByUsername(normalizedUsername)) throw WebApplicationException("Username already exists", 409)
 
-        val state = jwtService.verifyPasskeyChallengeState(
-            challengeState, "register", "register:$normalizedUsername", normalizedUsername
+        val savedChallenge = requireChallenge(
+            challengeId, challenge, "register", normalizedUsername, normalizedUsername
         )
-        val credentialRecord = verifyRegistration(normalizedUsername, userRegisterResponse, state.challenge, routingContext)
-        if (!challengeRepository.consume(state.stateId)) {
+        val credentialRecord = verifyRegistration(
+            normalizedUsername, userRegisterResponse, savedChallenge.challenge, routingContext
+        )
+        if (!challengeRepository.consume(
+                savedChallenge.id, savedChallenge.challenge, savedChallenge.purpose,
+                savedChallenge.subject, savedChallenge.username
+            )
+        ) {
             throw WebApplicationException("Passkey challenge was already used or expired", 400)
         }
 
@@ -177,7 +188,8 @@ class PasskeyService(
     @Transactional
     fun login(
         username: String?,
-        challengeState: String,
+        challengeId: UUID,
+        challenge: String,
         userLoginResponse: WebAuthnLoginResponse,
         routingContext: RoutingContext
     ): TokenResponse {
@@ -185,12 +197,8 @@ class PasskeyService(
             throw WebApplicationException("Invalid passkey response", 400)
         }
         val normalizedUsername = username?.trim()?.takeIf { it.isNotBlank() }
-        val state = jwtService.verifyPasskeyChallengeState(
-            challengeState,
-            "login",
-            normalizedUsername ?: "discoverable",
-            normalizedUsername
-        )
+        val challengeSubject = normalizedUsername ?: "discoverable"
+        val savedChallenge = requireChallenge(challengeId, challenge, "login", challengeSubject, normalizedUsername)
         val credential = credentialRepository.findByCredentialId(userLoginResponse.webAuthnRawId)
             ?: throw WebApplicationException("Passkey credential not found", 401)
         if (normalizedUsername != null && credential.user.username != normalizedUsername) {
@@ -200,7 +208,7 @@ class PasskeyService(
         val serverProperty = ServerProperty(
             webAuthnSecurity.getAllowedOrigins(routingContext).map(Origin::create).toSet(),
             relyingPartyId,
-            DefaultChallenge(state.challenge),
+            DefaultChallenge(savedChallenge.challenge),
             null
         )
         val responseJson = userLoginResponse.toJsonObject()
@@ -219,7 +227,11 @@ class PasskeyService(
         } catch (exception: Exception) {
             throw WebApplicationException("Passkey authentication failed", exception, 401)
         }
-        if (!challengeRepository.consume(state.stateId)) {
+        if (!challengeRepository.consume(
+            savedChallenge.id, savedChallenge.challenge, savedChallenge.purpose,
+            savedChallenge.subject, savedChallenge.username
+            )
+        ) {
             throw WebApplicationException("Passkey challenge was already used or expired", 401)
         }
         credential.counter = authenticationData.authenticatorData?.signCount?.toLong()
@@ -227,11 +239,36 @@ class PasskeyService(
         return authService.issueTokens(credential.user)
     }
 
-    private fun issueChallengeState(purpose: String, subject: String, username: String?, challenge: String): String {
+    private fun issueChallenge(purpose: String, subject: String, username: String?, challenge: String): UUID {
         challengeRepository.deleteExpired()
-        val (token, stateId) = jwtService.createPasskeyChallengeState(purpose, subject, username, challenge)
-        challengeRepository.persist(PasskeyChallenge(stateId, Instant.now().plusSeconds(300)))
-        return token
+        val challengeId = UUID.randomUUID()
+        challengeRepository.persist(
+            PasskeyChallenge(
+                challengeId,
+                challenge,
+                purpose,
+                subject,
+                username,
+                Instant.now().plusSeconds(300)
+            )
+        )
+        return challengeId
+    }
+
+    private fun requireChallenge(
+        id: UUID,
+        submittedChallenge: String,
+        purpose: String,
+        subject: String,
+        username: String?
+    ): PasskeyChallenge {
+        val record = challengeRepository.findById(id) ?: throw WebApplicationException("Passkey challenge is missing or expired", 400)
+        if (record.expiresAt <= Instant.now() || record.challenge != submittedChallenge ||
+            record.purpose != purpose || record.subject != subject || record.username != username
+        ) {
+            throw WebApplicationException("Passkey challenge is invalid or expired", 400)
+        }
+        return record
     }
 
     private fun verifyRegistration(

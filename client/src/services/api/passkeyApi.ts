@@ -2,7 +2,7 @@ import { authClient } from "@/services/api/http";
 
 interface PublicKeyOptions {
   challenge: string;
-  challengeState?: string;
+  challengeId?: string;
   timeout?: number;
   rp?: PublicKeyCredentialRpEntity;
   user?: { id: string; name: string; displayName: string };
@@ -57,14 +57,14 @@ async function registrationClientSteps(
       withCredentials: false,
     },
   );
-  const { challengeState, ...publicKeyOptions } = options;
-  if (!challengeState) {
-    throw new Error("Сервер не вернул challenge state");
+  const { challengeId, challenge, ...publicKeyOptions } = options;
+  if (!challengeId || !challenge) {
+    throw new Error("Сервер не вернул данные challenge");
   }
   const credential = (await navigator.credentials.create({
     publicKey: {
       ...publicKeyOptions,
-      challenge: decode(options.challenge),
+      challenge: decode(challenge),
       rp: options.rp ?? { name: "FinFast", id: window.location.hostname },
       user: options.user
         ? { ...options.user, id: decode(options.user.id) }
@@ -96,7 +96,8 @@ async function registrationClientSteps(
       clientDataJSON: encode(credential.response.clientDataJSON),
     },
     type: credential.type,
-    challengeState,
+    challengeId,
+    challenge,
   };
 }
 
@@ -109,15 +110,15 @@ async function loginClientSteps(username?: string) {
       withCredentials: false,
     },
   );
-  const { challengeState, ...publicKeyOptions } = options;
-  if (!challengeState) {
-    throw new Error("Сервер не вернул challenge state");
+  const { challengeId, challenge, ...publicKeyOptions } = options;
+  if (!challengeId || !challenge) {
+    throw new Error("Сервер не вернул данные challenge");
   }
 
   const credentialRequestOptions = {
     publicKey: {
       ...publicKeyOptions,
-      challenge: decode(options.challenge),
+      challenge: decode(challenge),
       allowCredentials: options.allowCredentials?.map((item) => ({
         ...item,
         id: decode(item.id),
@@ -154,7 +155,8 @@ async function loginClientSteps(username?: string) {
         : "",
     },
     type: credential.type,
-    challengeState,
+    challengeId,
+    challenge,
   };
 }
 
@@ -169,7 +171,8 @@ function registrationForm(
     webAuthnResponseAttestationObject: registration.response.attestationObject,
     webAuthnResponseClientDataJSON: registration.response.clientDataJSON,
     webAuthnType: registration.type,
-    challengeState: registration.challengeState ?? "",
+    challengeId: registration.challengeId ?? "",
+    challenge: registration.challenge ?? "",
   });
 }
 
@@ -206,7 +209,8 @@ export const passkeyApi = {
       webAuthnResponseSignature: login.response.signature,
       webAuthnResponseUserHandle: login.response.userHandle,
       webAuthnType: login.type,
-      challengeState: login.challengeState ?? "",
+      challengeId: login.challengeId ?? "",
+      challenge: login.challenge ?? "",
       ...(username ? { username } : {}),
     });
     const { data } = await authClient.post("/auth/passkey/login", form, {

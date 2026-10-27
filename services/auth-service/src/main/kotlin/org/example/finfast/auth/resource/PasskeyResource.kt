@@ -75,10 +75,11 @@ class PasskeyResource @Inject constructor(
     @Authenticated
     fun linkPasskey(
         @BeanParam userRegisterResponse: WebAuthnRegisterResponse,
-        @RestForm("challengeState") challengeState: String,
+        @RestForm("challengeId") challengeId: UUID,
+        @RestForm challenge: String,
         routingContext: RoutingContext
     ): Response {
-        passkeyService.linkPasskey(currentUserId(), userRegisterResponse, challengeState, routingContext)
+        passkeyService.linkPasskey(currentUserId(), userRegisterResponse, challengeId, challenge, routingContext)
         return Response.ok().build()
     }
 
@@ -95,21 +96,23 @@ class PasskeyResource @Inject constructor(
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     fun registerUser(
         @RestForm username: String,
-        @RestForm("challengeState") challengeState: String,
+        @RestForm("challengeId") challengeId: UUID,
+        @RestForm challenge: String,
         @BeanParam userRegisterResponse: WebAuthnRegisterResponse,
         context: RoutingContext
-    ): TokenResponse = passkeyService.registerUser(username, userRegisterResponse, challengeState, context)
+    ): TokenResponse = passkeyService.registerUser(username, userRegisterResponse, challengeId, challenge, context)
 
     @POST
     @Path("/login")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     fun login(
         @RestForm username: String?,
-        @RestForm("challengeState") challengeState: String,
+        @RestForm("challengeId") challengeId: UUID,
+        @RestForm challenge: String,
         @BeanParam userLoginResponse: WebAuthnLoginResponse,
         routingContext: RoutingContext
     ): TokenResponse {
-        return passkeyService.login(username, challengeState, userLoginResponse, routingContext)
+        return passkeyService.login(username, challengeId, challenge, userLoginResponse, routingContext)
     }
 
     private fun currentUserId(): UUID {
