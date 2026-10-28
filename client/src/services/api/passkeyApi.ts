@@ -1,43 +1,20 @@
 import { authClient } from "@/services/api/http";
+import {
+  browserSupportsWebAuthn,
+  sendSignal,
+  startAuthentication,
+  startRegistration,
+} from "@simplewebauthn/browser";
+import type {
+  PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+} from "@simplewebauthn/browser";
 
-interface PublicKeyOptions {
-  challenge: string;
-  challengeId?: string;
-  timeout?: number;
-  rp?: PublicKeyCredentialRpEntity;
-  user?: { id: string; name: string; displayName: string };
-  pubKeyCredParams?: PublicKeyCredentialParameters[];
-  authenticatorSelection?: AuthenticatorSelectionCriteria;
-  attestation?: AttestationConveyancePreference;
-  excludeCredentials?: Array<{
-    id: string;
-    type: PublicKeyCredentialType;
-    transports?: AuthenticatorTransport[];
-  }>;
-  allowCredentials?: Array<{
-    id: string;
-    type: PublicKeyCredentialType;
-    transports?: AuthenticatorTransport[];
-  }>;
-}
-
-function decode(value: string): ArrayBuffer {
-  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
-  const binary = atob(
-    normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "="),
-  );
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0)).buffer;
-}
-
-function encode(value: ArrayBuffer): string {
-  return btoa(String.fromCharCode(...new Uint8Array(value)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-}
+type RegistrationOptions = PublicKeyCredentialCreationOptionsJSON & { challengeId: string };
+type LoginOptions = PublicKeyCredentialRequestOptionsJSON & { challengeId: string };
 
 function assertSupported() {
-  if (!window.PublicKeyCredential || !navigator.credentials) {
+  if (!browserSupportsWebAuthn()) {
     throw new Error("Passkey не поддерживается этим браузером");
   }
 }
@@ -48,7 +25,7 @@ async function registrationClientSteps(
   statelessPurpose: "register" | "link",
 ) {
   assertSupported();
-  const { data: options } = await authClient.get<PublicKeyOptions>(
+  const { data: options } = await authClient.get<RegistrationOptions>(
     statelessPurpose === "link"
       ? "/auth/passkey/link/register-options"
       : "/auth/passkey/register-options",
@@ -61,39 +38,16 @@ async function registrationClientSteps(
   if (!challengeId || !challenge) {
     throw new Error("Сервер не вернул данные challenge");
   }
-  const credential = (await navigator.credentials.create({
-    publicKey: {
-      ...publicKeyOptions,
-      challenge: decode(challenge),
-      rp: options.rp ?? { name: "FinFast", id: window.location.hostname },
-      user: options.user
-        ? { ...options.user, id: decode(options.user.id) }
-        : (() => {
-            throw new Error("Сервер не вернул данные пользователя");
-          })(),
-      pubKeyCredParams: options.pubKeyCredParams ?? [
-        { alg: -7, type: "public-key" },
-        { alg: -257, type: "public-key" },
-      ],
-      excludeCredentials: options.excludeCredentials?.map((item) => ({
-        ...item,
-        id: decode(item.id),
-      })),
-    },
-  })) as PublicKeyCredential | null;
-  if (
-    !credential ||
-    !(credential.response instanceof AuthenticatorAttestationResponse)
-  ) {
-    throw new Error("Не удалось создать passkey");
-  }
+  const credential = await startRegistration({
+    optionsJSON: { ...publicKeyOptions, challenge },
+  });
 
   return {
     id: credential.id,
-    rawId: encode(credential.rawId),
+    rawId: credential.rawId,
     response: {
-      attestationObject: encode(credential.response.attestationObject),
-      clientDataJSON: encode(credential.response.clientDataJSON),
+      attestationObject: credential.response.attestationObject,
+      clientDataJSON: credential.response.clientDataJSON,
     },
     type: credential.type,
     challengeId,
@@ -103,7 +57,7 @@ async function registrationClientSteps(
 
 async function loginClientSteps(username?: string) {
   assertSupported();
-  const { data: options } = await authClient.get<PublicKeyOptions>(
+  const { data: options } = await authClient.get<LoginOptions>(
     "/auth/passkey/login-options",
     {
       params: username ? { username } : undefined,
@@ -115,20 +69,11 @@ async function loginClientSteps(username?: string) {
     throw new Error("Сервер не вернул данные challenge");
   }
 
-  const credentialRequestOptions = {
-    publicKey: {
-      ...publicKeyOptions,
-      challenge: decode(challenge),
-      allowCredentials: options.allowCredentials?.map((item) => ({
-        ...item,
-        id: decode(item.id),
-      })),
-    },
-  };
-
-  let credential
+  let credential: Awaited<ReturnType<typeof startAuthentication>>;
   try {
-    credential = (await navigator.credentials.get(credentialRequestOptions)) as PublicKeyCredential | null;
+    credential = await startAuthentication({
+      optionsJSON: { ...publicKeyOptions, challenge },
+    });
   } catch (error) {
     if (error instanceof Error && error.name === 'NotAllowedError') {
       throw new Error("Аутентификация с помощью ключа доступа была отменена. Попробуйте заново либо проверьте настройки менеджера паролей.");
@@ -136,23 +81,14 @@ async function loginClientSteps(username?: string) {
     throw new Error("Не удалось подтвердить passkey. Проверьте настройки менеджера паролей.");
   }
   
-  if (
-    !credential ||
-    !(credential.response instanceof AuthenticatorAssertionResponse)
-  ) {
-    throw new Error("Не удалось подтвердить passkey.");
-  }
-
   return {
     id: credential.id,
-    rawId: encode(credential.rawId),
+    rawId: credential.rawId,
     response: {
-      clientDataJSON: encode(credential.response.clientDataJSON),
-      authenticatorData: encode(credential.response.authenticatorData),
-      signature: encode(credential.response.signature),
-      userHandle: credential.response.userHandle
-        ? encode(credential.response.userHandle)
-        : "",
+      clientDataJSON: credential.response.clientDataJSON,
+      authenticatorData: credential.response.authenticatorData,
+      signature: credential.response.signature,
+      userHandle: credential.response.userHandle ?? "",
     },
     type: credential.type,
     challengeId,
@@ -226,22 +162,13 @@ export const passkeyApi = {
       credentialIds: string[];
     }>('/auth/passkey/unlink')
 
-    const signalUnknownCredential = (
-      window.PublicKeyCredential as typeof PublicKeyCredential & {
-        signalUnknownCredential?: (options: {
-          rpId: string;
-          credentialId: string;
-        }) => Promise<void>;
-      } | undefined
-    )?.signalUnknownCredential
-
-    if (!signalUnknownCredential) {
-      return
-    }
-
     await Promise.all(data.credentialIds.map(async (credentialId) => {
       try {
-        await signalUnknownCredential({ rpId: data.rpId, credentialId })
+        await sendSignal({
+          signalName: "unknownCredential",
+          rpID: data.rpId,
+          credentialID: credentialId,
+        });
       } catch {
         // The signal is best-effort; server-side unlink has already succeeded.
       }
