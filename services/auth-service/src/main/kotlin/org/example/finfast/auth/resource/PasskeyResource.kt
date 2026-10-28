@@ -17,6 +17,7 @@ import jakarta.ws.rs.WebApplicationException
 import jakarta.ws.rs.core.MediaType
 import jakarta.ws.rs.core.Response
 import org.example.finfast.auth.dto.TokenResponse
+import org.example.finfast.auth.service.PasskeyUnlinkResult
 import org.jboss.resteasy.reactive.RestForm
 import io.vertx.ext.web.RoutingContext
 import org.example.finfast.auth.service.PasskeyService
@@ -86,10 +87,7 @@ class PasskeyResource @Inject constructor(
     @DELETE
     @Path("/unlink")
     @Authenticated
-    fun unlinkPasskey(): Response {
-        val result = passkeyService.unlinkPasskey(currentUserId())
-        return Response.ok(result).build()
-    }
+    fun unlinkPasskey(): PasskeyUnlinkResult = passkeyService.unlinkPasskey(currentUserId())
 
     @POST
     @Path("/register")

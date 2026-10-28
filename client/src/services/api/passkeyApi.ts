@@ -169,8 +169,9 @@ export const passkeyApi = {
           rpID: data.rpId,
           credentialID: credentialId,
         });
-      } catch {
+      } catch (error) {
         // The signal is best-effort; server-side unlink has already succeeded.
+        console.log(`Could not delete passkey from password manager. rpID: ${data.rpId}, credentialID: ${credentialId}`, error);
       }
     }))
   },
