@@ -5,6 +5,10 @@ body,
   margin: 0;
 }
 
+html {
+  touch-action: manipulation;
+}
+
 .Notivue__content-message {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
