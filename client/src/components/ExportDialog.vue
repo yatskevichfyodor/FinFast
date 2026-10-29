@@ -4,6 +4,7 @@ import { ref, watch } from 'vue'
 import { createCsvExport, createJsonExport, downloadExport, type ExportFormat } from '@/services/expenseExport'
 import { expenseStorage } from '@/storage/indexedDB'
 import { useAuthStore } from '@/stores/authStore'
+import { useCategoryStore } from '@/stores'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ modelValue: boolean }>()
@@ -34,10 +35,19 @@ async function doExport() {
   exportError.value = false
 
   try {
+    const categoryStore = useCategoryStore().value
+    if (!categoryStore || categoryStore.userId !== authStore.userId) {
+      throw new Error('Category data for the active account is not ready')
+    }
+    await categoryStore.loadDataFromStorage()
     const expenses = await expenseStorage.loadExpenses(authStore.userId)
     const content = selectedFormat.value === 'json'
-      ? createJsonExport(expenses)
-      : createCsvExport(expenses)
+      ? createJsonExport(expenses, categoryStore.customCategories)
+      : createCsvExport(expenses, expense => {
+        const categoryId = expense.customCategoryId ?? expense.categoryId
+        return categoryStore.categories.find(category => category.id === categoryId)?.name
+          ?? categoryStore.getCategoryDisplay(categoryId).name
+      })
 
     downloadExport(content, selectedFormat.value)
     localOpen.value = false

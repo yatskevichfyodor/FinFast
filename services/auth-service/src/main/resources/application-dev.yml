@@ -4,10 +4,6 @@ quarkus:
     port: 8082
     cors:
       origins: http://localhost:5173,http://localhost:4173,https://192.168.0.234:5273
-    ssl: # comment out this section if no need to use https port
-      certificate:
-        files: ../../certs/finfast.pem
-        key-files: ../../certs/finfast-key.pem
 
   datasource:
     username: postgres
@@ -15,6 +11,20 @@ quarkus:
     jdbc:
       # DATABASE_HOST will be postgres for local launch in docker container
       url: jdbc:postgresql://${DATABASE_HOST:localhost}:5432/finfast
+
+  webauthn:
+    enabled: true
+    origins: http://localhost:5173
+
+    relying-party:
+      id: localhost
+      name: FinFast
+
+    resident-key: required
+    user-verification: required
+
+    enable-registration-endpoint: false
+    enable-login-endpoint: false
 
 mp:
   messaging:

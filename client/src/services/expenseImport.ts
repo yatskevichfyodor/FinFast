@@ -2,11 +2,20 @@ import type { Expense } from '@/types/expense'
 import { i18n } from '@/i18n'
 
 export const IMPORT_FORMAT_VERSION = 1
+export const CURRENT_IMPORT_FORMAT_VERSION = 2
+
+export interface ImportedCustomCategory {
+  id: string
+  name: string
+  icon: string
+  color: string
+}
 
 export interface ImportedExpense {
   expenseId: string
   amount: number
   categoryId?: string
+  customCategoryId?: string
   createdAt: string
   description?: string
   paymentDate?: string
@@ -16,6 +25,7 @@ export interface ImportFileData {
   format: string
   version: number
   expenses: ImportedExpense[]
+  categories?: ImportedCustomCategory[]
 }
 
 export interface ImportResult {
@@ -49,10 +59,13 @@ export function validateJson(content: string): { data: ImportFileData; error: nu
       return { data: null, error: i18n.global.t('import.versionNumber') }
     }
 
-    if (obj.version !== IMPORT_FORMAT_VERSION) {
+    if (obj.version !== IMPORT_FORMAT_VERSION && obj.version !== CURRENT_IMPORT_FORMAT_VERSION) {
       return {
         data: null,
-        error: i18n.global.t('import.unsupportedVersion', { version: obj.version, supported: IMPORT_FORMAT_VERSION })
+        error: i18n.global.t('import.unsupportedVersion', {
+          version: obj.version,
+          supported: `${IMPORT_FORMAT_VERSION}, ${CURRENT_IMPORT_FORMAT_VERSION}`
+        })
       }
     }
 
@@ -65,13 +78,54 @@ export function validateJson(content: string): { data: ImportFileData; error: nu
       return { data: null, error: i18n.global.t('import.emptyExpenses') }
     }
 
+    let categories: ImportedCustomCategory[] = []
+    if (obj.version === CURRENT_IMPORT_FORMAT_VERSION) {
+      if (!Array.isArray(obj.categories)) {
+        return { data: null, error: i18n.global.t('import.validationErrors', { errors: 'Custom category definitions are missing.' }) }
+      }
+
+      const seenCategoryIds = new Set<string>()
+      const categoryErrors = obj.categories.flatMap((category, index) => {
+        if (!category || typeof category !== 'object') {
+          return [`Custom category #${index + 1} must be an object.`]
+        }
+        const item = category as Record<string, unknown>
+        if (typeof item.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.id)) {
+          return [`Custom category #${index + 1} has an invalid ID.`]
+        }
+        if (seenCategoryIds.has(item.id)) {
+          return [`Custom category #${index + 1} has a duplicate ID.`]
+        }
+        seenCategoryIds.add(item.id)
+        if (['name', 'icon', 'color'].some(key => typeof item[key] !== 'string' || !(item[key] as string).trim())) {
+          return [`Custom category #${index + 1} must include a name, icon, and color.`]
+        }
+        if ((item.name as string).trim().length > 100) {
+          return [`Custom category #${index + 1} name must be at most 100 characters.`]
+        }
+        return []
+      })
+
+      if (categoryErrors.length > 0) {
+        return { data: null, error: i18n.global.t('import.validationErrors', { errors: categoryErrors.join('\n') }) }
+      }
+      categories = obj.categories as ImportedCustomCategory[]
+    }
+
     // Валидация каждого расхода
     const expenseErrors: string[] = []
+    const seenExpenseIds = new Set<string>()
     for (let i = 0; i < obj.expenses.length; i++) {
       const expense = obj.expenses[i]
       const expenseError = validateExpense(expense, i)
       if (expenseError) {
         expenseErrors.push(expenseError)
+      } else {
+        const expenseId = (expense as Record<string, unknown>).expenseId as string
+        if (seenExpenseIds.has(expenseId)) {
+          expenseErrors.push(`Expense #${i + 1}: duplicate expenseId "${expenseId}"`)
+        }
+        seenExpenseIds.add(expenseId)
       }
     }
 
@@ -82,17 +136,35 @@ export function validateJson(content: string): { data: ImportFileData; error: nu
       }
     }
 
-    const normalizedExpenses = obj.expenses.map(expense => {
-      const { categoryId, ...expenseData } = expense as Record<string, unknown>
+    if (obj.version === CURRENT_IMPORT_FORMAT_VERSION) {
+      const categoryIds = new Set(categories.map(category => category.id))
+      const missingCategoryIds = [...new Set((obj.expenses as unknown as Record<string, unknown>[])
+        .map(expense => expense.customCategoryId)
+        .filter((id): id is string => typeof id === 'string' && !categoryIds.has(id)))]
+      if (missingCategoryIds.length > 0) {
+        return {
+          data: null,
+          error: i18n.global.t('import.validationErrors', {
+            errors: `Missing custom category definitions for: ${missingCategoryIds.join(', ')}`
+          })
+        }
+      }
+    }
 
-      return typeof categoryId === 'string'
-        ? { ...expenseData, categoryId }
-        : expenseData
+    const normalizedExpenses = obj.expenses.map(expense => {
+      const { categoryId, customCategoryId, ...expenseData } = expense as Record<string, unknown>
+
+      return {
+        ...expenseData,
+        ...(typeof categoryId === 'string' ? { categoryId } : {}),
+        ...(typeof customCategoryId === 'string' ? { customCategoryId } : {})
+      }
     })
 
     return {
       data: {
         ...obj,
+        categories,
         expenses: normalizedExpenses
       } as unknown as ImportFileData,
       error: null
@@ -119,7 +191,7 @@ function validateExpense(expense: unknown, index: number): string | null {
   }
 
   // Проверка UUID формата (простая проверка)
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(exp.expenseId as string)) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(exp.expenseId as string)) {
     return i18n.global.t('import.expenseIdUuid', { index: index + 1 })
   }
 
@@ -130,6 +202,11 @@ function validateExpense(expense: unknown, index: number): string | null {
 
   if (exp.categoryId !== undefined && exp.categoryId !== null && typeof exp.categoryId !== 'string') {
     return i18n.global.t('import.categoryType', { index: index + 1 })
+  }
+
+  if (exp.customCategoryId !== undefined && exp.customCategoryId !== null &&
+      (typeof exp.customCategoryId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(exp.customCategoryId))) {
+    return `Expense #${index + 1}: "customCategoryId" must be a valid UUID or omitted`
   }
 
   // Проверка description (опциональное поле)
@@ -171,6 +248,7 @@ export function convertImportedExpenseToExpense(
     id: imported.expenseId,
     amount: imported.amount,
     categoryId: imported.categoryId,
+    customCategoryId: imported.customCategoryId,
     createdAt: imported.createdAt,
     description: imported.description,
     paymentDate: imported.paymentDate,
@@ -202,6 +280,7 @@ export function mergeExpenses(
         ...existing_expense,
         amount: imported_expense.amount,
         categoryId: imported_expense.categoryId,
+        customCategoryId: imported_expense.customCategoryId,
         createdAt: imported_expense.createdAt,
         description: imported_expense.description,
         paymentDate: imported_expense.paymentDate,

@@ -429,6 +429,7 @@ export function createExpenseStore(userId: string) {
   initializeOnlineSync();
 
   return reactive({ // reactive helps to access expenses directly: expenseStore.expenses instead of expenseStore.expenses.value
+    userId,
     expenses,
     loadDataFromStorage,
     refreshExpenses,

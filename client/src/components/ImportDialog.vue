@@ -8,7 +8,7 @@ import {
   mergeExpenses,
   type ImportFileData,
 } from "@/services/expenseImport";
-import { useExpenseStore } from "@/stores";
+import { useCategoryStore, useExpenseStore } from "@/stores";
 import { useI18n } from "vue-i18n";
 
 const props = defineProps<{ modelValue: boolean }>();
@@ -28,8 +28,6 @@ watch(
 
 const authStore = useAuthStore();
 const { t } = useI18n();
-const expenseStore = useExpenseStore().value!;
-
 const isLoading = ref(false);
 const errorMessage = ref<string | null>(null);
 const successMessage = ref<string | null>(null);
@@ -113,8 +111,9 @@ async function handleFileSelected(event: Event) {
 
 async function processFile(file: File) {
   // Проверка расширения файла
-  if (!file.name.endsWith(".json")) {
-    if (file.name.endsWith(".csv")) {
+  const fileName = file.name.toLowerCase();
+  if (!fileName.endsWith(".json")) {
+    if (fileName.endsWith(".csv")) {
       errorMessage.value =
         t("import.csvError");
     } else {
@@ -137,7 +136,43 @@ async function processFile(file: File) {
     }
 
     const importedData = validation.data as ImportFileData;
-    const userId = authStore.userId || "anonymous";
+    const userId = authStore.userId;
+    const categoryStore = useCategoryStore().value;
+    const expenseStore = useExpenseStore().value;
+    if (!userId || !categoryStore || !expenseStore ||
+      categoryStore.userId !== userId || expenseStore.userId !== userId) {
+      throw new Error("Active account data is still loading. Please retry the import.");
+    }
+
+    // Категории принадлежат профилю, поэтому при переносе между профилями
+    // создаём локальные категории и подменяем исходные ID на новые.
+    await categoryStore.loadDataFromStorage();
+    const categoryIdMap = new Map<string, string>();
+    for (const importedCategory of importedData.categories ?? []) {
+      const existingCategory = categoryStore.customCategories.find(
+        (category) => category.id.toLowerCase() === importedCategory.id.toLowerCase(),
+      );
+      if (existingCategory) {
+        categoryIdMap.set(importedCategory.id.toLowerCase(), existingCategory.id);
+        continue;
+      }
+
+      const createdCategory = await categoryStore.createCustomCategory({
+        name: importedCategory.name,
+        icon: importedCategory.icon,
+        color: importedCategory.color,
+      });
+      categoryIdMap.set(importedCategory.id.toLowerCase(), createdCategory.id);
+    }
+    const importedExpenses = importedData.expenses.map((expense) => {
+      if (!expense.customCategoryId) return expense;
+
+      const localCategoryId = categoryIdMap.get(expense.customCategoryId.toLowerCase());
+      if (!localCategoryId) {
+        throw new Error(`Could not restore custom category ${expense.customCategoryId}; no expenses were imported.`);
+      }
+      return { ...expense, customCategoryId: localCategoryId };
+    });
 
     // Загружаем существующие расходы
     const existingExpenses = await expenseStorage.loadExpenses(userId);
@@ -145,7 +180,7 @@ async function processFile(file: File) {
     // Объединяем данные
     const { merged, added, updated } = mergeExpenses(
       existingExpenses,
-      importedData.expenses,
+      importedExpenses,
     );
 
     // Сохраняем объединённые данные

@@ -6,7 +6,7 @@
 
 ## JSON import/export
 
-JSON имеет `format: "finfast"`, `version: 1`, массив `expenses`. Export включает expense ID, amount, system `categoryId` если строка, `createdAt`, описание и payment date; не включает userId и sync flags. Импорт проверяет JSON parse, format/version, наличие непустого массива, обязательные поля, простой UUID regex, положительный amount, тип optional description/category и распознавание даты через `new Date()`.
+JSON export использует `format: "finfast"`, `version: 2`, массив `expenses` и массив определений используемых custom categories (`id`, `name`, `icon`, `color`). В расход входят expense ID, amount, system `categoryId` и/или custom `customCategoryId`, `createdAt`, описание и payment date; userId и sync flags не экспортируются. Импорт поддерживает версии 1 и 2. Для v2 категории проверяются до записи расходов; отсутствующие в текущем профиле категории создаются с новыми профильными ID, после чего ссылки расходов переназначаются. v1 остаётся совместимым, но не содержит custom category metadata.
 
 Валидация выполняется для всех записей до merge; если файл невалиден, сохранение не должно начинаться. Merge идентифицирует дубликаты по expense ID в текущем user-scoped наборе: совпавшая запись обновляется и помечается unsynced, новая добавляется как unsynced. После merge UI сохраняет результат и перезагружает local store. Сам импорт не отправляет немедленно API sync.
 
@@ -14,14 +14,11 @@ JSON имеет `format: "finfast"`, `version: 1`, массив `expenses`. Expo
 
 ## CSV export
 
-CSV содержит русские заголовки даты, суммы, категории, описания, UTF-8 BOM, CRLF и escaping кавычек/разделителей. Удалённые расходы фильтруются. CSV предназначен для просмотра, не является форматом обратимого backup.
+CSV содержит локализованные заголовки даты, суммы, категории, описания, UTF-8 BOM, CRLF и escaping кавычек/разделителей. Категория заполняется локализованным отображаемым именем системной или пользовательской категории; дата берётся из `paymentDate`, если она задана, иначе из `createdAt`. Удалённые расходы фильтруются. CSV предназначен для просмотра, не является форматом обратимого backup и не поддерживается импортом.
 
 ## Известные расхождения с ожиданиями
 
-- JSON export не записывает `customCategoryId`; импорт также не читает его. Custom category связи при backup/restore теряются.
-- CSV создаёт поле `category`, но `toExportRows()` его не заполняет. Колонка «Категория» в текущем экспорте поэтому будет пустой.
-- Дата CSV выводится из `createdAt`, а не `paymentDate`.
-- Поле `categoryId` хранит только системную категорию; custom category отдельно и не экспортируется.
-- Import merge для существующего расхода устанавливает categoryId из импортированной записи (может очистить ранее заданное значение), но в internal model нет category transfer для custom category.
+- JSON v1 сохраняется для обратной совместимости, но не содержит custom category metadata. Новые экспорты используют v2.
+- Импорт CSV не реализован: CSV предназначен для таблиц и просмотра, а не для восстановления данных.
 
 При изменении импорта проверять all-or-nothing (сначала полная валидация, затем write), user-scoped duplicate detection, IndexedDB и синхронизацию; не создавать API calls непосредственно в диалоге.

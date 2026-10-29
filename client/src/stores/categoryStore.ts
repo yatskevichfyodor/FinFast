@@ -39,6 +39,7 @@ export function createCategoryStore(userId: string) {
   const dataChangeStore = useDataChangesStore().value!;
 
   const customCategories = ref<CustomCategory[]>([]);
+  let customCategoryMutationVersion = 0;
   const hiddenSystemCategoriesIds = ref<string[]>([]);
   const systemCategories = computed(() => {
     const hiddenIds = new Set(hiddenSystemCategoriesIds.value);
@@ -105,8 +106,8 @@ export function createCategoryStore(userId: string) {
       : [];
   }
 
-  function saveCustomCategoriesToStorage() {
-    customCategoryStorage.saveCategories(userId, customCategories.value);
+  async function saveCustomCategoriesToStorage() {
+    await customCategoryStorage.saveCategories(userId, customCategories.value);
   }
 
   function saveHiddenSystemCategoriesIdsToStorage() {
@@ -144,6 +145,7 @@ export function createCategoryStore(userId: string) {
    * @returns true categories were updated with api data, else false
    */
   async function loadCategoriesFromApi(): Promise<boolean> {
+    const mutationVersion = customCategoryMutationVersion;
     const apiCategoriesResult = await runLatest(() =>
       categoryApi
         .getCustomAndHiddenSystemCategories()
@@ -154,25 +156,34 @@ export function createCategoryStore(userId: string) {
       return false;
     }
 
+    // Do not let an older background snapshot erase a category created/changed
+    // locally while the request was in flight (for example during import).
+    if (mutationVersion !== customCategoryMutationVersion) {
+      return false;
+    }
+
     customCategories.value = apiCategoriesResult.customCategories;
-    saveCustomCategoriesToStorage();
+    await saveCustomCategoriesToStorage();
     hiddenSystemCategoriesIds.value =
       apiCategoriesResult.hiddenSystemCategoriesIds;
     saveHiddenSystemCategoriesIdsToStorage();
     return true;
   }
 
-  async function createCustomCategory(input: CustomCategoryInput) {
+  async function createCustomCategory(input: CustomCategoryInput): Promise<CustomCategory> {
+    customCategoryMutationVersion++;
     const localInput: CustomCategoryCreateDto = {
       ...input,
       id: crypto.randomUUID(),
     };
-    const category = await categorySyncService.createCustomCategory(localInput);
-    customCategories.value.push(category ?? localInput);
-    saveCustomCategoriesToStorage();
+    const category = await categorySyncService.createCustomCategory(localInput) ?? localInput;
+    customCategories.value.push(category);
+    await saveCustomCategoriesToStorage();
+    return category;
   }
 
   async function updateCustomCategory(id: string, input: CustomCategoryInput) {
+    customCategoryMutationVersion++;
     const customCategory: CustomCategory = await categorySyncService.updateCustomCategory(id, input) ?? 
     {
       id: id,
@@ -180,29 +191,32 @@ export function createCategoryStore(userId: string) {
     };
     const index = customCategories.value.findIndex((it) => it.id === id);
     if (index >= 0) customCategories.value[index] = customCategory;
-    saveCustomCategoriesToStorage();
+    await saveCustomCategoriesToStorage();
   }
 
   async function hideCustomCategory(id: string) {
+    customCategoryMutationVersion++;
     await categorySyncService.hideCustomCategory(id);
     const category = customCategories.value.find((it) => it.id === id);
     if (category) category.hiddenAt = new Date().toISOString();
-    saveCustomCategoriesToStorage();
+    await saveCustomCategoriesToStorage();
   }
 
   async function removeCustomCategory(id: string) {
+    customCategoryMutationVersion++;
     await categorySyncService.deleteCustomCategory(id);
     customCategories.value = customCategories.value.filter(
       (it) => it.id !== id,
     );
-    saveCustomCategoriesToStorage();
+    await saveCustomCategoriesToStorage();
   }
 
   async function restoreCustomCategory(id: string) {
+    customCategoryMutationVersion++;
     await categorySyncService.restoreCustomCategory(id);
     const category = customCategories.value.find((it) => it.id === id);
     if (category) delete category.hiddenAt;
-    saveCustomCategoriesToStorage();
+    await saveCustomCategoriesToStorage();
   }
 
   async function hideSystemCategory(id: string) {
@@ -241,6 +255,7 @@ export function createCategoryStore(userId: string) {
   }
 
   return reactive({
+    userId,
     categories,
     systemCategories,
     customCategories,
