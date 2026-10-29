@@ -13,6 +13,7 @@ const REFRESH_TOKEN_KEY = "finfast-refresh-token";
 const USER_ID_KEY = "finfast-user-id";
 const USERNAME_KEY = "finfast-username";
 const OFFLINE_MODE_KEY = "finfast-offline-mode";
+const AUTH_SESSION_ISSUE_KEY = "finfast-auth-session-issue";
 const ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY =
   "finfast-access-token-expiration-timestamp";
 export const ANONYMOUS_MODE_ENABLED_KEY = "finfast-anonymous-mode-enabled";
@@ -62,6 +63,9 @@ export const useAuthStore = defineStore("auth", () => {
   );
   const email = ref<string | null>(null);
   const isAnonymous = ref(false);
+  const authSessionIssue = ref(
+    localStorage.getItem(AUTH_SESSION_ISSUE_KEY) === "true",
+  );
   const googleLinked = ref(false);
   const hasPassword = ref(false);
   const passkeyLinked = ref(false);
@@ -122,21 +126,33 @@ export const useAuthStore = defineStore("auth", () => {
     hasPassword.value = false;
     passkeyLinked.value = false;
     isOffline.value = true;
+    authSessionIssue.value = false;
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_SESSION_ISSUE_KEY);
     localStorage.setItem(USER_ID_KEY, userId.value);
     localStorage.setItem(USERNAME_KEY, username.value);
     localStorage.setItem(OFFLINE_MODE_KEY, "true");
     localStorage.setItem(ANONYMOUS_MODE_ENABLED_KEY, "true");
   }
 
-  if (localStorage.getItem(ANONYMOUS_MODE_ENABLED_KEY)) {
+  if (
+    localStorage.getItem(ANONYMOUS_MODE_ENABLED_KEY) &&
+    !accessToken.value
+  ) {
     userId.value = ANONYMOUS_USER_ID;
     username.value = "Без аккаунта";
     isAnonymous.value = true;
   }
 
   restoreUserFromStorage();
+  if (
+    !accessToken.value &&
+    !isOffline.value &&
+    !localStorage.getItem(ANONYMOUS_MODE_ENABLED_KEY)
+  ) {
+    continueWithoutAccount();
+  }
   storeInitialized = true;
 
   const isAuthenticated = computed(
@@ -149,10 +165,11 @@ export const useAuthStore = defineStore("auth", () => {
     refreshToken.value = tokens.refreshToken;
     isOffline.value = false;
     isAnonymous.value = false;
+    authSessionIssue.value = false;
     localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
     localStorage.removeItem(OFFLINE_MODE_KEY);
-    localStorage.removeItem(ANONYMOUS_MODE_ENABLED_KEY);
+    localStorage.removeItem(AUTH_SESSION_ISSUE_KEY);
 
     if (tokens.accessToken) {
       const claims = readTokenClaims(tokens.accessToken);
@@ -275,6 +292,24 @@ export const useAuthStore = defineStore("auth", () => {
     }
   });
 
+  function markSessionIssue() {
+    accessToken.value = null;
+    refreshToken.value = null;
+    isOffline.value = true;
+    isAnonymous.value = false;
+    authSessionIssue.value = true;
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY);
+    localStorage.removeItem(ANONYMOUS_MODE_ENABLED_KEY);
+    localStorage.setItem(OFFLINE_MODE_KEY, "true");
+    localStorage.setItem(AUTH_SESSION_ISSUE_KEY, "true");
+  }
+
+  function clearAnonymousModeMarker() {
+    localStorage.removeItem(ANONYMOUS_MODE_ENABLED_KEY);
+  }
+
   async function logout() {
     const currentRefreshToken = refreshToken.value;
     accessToken.value = null;
@@ -293,6 +328,9 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.removeItem(USERNAME_KEY);
     localStorage.removeItem(OFFLINE_MODE_KEY);
     localStorage.removeItem(ANONYMOUS_MODE_ENABLED_KEY);
+    localStorage.removeItem(AUTH_SESSION_ISSUE_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_EXPIRATION_TIMESTAMP_KEY);
+    authSessionIssue.value = false;
 
     if (currentRefreshToken) {
       try {
@@ -311,6 +349,7 @@ export const useAuthStore = defineStore("auth", () => {
     isOffline,
     isAuthenticated,
     isAnonymous,
+    authSessionIssue,
     googleLinked,
     hasPassword,
     passkeyLinked,
@@ -327,6 +366,8 @@ export const useAuthStore = defineStore("auth", () => {
     updateProfile,
     setPassword,
     continueWithoutAccount,
+    markSessionIssue,
+    clearAnonymousModeMarker,
     loadCurrentUser,
     refresh,
     logout,

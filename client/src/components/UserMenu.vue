@@ -28,7 +28,10 @@ const pendingExpensesCount = computed(() =>
   expenseStore ? expenseStore.getNotSyncedExpensesCount() : null,
 );
 const shouldShowLogin = computed(
-  () => !authStore.isAuthenticated || authStore.isAnonymous,
+  () =>
+    !authStore.isAuthenticated ||
+    authStore.isAnonymous ||
+    authStore.authSessionIssue,
 );
 
 const buildInfo = computed(() => {
@@ -89,7 +92,9 @@ async function completeLogout() {
 
 async function goToLogin() {
   closeMenu();
-  await authStore.logout();
+  if (!authStore.isAnonymous && !authStore.authSessionIssue) {
+    await authStore.logout();
+  }
   await router.replace({ name: "login" });
 }
 
@@ -142,6 +147,28 @@ function handleBackdropClick(event: MouseEvent) {
             </div>
 
             <div class="menu-content">
+              <div v-if="authStore.authSessionIssue" class="auth-issue-item">
+                <v-alert
+                  class="auth-issue-alert"
+                  type="warning"
+                  variant="tonal"
+                  density="compact"
+                  icon="mdi-cloud-alert-outline"
+                >
+                  Сессия аккаунта завершилась. Расходы сохранены на устройстве, но синхронизация приостановлена. Войдите снова, чтобы возобновить её.
+                </v-alert>
+                <v-btn
+                  class="auth-issue-action"
+                  color="primary"
+                  variant="tonal"
+                  size="small"
+                  @click="goToLogin"
+                >
+                  Войти снова
+                </v-btn>
+                <v-divider class="my-2" />
+              </div>
+
               <div v-if="updateAvailable" class="update-menu-item">
                 <div class="update-menu-label">
                   <v-icon class="menu-icon update-menu-icon">mdi-update</v-icon>
@@ -346,6 +373,19 @@ function handleBackdropClick(event: MouseEvent) {
   gap: 10px;
   padding: 8px 0;
   color: #c62828;
+}
+
+.auth-issue-item {
+  padding: 0 12px;
+}
+
+.auth-issue-alert {
+  font-size: 0.875rem;
+}
+
+.auth-issue-action {
+  margin-top: 8px;
+  width: 100%;
 }
 
 .update-menu-label {

@@ -58,16 +58,19 @@ const router = createRouter({
 })
 
 router.beforeEach(to => {
+  const isAnonymous = localStorage.getItem('finfast-anonymous-mode-enabled') === 'true'
+  const hasSessionIssue = localStorage.getItem('finfast-auth-session-issue') === 'true'
   const isAuthenticated = localStorage.getItem('finfast-access-token') !== null || (
     localStorage.getItem('finfast-offline-mode') === 'true' &&
     localStorage.getItem('finfast-user-id') !== null
   )
+  const hasAccountSession = isAuthenticated && !isAnonymous && !hasSessionIssue
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  if ((to.name === 'login' || to.name === 'register') && isAuthenticated) {
+  if ((to.name === 'login' || to.name === 'register') && hasAccountSession) {
     return { name: 'home' }
   }
 })

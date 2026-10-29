@@ -94,7 +94,7 @@ watch(
         <AppNavigation />
         <div class="menu-button-container">
           <v-badge
-            v-if="updateAvailable"
+            v-if="updateAvailable || authStore.authSessionIssue"
             dot
             color="error"
             location="top right"

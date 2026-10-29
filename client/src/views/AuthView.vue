@@ -192,6 +192,7 @@ function handleGoogleError(message: string) {
 async function continueAfterLogin() {
   if (localStorage.getItem(ANONYMOUS_MODE_ENABLED_KEY)) {
     anonymousExpensesCount.value = (await expenseStorage.loadExpenses(ANONYMOUS_USER_ID)).length
+    authStore.clearAnonymousModeMarker()
   }
 
   if (anonymousExpensesCount.value > 0) {

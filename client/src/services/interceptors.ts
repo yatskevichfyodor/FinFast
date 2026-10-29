@@ -4,7 +4,6 @@ import {
   dataChangesClient,
   expenseClient,
 } from "@/services/api/http";
-import router from "@/router";
 import tokenStorage from "@/storage/tokenStorage";
 import type { AxiosInstance } from "axios";
 import { useAuthStore } from "@/stores/authStore";
@@ -32,17 +31,6 @@ const PUBLIC_AUTH_REQUESTS = new Set([
 
 function isPublicAuthRequest(baseUrl: string, url: string): boolean {
   return baseUrl === AUTH_BASE_URL && PUBLIC_AUTH_REQUESTS.has(url);
-}
-
-function redirectToLogin() {
-  tokenStorage.clear();
-
-  void router.replace({
-    name: "login",
-    query: {
-      redirect: router.currentRoute.value.fullPath,
-    },
-  });
 }
 
 function setupRequestInterceptor(client: AxiosInstance) {
@@ -82,16 +70,24 @@ function setupResponseInterceptor(client: AxiosInstance) {
 
       if (
         error.response?.status !== 401 ||
-        isPublicAuthRequest(error.config.baseURL, requestUrl) ||
-        isRetry
+        isPublicAuthRequest(error.config?.baseURL ?? "", requestUrl)
       ) {
+        return Promise.reject(error);
+      }
+
+      if (authStore.isOffline || authStore.isAnonymous) {
+        return Promise.reject(error);
+      }
+
+      if (isRetry) {
+        authStore.markSessionIssue();
         return Promise.reject(error);
       }
 
       const refreshToken = tokenStorage.getRefreshToken();
 
       if (!refreshToken) {
-        redirectToLogin();
+        authStore.markSessionIssue();
         return Promise.reject(error);
       }
 
@@ -109,12 +105,13 @@ async function refreshTokens() {
     await authStore.refresh();
   } catch (error) {
     console.log("Refresh tokens request error: ", error);
-    // if user sent invalid refresh token, then redirect to login
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      redirectToLogin();
-    } else {
-      throw error;
+    if (
+      !tokenStorage.getRefreshToken() ||
+      (axios.isAxiosError(error) && error.response?.status === 401)
+    ) {
+      authStore.markSessionIssue();
     }
+    throw error;
   }
 }
 
