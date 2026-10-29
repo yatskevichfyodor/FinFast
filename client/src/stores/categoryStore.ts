@@ -15,6 +15,7 @@ import { useDataChangesStore } from ".";
 import { createLatestOnly } from "@/utils/latestOnly";
 import { createUserEntryStorage } from "@/utils/localStorage";
 import { createCategorySyncService } from "@/services/categorySyncService";
+import { i18n } from "@/i18n";
 
 export type CategoryStore = ReturnType<typeof createCategoryStore>;
 
@@ -41,9 +42,11 @@ export function createCategoryStore(userId: string) {
   const hiddenSystemCategoriesIds = ref<string[]>([]);
   const systemCategories = computed(() => {
     const hiddenIds = new Set(hiddenSystemCategoriesIds.value);
+    const categoryMessages = i18n.global.messages.value[i18n.global.locale.value].category;
 
     return SYSTEM_CATEGORIES.map((category) => ({
       ...category,
+      name: categoryMessages[category.id as keyof typeof categoryMessages] ?? category.name,
       hidden: hiddenIds.has(category.id),
     }));
   });
@@ -225,7 +228,16 @@ export function createCategoryStore(userId: string) {
   }
 
   function getCategoryDisplay(id: string | undefined): Category {
-    return getCategoryById(id) ?? DEFAULT_CATEGORY_DISPLAY;
+    if (!id || id === DEFAULT_CATEGORY_DISPLAY.id) {
+      const categoryMessages = i18n.global.messages.value[i18n.global.locale.value].category;
+      return { ...DEFAULT_CATEGORY_DISPLAY, name: categoryMessages.uncategorized };
+    }
+
+    const category = getCategoryById(id);
+    if (category) return category;
+
+    const categoryMessages = i18n.global.messages.value[i18n.global.locale.value].category;
+    return { ...DEFAULT_CATEGORY_DISPLAY, name: categoryMessages.uncategorized };
   }
 
   return reactive({

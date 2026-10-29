@@ -9,6 +9,7 @@ import {
   type ImportFileData,
 } from "@/services/expenseImport";
 import { useExpenseStore } from "@/stores";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{
@@ -26,6 +27,7 @@ watch(
 );
 
 const authStore = useAuthStore();
+const { t } = useI18n();
 const expenseStore = useExpenseStore().value!;
 
 const isLoading = ref(false);
@@ -114,10 +116,10 @@ async function processFile(file: File) {
   if (!file.name.endsWith(".json")) {
     if (file.name.endsWith(".csv")) {
       errorMessage.value =
-        "CSV-файлы предназначены только для просмотра в Excel. Для импорта используйте JSON-файл, экспортированный через меню «Экспорт».";
+        t("import.csvError");
     } else {
       errorMessage.value =
-        "Можно импортировать только JSON-файлы, экспортированные через меню «Экспорт».";
+        t("import.fileError");
     }
     return;
   }
@@ -153,13 +155,13 @@ async function processFile(file: File) {
 
     // Показываем успешное сообщение
     if (added === 0 && updated === 0) {
-      successMessage.value = "Импорт завершён. Нет новых данных.";
+      successMessage.value = t("import.noChanges");
     } else if (updated === 0) {
-      successMessage.value = `Импорт успешен! Добавлено ${added} ${pluralExpense(added)}.`;
+      successMessage.value = t("import.added", { count: added });
     } else if (added === 0) {
-      successMessage.value = `Импорт успешен! Обновлено ${updated} ${pluralExpense(updated)}.`;
+      successMessage.value = t("import.updated", { count: updated });
     } else {
-      successMessage.value = `Импорт успешен! Добавлено ${added}, обновлено ${updated} ${pluralExpense(added + updated)}.`;
+      successMessage.value = t("import.summary", { added, updated });
     }
 
     // Закрываем диалог через 2 секунды
@@ -168,8 +170,8 @@ async function processFile(file: File) {
     }, 2000);
   } catch (error) {
     const errorMsg =
-      error instanceof Error ? error.message : "Неизвестная ошибка при импорте";
-    errorMessage.value = `Ошибка: ${errorMsg}`;
+      error instanceof Error ? error.message : t("import.unknownError");
+    errorMessage.value = `${t("common.error")}: ${errorMsg}`;
   } finally {
     isLoading.value = false;
   }
@@ -183,27 +185,14 @@ function readFile(file: File): Promise<string> {
       if (typeof content === "string") {
         resolve(content);
       } else {
-        reject(new Error("Не удалось прочитать файл"));
+        reject(new Error(t("import.readError")));
       }
     };
-    reader.onerror = () => reject(new Error("Ошибка чтения файла"));
+    reader.onerror = () => reject(new Error(t("import.readFailure")));
     reader.readAsText(file);
   });
 }
 
-function pluralExpense(count: number): string {
-  if (count % 10 === 1 && count % 100 !== 11) {
-    return "расхода";
-  }
-  if (
-    count % 10 >= 2 &&
-    count % 10 <= 4 &&
-    (count % 100 < 10 || count % 100 >= 20)
-  ) {
-    return "расходов";
-  }
-  return "расходов";
-}
 </script>
 
 <template>
@@ -226,9 +215,9 @@ function pluralExpense(count: number): string {
         </div>
 
         <div>
-          <div class="text-h6 font-weight-bold">Импорт расходов</div>
+          <div class="text-h6 font-weight-bold">{{ t("import.title") }}</div>
           <div class="text-body-2 import-header-subtitle">
-            Загрузите сохранённые данные
+            {{ t("import.subtitle") }}
           </div>
         </div>
       </div>
@@ -260,7 +249,7 @@ function pluralExpense(count: number): string {
         <!-- Содержимое при отсутствии ошибок -->
         <div v-if="!successMessage && !errorMessage" class="text-center">
           <div class="text-body-2 text-medium-emphasis mb-4 import-description">
-            Импортируйте данные из JSON-файла
+            {{ t("import.description") }}
           </div>
 
           <div
@@ -301,16 +290,16 @@ function pluralExpense(count: number): string {
             >
               {{
                 isLoading
-                  ? "Загрузка..."
+                  ? t("import.loading")
                   : isOverDropZone
-                    ? "Отпустите файл для загрузки"
-                    : "Перетащите файл или нажмите здесь для выбора"
+                    ? t("import.drop")
+                    : t("import.select")
               }}
             </p>
           </div>
 
           <p class="text-caption text-medium-emphasis mt-3">
-            Поддерживаются JSON-файлы, экспортированные через меню «Экспорт»
+            {{ t("import.supported") }}
           </p>
         </div>
       </v-card-text>
@@ -324,7 +313,7 @@ function pluralExpense(count: number): string {
           :disabled="isLoading"
           @click="cancel"
         >
-          {{ successMessage ? "Закрыть" : "Отмена" }}
+          {{ successMessage ? t("common.close") : t("common.cancel") }}
         </v-btn>
       </v-card-actions>
 

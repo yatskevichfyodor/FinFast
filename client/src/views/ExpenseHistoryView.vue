@@ -6,10 +6,12 @@ import { parseDate } from "@/utils/dateHelpers";
 import { format, parse } from "date-fns";
 import type { Expense } from "@/types/expense";
 import { useCategoryStore, useExpenseStore } from "@/stores";
+import { useI18n } from "vue-i18n";
 
 const router = useRouter();
 const expenseStore = useExpenseStore().value!;
 const categoryStore = useCategoryStore().value!;
+const { t, locale } = useI18n();
 
 onMounted(() => {
   void expenseStore.refreshExpenses();
@@ -26,7 +28,7 @@ function formatDisplayDate(date: string): string {
   const parsedDate = parse(date, "yyyy-MM-dd", new Date());
   const currentYear = new Date().getFullYear();
 
-  return parsedDate.toLocaleDateString(undefined, {
+  return parsedDate.toLocaleDateString(locale.value === "ru" ? "ru-RU" : "en-US", {
     day: "numeric",
     month: "long",
     ...(parsedDate.getFullYear() !== currentYear && {
@@ -117,9 +119,9 @@ function editExpense(expense: Expense) {
     <v-container class="expense-page" max-width="600">
       <!-- Header -->
       <div class="mb-6">
-        <div class="text-h5 font-weight-bold">История расходов</div>
+        <div class="text-h5 font-weight-bold">{{ t("expense.history") }}</div>
 
-        <div class="text-body-2 text-medium-emphasis mt-1">Сначала новые</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">{{ t("expense.newestFirst") }}</div>
       </div>
 
       <!-- Expenses List -->
@@ -132,11 +134,11 @@ function editExpense(expense: Expense) {
         />
 
         <div class="text-h6 font-weight-medium text-medium-emphasis mb-2">
-          Пока нет расходов
+          {{ t("expense.empty") }}
         </div>
 
         <div class="text-body-2 text-medium-emphasis">
-          Добавьте первый расход, чтобы начать отслеживание
+          {{ t("expense.emptyHint") }}
         </div>
       </div>
 
@@ -217,20 +219,20 @@ function editExpense(expense: Expense) {
                       variant="text"
                       size="small"
                       class="expense-menu-btn ml-1"
-                      aria-label="Действия с расходом"
+                      :aria-label="t('expense.actions')"
                     />
                   </template>
 
                   <v-list density="compact" rounded="lg">
                     <v-list-item
                       prepend-icon="mdi-pencil-outline"
-                      title="Редактировать"
+                      :title="t('common.edit')"
                       @click="editExpense(expense)"
                     />
 
                     <v-list-item
                       prepend-icon="mdi-delete-outline"
-                      title="Удалить"
+                      :title="t('common.delete')"
                       base-color="error"
                       @click="openDeleteDialog(expense)"
                     />
@@ -245,24 +247,22 @@ function editExpense(expense: Expense) {
       <v-dialog v-model="deleteDialogOpen" max-width="400">
         <v-card rounded="xl">
           <v-card-title class="text-h6 font-weight-bold pt-5 px-5">
-            Удалить расход?
+            {{ t("expense.deleteTitle") }}
           </v-card-title>
 
           <v-card-text class="px-5">
             <template v-if="expenseToDelete">
-              Расход на сумму
-              <strong>{{ expenseToDelete.amount.toFixed(2) }}</strong>
-              будет удалён без возможности восстановления.
+              {{ t("expense.deleteMessage", { amount: expenseToDelete.amount.toFixed(2) }) }}
             </template>
           </v-card-text>
 
           <v-card-actions class="px-5 pb-5">
             <v-spacer />
 
-            <v-btn variant="text" @click="closeDeleteDialog"> Отмена </v-btn>
+            <v-btn variant="text" @click="closeDeleteDialog">{{ t("common.cancel") }}</v-btn>
 
             <v-btn color="error" variant="flat" @click="confirmDelete">
-              Удалить
+              {{ t("common.delete") }}
             </v-btn>
           </v-card-actions>
         </v-card>

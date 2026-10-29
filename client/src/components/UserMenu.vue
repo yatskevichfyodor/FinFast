@@ -9,6 +9,8 @@ import AccountDialog from "@/components/AccountDialog.vue";
 import { updateAvailable, updatePwa } from "@/services/pwaUpdate";
 import { format } from "date-fns/format";
 import { useExpenseStore } from "@/stores";
+import { useI18n } from "vue-i18n";
+import { setLocale, type AppLocale } from "@/i18n";
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{
@@ -16,6 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const router = useRouter();
+const { t, locale } = useI18n();
 const authStore = useAuthStore();
 const expenseStore = useExpenseStore().value!;
 
@@ -56,6 +59,10 @@ onMounted(() => {
 
 function closeMenu() {
   localOpen.value = false;
+}
+
+function changeLocale(value: string) {
+  if (value === "ru" || value === "en") setLocale(value as AppLocale);
 }
 
 function openExport() {
@@ -141,7 +148,7 @@ function handleBackdropClick(event: MouseEvent) {
               </v-avatar>
               <div class="menu-user-info">
                 <span class="menu-username">{{
-                  authStore.username || "Пользователь"
+                  authStore.isAnonymous ? t("menu.guest") : authStore.username || t("menu.user")
                 }}</span>
               </div>
             </div>
@@ -155,7 +162,7 @@ function handleBackdropClick(event: MouseEvent) {
                   density="compact"
                   icon="mdi-cloud-alert-outline"
                 >
-                  Сессия аккаунта завершилась. Расходы сохранены на устройстве, но синхронизация приостановлена. Войдите снова, чтобы возобновить её.
+                  {{ t("menu.sessionIssue") }}
                 </v-alert>
                 <v-btn
                   class="auth-issue-action"
@@ -164,7 +171,7 @@ function handleBackdropClick(event: MouseEvent) {
                   size="small"
                   @click="goToLogin"
                 >
-                  Войти снова
+                  {{ t("menu.loginAgain") }}
                 </v-btn>
                 <v-divider class="my-2" />
               </div>
@@ -172,7 +179,7 @@ function handleBackdropClick(event: MouseEvent) {
               <div v-if="updateAvailable" class="update-menu-item">
                 <div class="update-menu-label">
                   <v-icon class="menu-icon update-menu-icon">mdi-update</v-icon>
-                  <span>Доступна новая версия</span>
+                  <span>{{ t("menu.updateAvailable") }}</span>
                 </div>
                 <v-btn
                   color="error"
@@ -180,7 +187,7 @@ function handleBackdropClick(event: MouseEvent) {
                   size="small"
                   @click="updateApplication"
                 >
-                  Обновить
+                  {{ t("menu.update") }}
                 </v-btn>
                 <v-divider class="my-2" />
               </div>
@@ -196,7 +203,7 @@ function handleBackdropClick(event: MouseEvent) {
                   <template #prepend>
                     <v-icon class="menu-icon">mdi-account-cog-outline</v-icon>
                   </template>
-                  Управление аккаунтом
+                  {{ t("menu.account") }}
                 </v-btn>
 
                 <v-divider class="my-2" />
@@ -208,8 +215,29 @@ function handleBackdropClick(event: MouseEvent) {
                     >mdi-tag-multiple</v-icon
                   >
                 </template>
-                Категории
+                {{ t("menu.categories") }}
               </v-btn>
+
+              <v-divider class="my-2" />
+
+              <div class="locale-picker">
+                <div class="locale-picker-label">
+                  <v-icon class="menu-icon">mdi-translate</v-icon>
+                  <span>{{ t("locale.label") }}</span>
+                </div>
+                <v-btn-toggle
+                  :model-value="locale"
+                  class="locale-toggle"
+                  color="primary"
+                  divided
+                  mandatory
+                  density="compact"
+                  @update:model-value="changeLocale"
+                >
+                  <v-btn value="ru">{{ t("locale.russian") }}</v-btn>
+                  <v-btn value="en">{{ t("locale.english") }}</v-btn>
+                </v-btn-toggle>
+              </div>
 
               <v-divider class="my-2" />
 
@@ -219,7 +247,7 @@ function handleBackdropClick(event: MouseEvent) {
                     >mdi-file-upload-outline</v-icon
                   >
                 </template>
-                Импорт расходов
+                {{ t("menu.import") }}
               </v-btn>
 
               <v-btn variant="text" class="menu-button" @click="openExport">
@@ -228,7 +256,7 @@ function handleBackdropClick(event: MouseEvent) {
                     >mdi-file-download-outline</v-icon
                   >
                 </template>
-                Экспорт расходов
+                {{ t("menu.export") }}
               </v-btn>
             </div>
 
@@ -249,7 +277,7 @@ function handleBackdropClick(event: MouseEvent) {
                     {{ shouldShowLogin ? "mdi-login" : "mdi-logout" }}
                   </v-icon>
                 </template>
-                {{ shouldShowLogin ? "Войти" : "Выйти" }}
+                {{ shouldShowLogin ? t("menu.login") : t("menu.logout") }}
               </v-btn>
               <div class="menu-build-info">{{ buildInfo }}</div>
             </div>
@@ -357,6 +385,30 @@ function handleBackdropClick(event: MouseEvent) {
 
 .menu-icon {
   font-size: 24px;
+}
+
+.locale-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.locale-picker-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #546e7a;
+}
+
+.locale-toggle {
+  width: 100%;
+}
+
+.locale-toggle :deep(.v-btn) {
+  flex: 1;
+  text-transform: none;
 }
 
 .menu-icon-import {

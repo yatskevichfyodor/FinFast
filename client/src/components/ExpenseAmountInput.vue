@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   expenseId?: string,
@@ -15,6 +16,7 @@ const emit = defineEmits<{
 }>()
 
 const amount = ref('')
+const { t } = useI18n()
 
 const isEditing = computed(() => props.expenseId !== undefined)
 const isInputMode = computed(() => props.isInputMode !== false)
@@ -106,11 +108,11 @@ watch(
       <div class="header-content">
         <div class="header-left">
           <div class="header-title">
-            {{ isEditing ? 'Редактирование расхода' : 'Новый расход' }}
+            {{ isEditing ? t('expense.edit') : t('expense.new') }}
           </div>
 
           <div class="header-subtitle">
-            Сколько вы потратили?
+            {{ t('expense.howMuch') }}
           </div>
         </div>
 
@@ -118,7 +120,7 @@ watch(
           v-if="isEditing"
           icon="mdi-close"
           variant="tonal"
-          aria-label="Отменить редактирование"
+          :aria-label="t('common.cancel')"
           class="header-button"
           @click="emit('cancel')"
         />
@@ -147,7 +149,7 @@ watch(
 
         <template v-if="isInputMode">
           <div class="summary-label">
-            Введите сумму расхода
+            {{ t('expense.enterAmount') }}
           </div>
         </template>
       </v-card-text>

@@ -2,8 +2,15 @@ import 'vuetify/styles'
 import '@mdi/font/css/materialdesignicons.css'
 
 import { createVuetify } from 'vuetify'
+import { en, ru } from 'vuetify/locale'
+import { getLocale } from '@/i18n'
 
-export default createVuetify({
+const vuetify = createVuetify({
+  locale: {
+    locale: getLocale(),
+    fallback: 'en',
+    messages: { en, ru },
+  },
   theme: {
     defaultTheme: 'light',
     themes: {
@@ -26,3 +33,5 @@ export default createVuetify({
     }
   }
 })
+
+export default vuetify

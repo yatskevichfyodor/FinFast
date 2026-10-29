@@ -7,9 +7,11 @@ import ExpenseAmountInput from "@/components/ExpenseAmountInput.vue";
 import { format, parse } from "date-fns";
 import type { CreateExpensePayload, ExpenseUpdatePayload } from "@/types/expense";
 import { useExpenseStore } from "@/stores";
+import { useI18n } from "vue-i18n";
 
 const router = useRouter();
 const route = useRoute();
+const { t } = useI18n();
 
 const emit = defineEmits<{
   saved: [];
@@ -73,14 +75,14 @@ const initialAmount = computed(() => {
 
 const getButtonText = computed(() => {
   if (isEditing.value) {
-    return "Сохранить изменения";
+    return t("expense.saveChanges");
   }
 
   if (isMobile.value) {
-    return mobileStep.value === 1 ? "Ввод" : "Готово";
+    return mobileStep.value === 1 ? t("expense.input") : t("expense.done");
   }
 
-  return "Готово";
+  return t("expense.done");
 });
 
 function handleAmountChange(amountValue: number, valid: boolean) {
@@ -246,9 +248,9 @@ watchCategoryId();
         <div v-if="!isMobile && !isEditing" class="desktop-wrapper">
           <!-- Centered header -->
           <div class="desktop-header">
-            <div class="text-h5 font-weight-bold text-center">Новый расход</div>
+            <div class="text-h5 font-weight-bold text-center">{{ t("expense.new") }}</div>
             <div class="text-body-2 text-medium-emphasis text-center mt-1">
-              Сколько вы потратили?
+              {{ t("expense.howMuch") }}
             </div>
           </div>
 
@@ -271,7 +273,7 @@ watchCategoryId();
               <v-card rounded="xl" elevation="0" class="additional-fields-card">
                 <v-card-text class="pa-4">
                   <div class="text-subtitle-1 font-weight-medium mb-4">
-                    Дополнительно
+                    {{ t("expense.additional") }}
                   </div>
 
                   <CategoryPicker
@@ -282,8 +284,8 @@ watchCategoryId();
                   <div class="field-group mt-4">
                     <v-text-field
                       v-model="description"
-                      label="Описание"
-                      placeholder="Например: продукты, обед, бензин"
+                      :label="t('expense.description')"
+                      :placeholder="t('expense.descriptionPlaceholder')"
                       variant="outlined"
                       density="comfortable"
                       clearable
@@ -306,7 +308,7 @@ watchCategoryId();
                   <div class="field-group">
                     <v-date-input
                       v-model="paymentDate"
-                      label="Дата платежа"
+                      :label="t('expense.paymentDate')"
                       variant="outlined"
                       density="comfortable"
                       clearable
@@ -348,7 +350,7 @@ watchCategoryId();
             <v-card rounded="xl" elevation="0" class="additional-fields-card">
               <v-card-text class="pa-4">
                 <div class="text-subtitle-1 font-weight-medium mb-2">
-                  Дополнительно
+                  {{ t("expense.additional") }}
                 </div>
 
                 <div class="d-flex flex-column ga-4">
@@ -359,7 +361,7 @@ watchCategoryId();
 
                   <v-date-input
                     v-model="paymentDate"
-                    label="Дата платежа"
+                    :label="t('expense.paymentDate')"
                     variant="outlined"
                     density="comfortable"
                     clearable
@@ -374,8 +376,8 @@ watchCategoryId();
 
                   <v-text-field
                     v-model="description"
-                    label="Описание"
-                    placeholder="Например: продукты, обед, бензин"
+                    :label="t('expense.description')"
+                    :placeholder="t('expense.descriptionPlaceholder')"
                     variant="outlined"
                     density="comfortable"
                     clearable
@@ -403,7 +405,7 @@ watchCategoryId();
             <v-card rounded="xl" elevation="0" class="additional-fields-card">
               <v-card-text class="pa-4">
                 <div class="text-subtitle-1 font-weight-medium mb-4">
-                  Дополнительно
+                  {{ t("expense.additional") }}
                 </div>
 
                 <CategoryPicker
@@ -414,8 +416,8 @@ watchCategoryId();
                 <div class="field-group mt-4">
                   <v-text-field
                     v-model="description"
-                    label="Описание"
-                    placeholder="Например: продукты, обед, бензин"
+                    :label="t('expense.description')"
+                    :placeholder="t('expense.descriptionPlaceholder')"
                     variant="outlined"
                     density="comfortable"
                     clearable
@@ -438,7 +440,7 @@ watchCategoryId();
                 <div class="field-group">
                   <v-date-input
                     v-model="paymentDate"
-                    label="Дата платежа"
+                    :label="t('expense.paymentDate')"
                     variant="outlined"
                     density="comfortable"
                     clearable

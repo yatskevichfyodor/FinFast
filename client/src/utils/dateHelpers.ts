@@ -1,7 +1,8 @@
 import { isValid, parse } from "date-fns"
+import { getLocale } from "@/i18n"
 
-export function formatMonthName(year: number, month: number): string {
-  return new Intl.DateTimeFormat('ru-RU', {
+export function formatMonthName(year: number, month: number, locale = getLocale()): string {
+  return new Intl.DateTimeFormat(locale === 'ru' ? 'ru-RU' : 'en-US', {
     month: 'long',
     year: 'numeric'
   }).format(new Date(year, month - 1))

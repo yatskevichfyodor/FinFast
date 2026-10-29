@@ -1,4 +1,5 @@
 import type { Expense } from '@/types/expense'
+import { i18n } from '@/i18n'
 
 export const IMPORT_FORMAT_VERSION = 1
 
@@ -30,7 +31,7 @@ export function validateJson(content: string): { data: ImportFileData; error: nu
     const data = JSON.parse(content) as unknown
 
     if (!data || typeof data !== 'object') {
-      return { data: null, error: 'JSON должен содержать объект верхнего уровня' }
+      return { data: null, error: i18n.global.t('import.validationObject') }
     }
 
     const obj = data as Record<string, unknown>
@@ -39,29 +40,29 @@ export function validateJson(content: string): { data: ImportFileData; error: nu
     if (obj.format !== 'finfast') {
       return {
         data: null,
-        error: `Неподдерживаемый формат: "${String(obj.format)}". Ожидается "finfast"`
+        error: i18n.global.t('import.unsupportedFormat', { format: String(obj.format) })
       }
     }
 
     // Проверка version
     if (typeof obj.version !== 'number') {
-      return { data: null, error: 'Поле "version" должно быть числом' }
+      return { data: null, error: i18n.global.t('import.versionNumber') }
     }
 
     if (obj.version !== IMPORT_FORMAT_VERSION) {
       return {
         data: null,
-        error: `Версия формата ${obj.version} не поддерживается. Поддерживается версия ${IMPORT_FORMAT_VERSION}`
+        error: i18n.global.t('import.unsupportedVersion', { version: obj.version, supported: IMPORT_FORMAT_VERSION })
       }
     }
 
     // Проверка expenses
     if (!Array.isArray(obj.expenses)) {
-      return { data: null, error: 'Поле "expenses" должно быть массивом' }
+      return { data: null, error: i18n.global.t('import.expensesArray') }
     }
 
     if (obj.expenses.length === 0) {
-      return { data: null, error: 'Массив "expenses" пуст' }
+      return { data: null, error: i18n.global.t('import.emptyExpenses') }
     }
 
     // Валидация каждого расхода
@@ -77,7 +78,7 @@ export function validateJson(content: string): { data: ImportFileData; error: nu
     if (expenseErrors.length > 0) {
       return {
         data: null,
-        error: `Ошибки валидации расходов:\n${expenseErrors.join('\n')}`
+        error: i18n.global.t('import.validationErrors', { errors: expenseErrors.join('\n') })
       }
     }
 
@@ -97,66 +98,66 @@ export function validateJson(content: string): { data: ImportFileData; error: nu
       error: null
     }
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : 'Неизвестная ошибка'
+    const errorMsg = err instanceof Error ? err.message : i18n.global.t('import.unknown')
     return {
       data: null,
-      error: `Ошибка синтаксиса JSON: ${errorMsg}`
+      error: i18n.global.t('import.jsonSyntax', { error: errorMsg })
     }
   }
 }
 
 function validateExpense(expense: unknown, index: number): string | null {
   if (!expense || typeof expense !== 'object') {
-    return `Расход #${index + 1}: ожидается объект`
+    return i18n.global.t('import.expectedObject', { index: index + 1 })
   }
 
   const exp = expense as Record<string, unknown>
 
   // Проверка expenseId
   if (typeof exp.expenseId !== 'string' || !exp.expenseId.trim()) {
-    return `Расход #${index + 1}: "expenseId" должен быть непустой строкой`
+    return i18n.global.t('import.expenseIdString', { index: index + 1 })
   }
 
   // Проверка UUID формата (простая проверка)
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(exp.expenseId as string)) {
-    return `Расход #${index + 1}: "expenseId" не является корректным UUID`
+    return i18n.global.t('import.expenseIdUuid', { index: index + 1 })
   }
 
   // Проверка amount
   if (typeof exp.amount !== 'number' || exp.amount <= 0) {
-    return `Расход #${index + 1}: "amount" должен быть положительным числом`
+    return i18n.global.t('import.amountPositive', { index: index + 1 })
   }
 
   if (exp.categoryId !== undefined && exp.categoryId !== null && typeof exp.categoryId !== 'string') {
-    return `Расход #${index + 1}: "categoryId" должен быть строкой или отсутствовать`
+    return i18n.global.t('import.categoryType', { index: index + 1 })
   }
 
   // Проверка description (опциональное поле)
   if (exp.description !== undefined && exp.description !== null && typeof exp.description !== 'string') {
-    return `Расход #${index + 1}: "description" должен быть строкой или отсутствовать`
+    return i18n.global.t('import.descriptionType', { index: index + 1 })
   }
 
   // Проверка paymentDate (опциональное поле)
   if (exp.paymentDate !== undefined && exp.paymentDate !== null) {
     if (typeof exp.paymentDate !== 'string' || !exp.paymentDate.trim()) {
-      return `Расход #${index + 1}: "paymentDate" должен быть непустой строкой или отсутствовать`
+      return i18n.global.t('import.paymentDateString', { index: index + 1 })
     }
     // Проверка валидности ISO даты
     const paymentDate = new Date(exp.paymentDate as string)
     if (isNaN(paymentDate.getTime())) {
-      return `Расход #${index + 1}: "paymentDate" не является валидной ISO датой`
+      return i18n.global.t('import.paymentDateInvalid', { index: index + 1 })
     }
   }
 
   // Проверка createdAt
   if (typeof exp.createdAt !== 'string' || !exp.createdAt.trim()) {
-    return `Расход #${index + 1}: "createdAt" должен быть непустой строкой`
+    return i18n.global.t('import.createdAtString', { index: index + 1 })
   }
 
   // Проверка валидности ISO даты
   const date = new Date(exp.createdAt as string)
   if (isNaN(date.getTime())) {
-    return `Расход #${index + 1}: "createdAt" не является валидной ISO датой`
+    return i18n.global.t('import.createdAtInvalid', { index: index + 1 })
   }
 
   return null

@@ -4,6 +4,7 @@ import { ref, watch } from 'vue'
 import { createCsvExport, createJsonExport, downloadExport, type ExportFormat } from '@/services/expenseExport'
 import { expenseStorage } from '@/storage/indexedDB'
 import { useAuthStore } from '@/stores/authStore'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -11,6 +12,7 @@ const emit = defineEmits<{
 }>()
 
 const authStore = useAuthStore()
+const { t } = useI18n()
 const localOpen = ref(props.modelValue)
 const isExporting = ref(false)
 const exportError = ref(false)
@@ -56,14 +58,14 @@ async function doExport() {
         </div>
 
         <div>
-          <div class="text-h6 font-weight-bold">Экспорт расходов</div>
-          <div class="text-body-2 export-header-subtitle">Сохраните данные на своё устройство</div>
+            <div class="text-h6 font-weight-bold">{{ t('export.title') }}</div>
+              <div class="text-body-2 export-header-subtitle">{{ t('export.subtitle') }}</div>
         </div>
       </div>
 
       <v-card-text class="px-5">
         <div class="text-body-2 text-medium-emphasis mb-4 export-description">
-          Выберите формат файла
+          {{ t('export.choose') }}
         </div>
 
         <v-radio-group v-model="selectedFormat" hide-details class="format-group">
@@ -71,7 +73,7 @@ async function doExport() {
             <template #label>
               <div class="format-content">
                 <div class="format-title">JSON</div>
-                <div class="text-body-2 text-medium-emphasis">Для резервной копии и переноса данных</div>
+                <div class="text-body-2 text-medium-emphasis">{{ t('export.backup') }}</div>
               </div>
             </template>
           </v-radio>
@@ -79,23 +81,23 @@ async function doExport() {
           <v-radio value="csv" class="format-option format-option-csv">
             <template #label>
               <div class="format-content">
-                <div class="format-title">Таблица CSV</div>
-                <div class="text-body-2 text-medium-emphasis">Для просмотра и редактирования в Excel</div>
+                <div class="format-title">{{ t('export.csv') }}</div>
+                <div class="text-body-2 text-medium-emphasis">{{ t('export.excel') }}</div>
               </div>
             </template>
           </v-radio>
         </v-radio-group>
 
         <div v-if="exportError" class="text-body-2 text-error mt-3">
-          Не удалось экспортировать расходы. Попробуйте ещё раз.
+          {{ t('export.error') }}
         </div>
       </v-card-text>
 
       <v-card-actions class="px-5 pb-5">
         <v-spacer />
-        <v-btn variant="text" :disabled="isExporting" @click="cancel">Отмена</v-btn>
+        <v-btn variant="text" :disabled="isExporting" @click="cancel">{{ t('common.cancel') }}</v-btn>
         <v-btn variant="flat" rounded="lg" prepend-icon="mdi-download" class="export-submit-button" :loading="isExporting" :disabled="isExporting" @click="doExport">
-          Скачать файл
+          {{ t('export.download') }}
         </v-btn>
       </v-card-actions>
     </v-card>

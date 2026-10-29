@@ -7,6 +7,7 @@ import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { useExpenseStore } from '@/stores'
 import { isGoogleSignInAvailable } from '@/utils/auth'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -14,6 +15,7 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 const authStore = useAuthStore()
 const expenseStore = useExpenseStore().value!
 
@@ -95,7 +97,7 @@ async function saveUsername() {
     await authStore.updateProfile(editedUsername.value)
     isEditingUsername.value = false
   } catch (error) {
-    accountError.value = getRequestErrorMessage(error, 'Не удалось изменить имя пользователя')
+    accountError.value = getRequestErrorMessage(error, t('account.usernameError'))
   } finally {
     isSavingAccount.value = false
   }
@@ -105,12 +107,12 @@ async function savePassword() {
   passwordError.value = ''
 
   if (!newPassword.value) {
-    passwordError.value = 'Введите пароль'
+    passwordError.value = t('account.passwordRequired')
     return
   }
 
   if (newPassword.value !== confirmPassword.value) {
-    passwordError.value = 'Пароли не совпадают'
+    passwordError.value = t('auth.passwordsMismatch')
     return
   }
 
@@ -119,7 +121,7 @@ async function savePassword() {
     await authStore.setPassword(newPassword.value)
     showPasswordForm.value = false
   } catch (error) {
-    passwordError.value = getRequestErrorMessage(error, 'Не удалось сохранить пароль')
+    passwordError.value = getRequestErrorMessage(error, t('account.passwordError'))
   } finally {
     isSavingAccount.value = false
   }
@@ -132,7 +134,7 @@ async function unlinkGoogleAccount() {
     await authStore.unlinkGoogleAccount()
     showUnlinkGoogleDialog.value = false
   } catch (error) {
-    accountError.value = getRequestErrorMessage(error, 'Не удалось отвязать аккаунт Google')
+    accountError.value = getRequestErrorMessage(error, t('account.unlinkGoogleError'))
   } finally {
     isSavingAccount.value = false
   }
@@ -153,7 +155,7 @@ async function deleteAccount() {
     await authStore.logout()
     await router.replace({ name: 'login', query: { deleted: 'true' } })
   } catch (error) {
-    accountError.value = getRequestErrorMessage(error, 'Не удалось удалить аккаунт')
+    accountError.value = getRequestErrorMessage(error, t('account.deleteError'))
   } finally {
     isDeletingAccount.value = false
   }
@@ -164,7 +166,7 @@ async function linkGoogleAccount(credential: string) {
   googleLinkError.value = ''
   try {
     await authStore.linkGoogleAccount(credential)
-    googleLinkMessage.value = 'Аккаунт Google успешно привязан'
+    googleLinkMessage.value = t('account.googleLinked')
   } catch (error) {
     googleLinkError.value = getGoogleLinkErrorMessage(error)
   }
@@ -176,10 +178,10 @@ async function linkPasskey() {
   isLinkingPasskey.value = true
   try {
     await authStore.linkPasskey()
-    passkeyMessage.value = 'Passkey успешно привязан'
+    passkeyMessage.value = t('account.passkeyLinkedMessage')
   } catch (error) {
     console.error('Не удалось привязать passkey', error);
-    passkeyError.value = getRequestErrorMessage(error, 'Не удалось привязать passkey')
+    passkeyError.value = getRequestErrorMessage(error, t('account.passkeyError'))
   } finally {
     isLinkingPasskey.value = false
   }
@@ -191,10 +193,10 @@ async function unlinkPasskey() {
   isUnlinkingPasskey.value = true
   try {
     await authStore.unlinkPasskey()
-    passkeyMessage.value = 'Passkey успешно отвязан'
+    passkeyMessage.value = t('account.passkeyUnlinkedMessage')
     showUnlinkPasskeyDialog.value = false
   } catch (error) {
-    passkeyError.value = getRequestErrorMessage(error, 'Не удалось отвязать passkey')
+    passkeyError.value = getRequestErrorMessage(error, t('account.passkeyUnlinkError'))
   } finally {
     isUnlinkingPasskey.value = false
   }
@@ -208,11 +210,11 @@ function getGoogleLinkErrorMessage(error: unknown): string {
     }
 
     if (error.response?.status === 409) {
-      return 'Этот аккаунт Google уже привязан к другому пользователю'
+      return t('account.googleAlreadyLinked')
     }
   }
 
-  return 'Не удалось привязать аккаунт Google. Попробуйте ещё раз.'
+  return t('account.googleLinkError')
 }
 
 function handleGoogleLinkError(message: string) {
@@ -255,20 +257,20 @@ function getRequestErrorMessage(
         <div class="header-avatar">
           <v-icon size="25" color="white">mdi-account-circle</v-icon>
         </div>
-        <div class="header-title">Управление аккаунтом</div>
+        <div class="header-title">{{ t('account.title') }}</div>
       </div>
 
       <v-card-text class="dialog-content">
         <div class="scrollable-content">
           <v-alert v-if="isDemoUser" class="mb-4" type="info" variant="tonal">
-            Это демонстрационный аккаунт. К нему нельзя привязать email или passkey, а сам аккаунт нельзя удалить.
+            {{ t('account.demo') }}
           </v-alert>
           <div class="info-sections">
           <!-- Username Card -->
           <div class="info-card">
             <div class="card-header">
               <v-icon class="card-icon" color="#1976d2">mdi-account</v-icon>
-              <span class="card-label">Имя пользователя</span>
+              <span class="card-label">{{ t('account.username') }}</span>
             </div>
             <div class="card-content">
               <div class="username-input-wrapper">
@@ -293,7 +295,7 @@ function getRequestErrorMessage(
                       @click="startEditingUsername"
                     >
                       <v-icon size="16" start>mdi-pencil-outline</v-icon>
-                      Изменить
+                      {{ t('account.change') }}
                     </v-btn>
                   </template>
                   <template v-else>
@@ -330,14 +332,14 @@ function getRequestErrorMessage(
           <div class="info-card">
             <div class="card-header">
               <v-icon class="card-icon" :color="authStore.hasPassword ? '#2e7d32' : '#9e9e9e'">mdi-lock-outline</v-icon>
-              <span class="card-label">Пароль</span>
+              <span class="card-label">{{ t('account.password') }}</span>
               <v-chip
                 :color="authStore.hasPassword ? 'success' : 'default'"
                 size="x-small"
                 variant="tonal"
                 class="status-chip"
               >
-                {{ authStore.hasPassword ? 'Установлен' : 'Не установлен' }}
+                {{ authStore.hasPassword ? t('account.set') : t('account.unset') }}
               </v-chip>
             </div>
             <div class="card-content">
@@ -350,24 +352,24 @@ function getRequestErrorMessage(
                 @click="togglePasswordForm"
               >
                 <v-icon size="16" start>{{ showPasswordForm ? 'mdi-chevron-up' : (authStore.hasPassword ? 'mdi-lock-reset' : 'mdi-lock-plus-outline') }}</v-icon>
-                {{ showPasswordForm ? 'Скрыть' : (authStore.hasPassword ? 'Изменить пароль' : 'Добавить пароль') }}
+                {{ showPasswordForm ? t('account.hide') : (authStore.hasPassword ? t('account.changePassword') : t('account.addPassword')) }}
               </v-btn>
               <v-expand-transition>
                 <div v-if="showPasswordForm" class="password-form">
                   <div class="password-hint">
                     <v-icon size="16">mdi-information-outline</v-icon>
-                    <span>Пароль нужен для входа по имени пользователя и отвязки Google.</span>
+                    <span>{{ t('account.passwordHint') }}</span>
                   </div>
                   <v-text-field
                     v-model="newPassword"
-                    label="Новый пароль"
+                    :label="t('account.newPassword')"
                     type="password"
                     autocomplete="new-password"
                     hide-details="auto"
                   />
                   <v-text-field
                     v-model="confirmPassword"
-                    label="Подтверждение пароля"
+                    :label="t('account.confirmPassword')"
                     type="password"
                     autocomplete="new-password"
                     hide-details="auto"
@@ -376,8 +378,8 @@ function getRequestErrorMessage(
                     {{ passwordError }}
                   </v-alert>
                   <div class="password-form-actions">
-                    <v-btn variant="text" :disabled="isSavingAccount" @click="togglePasswordForm">Отмена</v-btn>
-                    <v-btn color="primary" :loading="isSavingAccount" @click="savePassword">Сохранить</v-btn>
+                    <v-btn variant="text" :disabled="isSavingAccount" @click="togglePasswordForm">{{ t('common.cancel') }}</v-btn>
+                    <v-btn color="primary" :loading="isSavingAccount" @click="savePassword">{{ t('common.save') }}</v-btn>
                   </div>
                 </div>
               </v-expand-transition>
@@ -395,7 +397,7 @@ function getRequestErrorMessage(
                 variant="tonal"
                 class="status-chip"
               >
-                {{ authStore.googleLinked ? 'Подключён' : 'Не подключён' }}
+                {{ authStore.googleLinked ? t('account.connected') : t('account.disconnected') }}
               </v-chip>
             </div>
             <div class="card-content">
@@ -415,7 +417,7 @@ function getRequestErrorMessage(
                       @click="openUnlinkGoogleDialog"
                     >
                       <v-icon size="16" start>mdi-link-variant-off</v-icon>
-                      Отвязать
+                      {{ t('account.unlink') }}
                     </v-btn>
                   </div>
                 </div>
@@ -423,14 +425,14 @@ function getRequestErrorMessage(
               <template v-else-if="!isDemoUser && !authStore.googleLinked && isGoogleSignInConfigured && isGoogleSignInAvailable()">
                 <div class="google-link-container">
                   <GoogleSignInButton
-                    hint="Привяжите аккаунт Google для входа без пароля"
+                    :hint="t('account.googleHint')"
                     @credential="linkGoogleAccount"
                     @error="handleGoogleLinkError"
                   />
                 </div>
               </template>
               <template v-else>
-                <div class="google-placeholder">{{ authStore.googleLinked ? 'Email не указан' : 'Не подключён' }}</div>
+                <div class="google-placeholder">{{ authStore.googleLinked ? t('account.emailMissing') : t('account.disconnected') }}</div>
               </template>
             </div>
           </div>
@@ -440,19 +442,19 @@ function getRequestErrorMessage(
               <v-icon class="card-icon" :color="authStore.passkeyLinked ? '#2e7d32' : '#9e9e9e'">mdi-fingerprint</v-icon>
               <span class="card-label">Passkey</span>
               <v-chip :color="authStore.passkeyLinked ? 'success' : 'default'" size="x-small" variant="tonal" class="status-chip">
-                {{ authStore.passkeyLinked ? 'Привязан' : 'Не привязан' }}
+                {{ authStore.passkeyLinked ? t('account.passkeyLinked') : t('account.passkeyUnlinked') }}
               </v-chip>
             </div>
             <div class="card-content">
               <v-btn v-if="!authStore.passkeyLinked && !isDemoUser" block size="small" variant="tonal" color="#1976d2" :loading="isLinkingPasskey" @click="linkPasskey">
                 <v-icon size="16" start>mdi-fingerprint</v-icon>
-                Привязать passkey
+                {{ t('account.linkPasskey') }}
               </v-btn>
               <div v-if="!authStore.passkeyLinked && isDemoUser" class="google-placeholder">
-                К демонстрационному аккаунту нельзя привязать passkey.
+                {{ t('account.demoPasskey') }}
               </div>
               <div v-if="authStore.passkeyLinked" class="passkey-linked-content">
-                <div class="google-placeholder">Используйте passkey для входа без пароля</div>
+                <div class="google-placeholder">{{ t('account.passkeyHint') }}</div>
                 <v-btn
                   size="small"
                   variant="tonal"
@@ -462,10 +464,10 @@ function getRequestErrorMessage(
                   @click="openUnlinkPasskeyDialog"
                 >
                   <v-icon size="16" start>mdi-link-variant-off</v-icon>
-                  Отвязать
+                  {{ t('account.unlink') }}
                 </v-btn>
                 <div v-if="!authStore.hasPassword && !authStore.googleLinked" class="google-placeholder">
-                  Добавьте пароль или привяжите Google, чтобы отвязать passkey.
+                  {{ t('account.unlinkRequirements') }}
                 </div>
               </div>
             </div>
@@ -494,7 +496,7 @@ function getRequestErrorMessage(
         <div class="danger-zone">
           <div class="danger-header">
             <v-icon class="danger-icon" color="#d32f2f">mdi-alert-circle</v-icon>
-            <span class="danger-label">Опасная зона</span>
+            <span class="danger-label">{{ t('account.danger') }}</span>
           </div>
           <v-btn 
             v-if="!isDemoUser"
@@ -504,9 +506,9 @@ function getRequestErrorMessage(
             @click="openDeleteAccountDialog"
           >
             <v-icon start>mdi-delete-outline</v-icon>
-            Удалить аккаунт
+            {{ t('account.deleteAccount') }}
           </v-btn>
-          <div v-else class="google-placeholder">Демонстрационный аккаунт нельзя удалить.</div>
+          <div v-else class="google-placeholder">{{ t('account.demoDelete') }}</div>
         </div>
         </div>
       </v-card-text>
@@ -515,29 +517,29 @@ function getRequestErrorMessage(
 
   <v-dialog v-model="showUnlinkGoogleDialog" max-width="420" persistent>
     <v-card>
-      <v-card-title>Отвязать Google?</v-card-title>
-      <v-card-text>После этого вход через Google станет недоступен. Вы сможете войти по имени пользователя и паролю.</v-card-text>
-      <v-card-actions><v-spacer /><v-btn :disabled="isSavingAccount" @click="showUnlinkGoogleDialog = false">Отмена</v-btn><v-btn color="primary" :loading="isSavingAccount" @click="unlinkGoogleAccount">Отвязать</v-btn></v-card-actions>
+      <v-card-title>{{ t('account.unlinkGoogleTitle') }}</v-card-title>
+      <v-card-text>{{ t('account.unlinkGoogleMessage') }}</v-card-text>
+      <v-card-actions><v-spacer /><v-btn :disabled="isSavingAccount" @click="showUnlinkGoogleDialog = false">{{ t('common.cancel') }}</v-btn><v-btn color="primary" :loading="isSavingAccount" @click="unlinkGoogleAccount">{{ t('account.unlink') }}</v-btn></v-card-actions>
     </v-card>
   </v-dialog>
 
   <v-dialog v-model="showUnlinkPasskeyDialog" max-width="420" persistent>
     <v-card>
-      <v-card-title>Отвязать passkey?</v-card-title>
-      <v-card-text>Этот passkey больше нельзя будет использовать для входа. Убедитесь, что у вас настроен другой способ входа.</v-card-text>
-      <v-card-actions><v-spacer /><v-btn :disabled="isUnlinkingPasskey" @click="showUnlinkPasskeyDialog = false">Отмена</v-btn><v-btn color="primary" :loading="isUnlinkingPasskey" @click="unlinkPasskey">Отвязать</v-btn></v-card-actions>
+      <v-card-title>{{ t('account.unlinkPasskeyTitle') }}</v-card-title>
+      <v-card-text>{{ t('account.unlinkPasskeyMessage') }}</v-card-text>
+      <v-card-actions><v-spacer /><v-btn :disabled="isUnlinkingPasskey" @click="showUnlinkPasskeyDialog = false">{{ t('common.cancel') }}</v-btn><v-btn color="primary" :loading="isUnlinkingPasskey" @click="unlinkPasskey">{{ t('account.unlink') }}</v-btn></v-card-actions>
     </v-card>
   </v-dialog>
 
   <v-dialog v-model="showDeleteAccountDialog" max-width="440" persistent>
     <v-card>
-      <v-card-title>Удалить аккаунт?</v-card-title>
+      <v-card-title>{{ t('account.deleteTitle') }}</v-card-title>
       <v-card-text>
-        <p class="dialog-description">Будет безвозвратно удалён аккаунт и все связанные данные.</p>
-        <v-checkbox v-model="deleteConfirmed" color="error" label="Я понимаю, что отменить это действие нельзя" hide-details />
+        <p class="dialog-description">{{ t('account.deleteMessage') }}</p>
+        <v-checkbox v-model="deleteConfirmed" color="error" :label="t('account.deleteConfirm')" hide-details />
         <v-alert v-if="accountError" class="mt-3" density="compact" type="error" variant="tonal">{{ accountError }}</v-alert>
       </v-card-text>
-      <v-card-actions><v-spacer /><v-btn :disabled="isDeletingAccount" @click="showDeleteAccountDialog = false">Отмена</v-btn><v-btn color="error" :disabled="!deleteConfirmed" :loading="isDeletingAccount" @click="deleteAccount">Удалить навсегда</v-btn></v-card-actions>
+      <v-card-actions><v-spacer /><v-btn :disabled="isDeletingAccount" @click="showDeleteAccountDialog = false">{{ t('common.cancel') }}</v-btn><v-btn color="error" :disabled="!deleteConfirmed" :loading="isDeletingAccount" @click="deleteAccount">{{ t('account.deletePermanent') }}</v-btn></v-card-actions>
     </v-card>
   </v-dialog>
 </template>

@@ -1,4 +1,5 @@
 import type { Expense } from '@/types/expense';
+import { getLocale, i18n } from '@/i18n';
 
 export type ExportFormat = 'json' | 'csv'
 
@@ -29,7 +30,7 @@ function toExportRows(expenses: Expense[]): ExportRow[] {
       createdAt: expense.createdAt,
       description: expense.description,
       paymentDate: expense.paymentDate,
-      date: new Intl.DateTimeFormat('ru-RU', {
+      date: new Intl.DateTimeFormat(getLocale() === 'ru' ? 'ru-RU' : 'en-US', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -65,7 +66,12 @@ function escapeCsvCell(value: string | number): string {
 
 export function createCsvExport(expenses: Expense[]): string {
   const rows = toExportRows(expenses)
-  const header = ['Дата', 'Сумма', 'Категория', 'Описание']
+  const header = [
+    i18n.global.t('export.date'),
+    i18n.global.t('export.amount'),
+    i18n.global.t('export.category'),
+    i18n.global.t('export.description'),
+  ]
   const lines = [
     header,
     ...rows.map(row => [row.date, row.amount.toFixed(2), row.category || '', row.description || ''])

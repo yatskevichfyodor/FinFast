@@ -18,8 +18,10 @@ import {
 } from "./stores";
 import availabilityService from "./services/availabilityService";
 import { Notivue, Notification } from "notivue";
+import { useI18n } from "vue-i18n";
 
 const route = useRoute();
+const { t } = useI18n();
 const showNavigation = computed(() => route.meta.requiresAuth === true);
 const showUserMenu = ref(false);
 
@@ -104,8 +106,8 @@ watch(
               variant="text"
               size="x-small"
               class="menu-button"
-              title="Меню пользователя"
-              aria-label="Меню пользователя"
+              :title="t('nav.userMenu')"
+              :aria-label="t('nav.userMenu')"
               @click="showUserMenu = !showUserMenu"
             />
           </v-badge>
@@ -115,8 +117,8 @@ watch(
             variant="text"
             size="x-small"
             class="menu-button"
-            title="Меню пользователя"
-            aria-label="Меню пользователя"
+            :title="t('nav.userMenu')"
+            :aria-label="t('nav.userMenu')"
             @click="showUserMenu = !showUserMenu"
           />
         </div>
@@ -124,7 +126,7 @@ watch(
 
       <UserMenu v-if="expenseStoreReady" v-model="showUserMenu" />
     </template>
-    <template v-else> Stores haven't been loaded </template>
+    <template v-else>{{ t("common.loading") }}</template>
   </v-app>
 </template>
 

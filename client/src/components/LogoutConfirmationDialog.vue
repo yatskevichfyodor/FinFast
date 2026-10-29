@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   modelValue: boolean
@@ -10,20 +11,27 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   confirm: []
 }>()
+const { t, locale } = useI18n()
 
 const pendingExpensesMessage = computed(() => {
   const count = props.pendingExpensesCount
   const lastDigit = count % 10
   const lastTwoDigits = count % 100
-  const word = lastTwoDigits >= 11 && lastTwoDigits <= 14
-    ? 'расходов'
-    : lastDigit === 1
-      ? 'расход'
-      : lastDigit >= 2 && lastDigit <= 4
-        ? 'расхода'
-        : 'расходов'
+  if (locale.value === 'en') {
+    return count === 1
+      ? t('logout.messageEnOne')
+      : t('logout.messageEnMany', { count })
+  }
 
-  return `${count} ${word} не синхронизированы и останутся только на этом устройстве.`
+  const word = lastTwoDigits >= 11 && lastTwoDigits <= 14
+    ? t('logout.expensesMany')
+    : lastDigit === 1
+      ? t('logout.expense')
+      : lastDigit >= 2 && lastDigit <= 4
+        ? t('logout.expensesFew')
+        : t('logout.expensesMany')
+
+  return t('logout.message', { count, word })
 })
 
 function stay() {
@@ -49,10 +57,10 @@ function logout() {
       <v-card-actions>
         <v-spacer />
         <v-btn variant="text" @click="stay">
-          Остаться
+          {{ t('logout.stay') }}
         </v-btn>
         <v-btn color="primary" variant="flat" @click="logout">
-          Выйти
+          {{ t('menu.logout') }}
         </v-btn>
       </v-card-actions>
     </v-card>

@@ -8,10 +8,12 @@ import { authApi } from '@/services/api/authApi'
 import GoogleSignInButton from '@/components/GoogleSignInButton.vue'
 import { useExpenseStore } from '@/stores'
 import { isGoogleSignInAvailable } from '@/utils/auth'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const username = ref('')
 const password = ref('')
@@ -28,7 +30,7 @@ const loginAbortController = ref<AbortController | null>(null)
 const showRetryButton = ref(false)
 
 const isRegistration = computed(() => route.name === 'register')
-const title = computed(() => isRegistration.value ? 'Регистрация' : 'Вход')
+const title = computed(() => isRegistration.value ? t('auth.register') : t('auth.login'))
 const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 const isGoogleSignInConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
 const isOfflineMode = computed(() =>
@@ -53,36 +55,36 @@ function getErrorMessage(error: any): string {
     }
 
     if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      return 'Сервер не отвечает. Возможно, сервер ещё запускается.'
+      return t('auth.timeout')
     }
 
     if (!error.response) {
-      return 'Сервер недоступен. Проверьте подключение к интернету.'
+      return t('auth.noConnection')
     }
 
     const responseMessage = error.response?.data?.message
     if (typeof responseMessage === 'string' && responseMessage.length > 0) {
       if (responseMessage === 'Passkey authentication failed' && error.response.status === 401)
-      return 'Этот ключ доступа не подходит для аккаунта. Если вы отвязали его ранее, удалите его из менеджера паролей и войдите другим способом.'
+      return t('auth.passkeyWrong')
       if (error.response.status === 403) {
         return responseMessage
       }
     }
 
     if (error.response.status >= 500) {
-      return 'Сервер временно недоступен. Попробуйте позже.'
+      return t('auth.serverError')
     }
 
     if (error.response.status === 401) {
-      return 'Неверный логин или пароль'
+      return t('auth.wrongCredentials')
     }
 
     if (error.response.status === 403 && isRegistration.value) {
-      return 'Приложение запущено в демонстрационном режиме. Регистрация новых аккаунтов недоступна.'
+      return t('auth.demoForbidden')
     }
 
     if (error.response.status === 409 && isRegistration.value) {
-      return 'Пользователь с таким именем уже зарегистрирован'
+      return t('auth.usernameExists')
     }
   }
 
@@ -91,8 +93,8 @@ function getErrorMessage(error: any): string {
   }
 
   return isRegistration.value
-    ? 'Не удалось зарегистрироваться'
-    : 'Неверный логин или пароль'
+    ? t('auth.registrationError')
+    : t('auth.wrongCredentials')
 }
 
 async function submit() {
@@ -101,12 +103,12 @@ async function submit() {
   showRetryButton.value = false
 
   if (!username.value.trim() || !password.value) {
-    errorMessage.value = 'Заполните логин и пароль'
+    errorMessage.value = t('auth.fillCredentials')
     return
   }
 
   if (isRegistration.value && password.value !== confirmPassword.value) {
-    errorMessage.value = 'Пароли не совпадают'
+    errorMessage.value = t('auth.passwordsMismatch')
     return
   }
 
@@ -135,7 +137,7 @@ async function submit() {
     const errorMsg = getErrorMessage(error)
     if (errorMsg) {
       errorMessage.value = errorMsg
-      showRetryButton.value = errorMsg.includes('Сервер не отвечает') || errorMsg.includes('Сервер недоступен')
+      showRetryButton.value = errorMsg === t('auth.timeout') || errorMsg === t('auth.noConnection')
     }
   } finally {
     if (slowResponseTimer !== null) {
@@ -166,7 +168,7 @@ async function loginWithPasskey() {
   try {
     await authStore.loginWithPasskey(username.value.trim() || undefined)
     
-    errorMessage.value = "готово,"
+    errorMessage.value = t('auth.passkeyDone')
     await continueAfterLogin()
   } catch (error) {
     console.error("Login with passkey error: ", errorMessage.value)
@@ -179,7 +181,7 @@ async function loginWithPasskey() {
 async function registerWithPasskey() {
   errorMessage.value = ''
   if (!username.value.trim()) {
-    errorMessage.value = 'Введите логин для регистрации passkey'
+    errorMessage.value = t('auth.passkeyUsername')
     return
   }
   isSubmitting.value = true
@@ -223,7 +225,7 @@ async function transferAnonymousExpenses() {
     showTransferDialog.value = false
     await router.push({ name: 'home' })
   } catch {
-    errorMessage.value = 'Не удалось перенести расходы. Попробуйте ещё раз.'
+    errorMessage.value = t('auth.transferError')
   }
 }
 
@@ -243,7 +245,7 @@ onMounted(() => {
   
   // Show success message when account was deleted
   if (route.query.deleted === 'true') {
-    successMessage.value = 'Аккаунт успешно удалён'
+    successMessage.value = t('auth.registeredSuccess')
     router.replace({ name: 'login' })
   }
 })
@@ -262,22 +264,22 @@ onMounted(() => {
             <div class="offline-icon" aria-hidden="true">
               <v-icon icon="mdi-wifi-off" size="28" />
             </div>
-            <div class="offline-status">Оффлайн-режим</div>
+            <div class="offline-status">{{ t('auth.offline') }}</div>
           </div>
 
-          <v-card-title class="offline-title">Сервис авторизации временно недоступен</v-card-title>
+          <v-card-title class="offline-title">{{ t('auth.unavailable') }}</v-card-title>
           <p class="offline-description">
-            Вы можете продолжить работу с расходами на этом устройстве.
+            {{ t('auth.local') }}
           </p>
 
           <div class="offline-details">
             <div class="offline-detail">
               <v-icon icon="mdi-content-save-outline" size="20" />
-              <span>Данные сохранятся локально</span>
+              <span>{{ t('auth.localSave') }}</span>
             </div>
             <div class="offline-detail offline-detail--transfer">
               <v-icon icon="mdi-account-sync-outline" size="20" />
-              <span>Когда соединение восстановится, войдите в аккаунт — мы предложим перенести сохранённые расходы.</span>
+              <span>{{ t('auth.transfer') }}</span>
             </div>
           </div>
 
@@ -289,7 +291,7 @@ onMounted(() => {
             type="button"
             @click="continueWithoutAccount"
           >
-            Продолжить без аккаунта
+            {{ t('auth.continue') }}
             <v-icon end icon="mdi-arrow-right" />
           </v-btn>
         </template>
@@ -303,7 +305,7 @@ onMounted(() => {
           type="info"
           variant="tonal"
         >
-          Включён демонстрационный режим: регистрация новых пользователей недоступна.
+          {{ t('auth.demo') }}
         </v-alert>
 
         <v-alert
@@ -312,7 +314,7 @@ onMounted(() => {
           type="success"
           variant="tonal"
         >
-          Регистрация завершена. Войдите в аккаунт.
+          {{ t('auth.registered') }}
         </v-alert>
 
         <v-alert v-if="successMessage" class="mt-4" type="success" variant="tonal">
@@ -329,7 +331,7 @@ onMounted(() => {
           type="info"
           variant="tonal"
         >
-          Сервер запускается. Первый запуск может занять до минуты.
+          {{ t('auth.serverStarting') }}
         </v-alert>
 
         <v-alert
@@ -338,16 +340,16 @@ onMounted(() => {
           type="warning"
           variant="tonal"
         >
-          Не удалось подключиться к сервису авторизации.<br/>
-          Можно продолжить без аккаунта. Ваши расходы сохранятся на этом устройстве.<br/>
-          Когда соединение восстановится, войдите в аккаунт — мы предложим перенести сохранённые расходы.
+          {{ t('auth.serviceWarning') }}<br/>
+          {{ t('auth.continue') }}. {{ t('auth.local') }}<br/>
+          {{ t('auth.transfer') }}
         </v-alert>
 
         <v-form class="mt-4" @submit.prevent="submit">
           <v-text-field
             v-if="!isOfflineMode"
             v-model="username"
-            label="Логин"
+            :label="t('auth.username')"
             autocomplete="username"
             autofocus
             required
@@ -355,7 +357,7 @@ onMounted(() => {
           <v-text-field
             v-if="!isOfflineMode"
             v-model="password"
-            label="Пароль"
+            :label="t('auth.password')"
             type="password"
             :autocomplete="isRegistration ? 'new-password' : 'current-password'"
             required
@@ -363,7 +365,7 @@ onMounted(() => {
           <v-text-field
             v-if="isRegistration"
             v-model="confirmPassword"
-            label="Повторите пароль"
+            :label="t('auth.repeatPassword')"
             type="password"
             autocomplete="new-password"
             required
@@ -377,7 +379,7 @@ onMounted(() => {
             :loading="isSubmitting && !isSlowResponse"
             :disabled="isSubmitting && !isSlowResponse"
           >
-            {{ isSubmitting ? 'Входим...' : title }}
+            {{ isSubmitting ? t('auth.submit') : title }}
           </v-btn>
 
           <v-btn
@@ -388,7 +390,7 @@ onMounted(() => {
             color="grey"
             @click="cancelLogin"
           >
-            Отменить
+            {{ t('auth.cancel') }}
           </v-btn>
 
           <v-btn
@@ -398,7 +400,7 @@ onMounted(() => {
             color="primary"
             @click="submit"
           >
-            Повторить
+            {{ t('common.retry') }}
           </v-btn>
           <v-btn
             v-if="!isRegistration"
@@ -408,12 +410,12 @@ onMounted(() => {
             type="button"
             @click="continueWithoutAccount"
           >
-            Продолжить без аккаунта
+            {{ t('auth.continue') }}
           </v-btn>
         </v-form>
 
         <template v-if="!isOfflineMode && !isCheckingService && isGoogleSignInConfigured && isGoogleSignInAvailable()">
-          <div class="auth-divider"><span>или</span></div>
+          <div class="auth-divider"><span>{{ t('auth.googleOr') }}</span></div>
           <GoogleSignInButton
             @credential="loginWithGoogle"
             @error="handleGoogleError"
@@ -431,7 +433,7 @@ onMounted(() => {
           @click="isRegistration ? registerWithPasskey() : loginWithPasskey()"
         >
           <v-icon start icon="mdi-fingerprint" />
-          {{ isRegistration ? 'Зарегистрироваться с passkey' : 'Войти с passkey' }}
+          {{ isRegistration ? t('auth.registerPasskey') : t('auth.loginPasskey') }}
         </v-btn>
 
         <v-card-actions class="justify-center mt-3">
@@ -440,10 +442,10 @@ onMounted(() => {
             variant="text"
             :to="{ name: 'login' }"
           >
-            Уже есть аккаунт? Войти
+            {{ t('auth.hasAccount') }}
           </v-btn>
           <template v-else-if="!isOfflineMode">
-            <span class="auth-switch-label">Нет аккаунта?</span>
+            <span class="auth-switch-label">{{ t('auth.noAccount') }}</span>
             <v-btn
               variant="text"
               class="auth-switch-link"
@@ -451,7 +453,7 @@ onMounted(() => {
               density="comfortable"
               :to="{ name: 'register' }"
             >
-              Зарегистрироваться
+              {{ t('auth.registerAction') }}
             </v-btn>
           </template>
         </v-card-actions>
@@ -461,15 +463,15 @@ onMounted(() => {
 
     <v-dialog v-model="showTransferDialog" max-width="440" persistent>
       <v-card>
-        <v-card-title>Перенести локальные расходы?</v-card-title>
+        <v-card-title>{{ t('auth.transferTitle') }}</v-card-title>
         <v-card-text>
-          Найдено расходов: {{ anonymousExpensesCount }}. Перенести их в ваш аккаунт?
+          {{ t('auth.transferFound', { count: anonymousExpensesCount }) }}
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="skipTransfer">Оставить локально</v-btn>
+          <v-btn variant="text" @click="skipTransfer">{{ t('auth.transferKeep') }}</v-btn>
           <v-btn color="primary" :loading="isSubmitting" @click="transferAnonymousExpenses">
-            Перенести
+            {{ t('auth.transferAction') }}
           </v-btn>
         </v-card-actions>
       </v-card>

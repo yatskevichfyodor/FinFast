@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { formatMonthName, parseDate } from "@/utils/dateHelpers";
 import { useCategoryStore, useExpenseStore } from "@/stores";
 import type { Expense } from "@/types/expense";
+import { useI18n } from "vue-i18n";
 
 interface CategoryStat {
   id: string;
@@ -20,6 +21,7 @@ interface MonthStat {
 
 const expenseStore = useExpenseStore().value!;
 const categoryStore = useCategoryStore().value!;
+const { t, locale } = useI18n();
 
 onMounted(() => {
   void expenseStore.refreshExpenses();
@@ -108,10 +110,14 @@ const formattedTotal = computed(() => {
 
 const monthName = computed(() => {
   if (!currentMonth.value) {
-    return "Нет данных";
+    return t("stats.noData");
   }
 
-  return formatMonthName(currentMonth.value.year, currentMonth.value.month);
+  return formatMonthName(
+    currentMonth.value.year,
+    currentMonth.value.month,
+    locale.value === "ru" ? "ru" : "en",
+  );
 });
 
 const sortedCategories = computed(() => {
@@ -174,7 +180,7 @@ function toggleCategory(categoryId: string) {
 
 function formatExpenseDate(expense: Expense): string {
   return parseDate(expense.paymentDate ?? expense.createdAt).toLocaleDateString(
-    "ru-RU",
+    locale.value === "ru" ? "ru-RU" : "en-US",
     { day: "numeric", month: "long" },
   );
 }
@@ -185,10 +191,10 @@ function formatExpenseDate(expense: Expense): string {
     <v-container max-width="700" class="py-8">
       <!-- Header -->
       <div class="mb-6">
-        <div class="text-h5 font-weight-bold">Статистика</div>
+        <div class="text-h5 font-weight-bold">{{ t("stats.title") }}</div>
 
         <div class="text-body-2 text-medium-emphasis mt-1">
-          Анализ ваших расходов
+          {{ t("stats.subtitle") }}
         </div>
       </div>
 
@@ -218,19 +224,19 @@ function formatExpenseDate(expense: Expense): string {
       <!-- Total -->
       <v-card rounded="xl" elevation="0" class="total-card mb-6">
         <v-card-text class="pa-6">
-          <div class="total-label">Всего расходов</div>
+          <div class="total-label">{{ t("stats.total") }}</div>
 
           <div class="total-amount">
             {{ formattedTotal }}
             <span>₽</span>
           </div>
 
-          <div class="total-caption">за {{ monthName }}</div>
+          <div class="total-caption">{{ t("stats.forMonth") }} {{ monthName }}</div>
         </v-card-text>
       </v-card>
 
       <!-- Categories -->
-      <div class="section-title mb-3">По категориям</div>
+      <div class="section-title mb-3">{{ t("stats.categories") }}</div>
 
       <div class="category-list">
         <v-card
@@ -339,10 +345,10 @@ function formatExpenseDate(expense: Expense): string {
             color="medium-emphasis"
           />
 
-          <div class="text-h6 mt-3">Нет расходов</div>
+          <div class="text-h6 mt-3">{{ t("stats.empty") }}</div>
 
           <div class="text-body-2 text-medium-emphasis mt-1">
-            За этот месяц пока нет данных
+            {{ t("stats.emptyHint") }}
           </div>
         </v-card-text>
       </v-card>

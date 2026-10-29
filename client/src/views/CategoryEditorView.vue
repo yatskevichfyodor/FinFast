@@ -4,8 +4,10 @@ import type { CustomCategory, CustomCategoryInput } from "@/types/category";
 import { useCategoryStore } from "@/stores";
 import { refDebounced } from "@vueuse/core";
 import { categoryApi } from "@/services/api/categoryApi";
+import { useI18n } from "vue-i18n";
 
 const store = useCategoryStore().value!;
+const { t } = useI18n();
 
 const dialog = ref(false);
 const editingId = ref<string | null>(null);
@@ -345,9 +347,9 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
     <div class="category-editor__content">
       <div class="category-editor__header mb-6">
         <div class="category-editor__title">
-          <div class="text-h5 font-weight-bold">Категории</div>
+          <div class="text-h5 font-weight-bold">{{ t("category.title") }}</div>
           <div class="text-body-2 text-medium-emphasis">
-            Ваши категории и доступные системные категории
+            {{ t("category.subtitle") }}
           </div>
         </div>
 
@@ -357,12 +359,12 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
           class="category-editor__add-button"
           @click="openCreate"
         >
-          Добавить
+          {{ t("category.add") }}
         </v-btn>
       </div>
 
       <section class="mb-8">
-        <div class="text-subtitle-1 font-weight-bold mb-3">Системные</div>
+        <div class="text-subtitle-1 font-weight-bold mb-3">{{ t("category.system") }}</div>
         <v-list rounded="lg" bg-color="transparent">
           <v-list-item v-for="category in systemCategories" :key="category.id">
             <template #prepend
@@ -376,14 +378,14 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
                 v-if="category.hidden"
                 icon="mdi-eye"
                 variant="text"
-                title="Восстановить"
+                :title="t('common.restore')"
                 @click="store.restoreSystemCategory(category.id)"
               />
               <v-btn
                 v-else
                 icon="mdi-eye-off-outline"
                 variant="text"
-                title="Скрыть"
+                :title="t('common.hide')"
                 @click="store.hideSystemCategory(category.id)"
               />
             </template>
@@ -392,7 +394,7 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
       </section>
 
       <section>
-        <div class="text-subtitle-1 font-weight-bold mb-3">Мои категории</div>
+        <div class="text-subtitle-1 font-weight-bold mb-3">{{ t("category.custom") }}</div>
         <v-list
           v-if="customCategories.length"
           rounded="lg"
@@ -412,20 +414,20 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
                 v-if="category.hiddenAt"
                 icon="mdi-restore"
                 variant="text"
-                title="Восстановить"
+                :title="t('common.restore')"
                 @click="store.restoreCustomCategory(category.id)"
               />
               <template v-else>
                 <v-btn
                   icon="mdi-pencil-outline"
                   variant="text"
-                  title="Изменить"
+                  :title="t('common.edit')"
                   @click="openEdit(category)"
                 />
                 <v-btn
                   icon="mdi-delete-outline"
                   variant="text"
-                  title="Удалить"
+                  :title="t('common.delete')"
                   @click="handleDeleteCategory(category)"
                 />
               </template>
@@ -433,32 +435,27 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
           </v-list-item>
         </v-list>
         <div v-else class="text-body-2 text-medium-emphasis">
-          Пользовательских категорий пока нет.
+          {{ t("category.empty") }}
         </div>
       </section>
     </div>
 
     <v-dialog v-model="showDeleteWarning" max-width="460">
       <v-card v-if="deleteWarning">
-        <v-card-title class="mx-auto">Удаление категории</v-card-title>
+        <v-card-title class="mx-auto">{{ t("category.deleteTitle") }}</v-card-title>
         <v-card-text>
           <div class="text-body-1 mb-2">
-            У категории <strong>{{ deleteWarning.category.name }}</strong> есть
-            {{ deleteWarning.linkedExpensesCount }} связанных расходов.
-          </div>
-          <div class="text-body-2 text-medium-emphasis">
-            Вы можете скрыть категорию, не затрагивая существующие платежи, или
-            удалить её — тогда категория будет сброшена у связанных расходов.
+            {{ t("category.deleteMessage", { name: deleteWarning.category.name, count: deleteWarning.linkedExpensesCount }) }}
           </div>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="deleteWarning = null">Отмена</v-btn>
+          <v-btn variant="text" @click="deleteWarning = null">{{ t("common.cancel") }}</v-btn>
           <v-btn color="primary" @click="confirmDeleteCategory('hide')">
-            Скрыть
+            {{ t("common.hide") }}
           </v-btn>
           <v-btn color="error" @click="confirmDeleteCategory('delete')">
-            Удалить
+            {{ t("common.delete") }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -467,16 +464,16 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
     <v-dialog v-model="dialog" max-width="520">
       <v-card>
         <v-card-title>{{
-          editingId ? "Изменить категорию" : "Новая категория"
+          editingId ? t("category.edit") : t("category.create")
         }}</v-card-title>
         <v-card-text>
-          <v-text-field v-model="form.name" label="Название" autofocus />
-          <div class="text-caption mb-2">Иконка</div>
+          <v-text-field v-model="form.name" :label="t('category.name')" autofocus />
+          <div class="text-caption mb-2">{{ t("category.icon") }}</div>
           <div class="icon-picker mb-5">
             <v-text-field
               v-model="iconSearch"
-              label="Поиск иконки"
-              placeholder="Например, car, food, hammer..."
+              :label="t('category.searchIcon')"
+              :placeholder="t('category.iconPlaceholder')"
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
               density="compact"
@@ -488,7 +485,7 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
               v-if="canScrollUp"
               class="icon-scroll-indicator icon-scroll-indicator--top"
               type="button"
-              aria-label="Прокрутить иконки вверх"
+              :aria-label="t('category.scrollUp')"
               @click="scrollIcons('up')"
             >
               <v-icon icon="mdi-chevron-up" size="18" />
@@ -520,13 +517,13 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
               v-if="canScrollDown"
               class="icon-scroll-indicator icon-scroll-indicator--bottom"
               type="button"
-              aria-label="Прокрутить иконки вниз"
+              :aria-label="t('category.scrollDown')"
               @click="scrollIcons('down')"
             >
               <v-icon icon="mdi-chevron-down" size="18" />
             </button>
           </div>
-          <div class="text-caption mb-2">Цвет</div>
+          <div class="text-caption mb-2">{{ t("category.color") }}</div>
           <div class="option-grid">
             <button
               v-for="color in colorOptions"
@@ -540,9 +537,9 @@ async function confirmDeleteCategory(mode: "hide" | "delete") {
         </v-card-text>
         <v-card-actions
           ><v-spacer /><v-btn variant="text" @click="dialog = false"
-            >Отмена</v-btn
+            >{{ t("common.cancel") }}</v-btn
           ><v-btn color="primary" @click="save"
-            >Сохранить</v-btn
+            >{{ t("common.save") }}</v-btn
           ></v-card-actions
         >
       </v-card>

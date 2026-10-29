@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { loadGoogleIdentity } from '@/services/googleIdentity'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   hint?: string
@@ -12,11 +13,13 @@ const emit = defineEmits<{
 }>()
 
 const container = ref<HTMLElement | null>(null)
+const { t, locale } = useI18n()
+let renderButton: (() => void) | undefined
 
 onMounted(async () => {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   if (!clientId) {
-    emit('error', 'Вход через Google пока не настроен')
+    emit('error', t('auth.googleNotConfigured'))
     return
   }
 
@@ -28,18 +31,29 @@ onMounted(async () => {
         if (response.credential) {
           emit('credential', response.credential)
         } else {
-          emit('error', 'Google не вернул данные для входа')
+          emit('error', t('auth.googleNoCredential'))
         }
       }
     })
-    if (container.value) {
+    renderButton = () => {
+      if (!container.value) return
+      container.value.replaceChildren()
       const width = Math.min(container.value.clientWidth || 392, 392)
-      google.renderButton(container.value, { theme: 'outline', size: 'large', text: 'signin_with', width, locale: 'ru' })
+      google.renderButton(container.value, {
+        theme: 'outline',
+        size: 'large',
+        text: 'signin_with',
+        width,
+        locale: locale.value === 'ru' ? 'ru' : 'en',
+      })
     }
+    renderButton()
   } catch (error) {
-    emit('error', error instanceof Error ? error.message : 'Не удалось подключиться к Google')
+    emit('error', error instanceof Error ? error.message : t('auth.googleConnectError'))
   }
 })
+
+watch(locale, () => renderButton?.())
 </script>
 
 <template>
