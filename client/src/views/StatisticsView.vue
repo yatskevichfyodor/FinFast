@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { formatMonthName } from "@/utils/dateHelpers";
+import { formatMonthName, parseDate } from "@/utils/dateHelpers";
 import { useCategoryStore, useExpenseStore } from "@/stores";
+import type { Expense } from "@/types/expense";
 
 interface CategoryStat {
   id: string;
@@ -25,6 +26,7 @@ onMounted(() => {
 });
 
 const selectedMonthIndex = ref(0);
+const expandedCategoryId = ref<string | null>(null);
 
 const activeExpenses = computed(() =>
   expenseStore.expenses.filter((expense) => !expense.deletedAt),
@@ -41,7 +43,7 @@ const months = computed<MonthStat[]>(() => {
   >();
 
   activeExpenses.value.forEach((expense) => {
-    const date = new Date(expense.paymentDate ?? expense.createdAt);
+    const date = parseDate(expense.paymentDate ?? expense.createdAt);
     if (Number.isNaN(date.getTime())) {
       return;
     }
@@ -137,6 +139,45 @@ function getPercentage(amount: number) {
 
   return Math.round((amount / totalAmount.value) * 100);
 }
+
+function getExpenseCategoryId(expense: Expense): string {
+  return expense.customCategoryId ?? expense.categoryId ?? "__uncategorized__";
+}
+
+function getCategoryExpenses(categoryId: string): Expense[] {
+  if (!currentMonth.value) {
+    return [];
+  }
+
+  return activeExpenses.value
+    .filter((expense) => {
+      const date = parseDate(expense.paymentDate ?? expense.createdAt);
+      return (
+        !Number.isNaN(date.getTime()) &&
+        date.getFullYear() === currentMonth.value!.year &&
+        date.getMonth() + 1 === currentMonth.value!.month &&
+        getExpenseCategoryId(expense) === categoryId
+      );
+    })
+    .sort((a, b) => {
+      const dateDifference =
+        parseDate(b.paymentDate ?? b.createdAt).getTime() -
+        parseDate(a.paymentDate ?? a.createdAt).getTime();
+      return dateDifference || parseDate(b.createdAt).getTime() - parseDate(a.createdAt).getTime();
+    });
+}
+
+function toggleCategory(categoryId: string) {
+  expandedCategoryId.value =
+    expandedCategoryId.value === categoryId ? null : categoryId;
+}
+
+function formatExpenseDate(expense: Expense): string {
+  return parseDate(expense.paymentDate ?? expense.createdAt).toLocaleDateString(
+    "ru-RU",
+    { day: "numeric", month: "long" },
+  );
+}
 </script>
 
 <template>
@@ -198,6 +239,13 @@ function getPercentage(amount: number) {
           rounded="xl"
           elevation="0"
           class="category-card mb-3"
+          role="button"
+          tabindex="0"
+          :aria-expanded="expandedCategoryId === category.id"
+          :aria-label="`${category.name}: ${category.amount.toFixed(2)} ₽`"
+          @click="toggleCategory(category.id)"
+          @keydown.enter.prevent="toggleCategory(category.id)"
+          @keydown.space.prevent="toggleCategory(category.id)"
         >
           <v-card-text class="pa-4">
             <div class="d-flex align-center">
@@ -236,7 +284,43 @@ function getPercentage(amount: number) {
                   {{ getPercentage(category.amount) }}%
                 </div>
               </div>
+
+              <v-icon
+                :icon="expandedCategoryId === category.id ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+                class="category-expand-indicator ml-2"
+                aria-hidden="true"
+              />
             </div>
+
+            <v-expand-transition>
+              <div
+                v-if="expandedCategoryId === category.id"
+                class="category-expenses"
+                @click.stop
+              >
+                <div
+                  v-for="expense in getCategoryExpenses(category.id)"
+                  :key="expense.id"
+                  class="category-expense-row"
+                  :style="{ '--category-color': category.color }"
+                >
+                  <div class="category-expense-details">
+                    <div class="category-expense-topline">
+                      <span class="category-expense-date">
+                        <v-icon icon="mdi-calendar-blank-outline" size="14" />
+                        {{ formatExpenseDate(expense) }}
+                      </span>
+                      <span class="category-expense-amount">
+                        {{ expense.amount.toFixed(2) }} ₽
+                      </span>
+                    </div>
+                    <span v-if="expense.description" class="category-expense-description">
+                      {{ expense.description }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </v-expand-transition>
           </v-card-text>
         </v-card>
       </div>
@@ -331,6 +415,7 @@ function getPercentage(amount: number) {
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease;
+  cursor: pointer;
 }
 
 .category-card:hover {
@@ -378,6 +463,86 @@ function getPercentage(amount: number) {
 
   font-size: 12px;
   color: #90a4ae;
+}
+
+.category-expand-indicator {
+  flex-shrink: 0;
+  color: #90a4ae;
+}
+
+.category-expenses {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.category-expense-row {
+  display: flex;
+  align-items: center;
+  min-height: 58px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--category-color);
+  border-radius: 12px;
+  background: color-mix(
+    in srgb,
+    var(--category-color) 5%,
+    rgb(var(--v-theme-surface))
+  );
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.category-expense-row:hover {
+  transform: translateX(2px);
+  background: color-mix(
+    in srgb,
+    var(--category-color) 9%,
+    rgb(var(--v-theme-surface))
+  );
+}
+
+.category-expense-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+.category-expense-topline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 8px;
+}
+
+.category-expense-date {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #78909c;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.category-expense-description {
+  overflow: hidden;
+  margin-top: 4px;
+  color: rgb(var(--v-theme-on-surface-variant));
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-expense-amount {
+  flex-shrink: 0;
+  text-align: center;
+  color: rgb(var(--v-theme-on-surface));
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
 }
 
 /* Empty */
