@@ -44,3 +44,6 @@ finfast:
     client-id: 1034212438621-0aqca3sr7q7ps8e3p2fs2e586lhjcp53.apps.googleusercontent.com
   outbox:
     enabled: false
+  demo-mode:
+    enabled: ${DEMO_MODE:false}
+    allowed-emails: "${DEMO_ALLOWED_EMAILS:}"

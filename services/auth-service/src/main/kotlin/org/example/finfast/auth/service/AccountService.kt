@@ -23,7 +23,8 @@ class AccountService(
     private val googleTokenVerifier: GoogleTokenVerifier,
     private val outboxEventPublisher: OutboxEventPublisher,
     private val objectMapper: ObjectMapper,
-    private val webAuthnCredentialRepository: WebAuthnCredentialRepository
+    private val webAuthnCredentialRepository: WebAuthnCredentialRepository,
+    private val demoModePolicy: DemoModePolicy
 ) {
     @Transactional
     fun currentUser(userId: UUID): UserResponse {
@@ -37,6 +38,7 @@ class AccountService(
     fun linkGoogleAccount(userId: UUID, request: GoogleIdTokenRequest): UserResponse {
         val identity = googleTokenVerifier.verify(request.credential)
         val user = userRepository.findByIdOptional(userId).orElseThrow { IllegalArgumentException("User not found") }
+        demoModePolicy.requireNotDemoUser(user, "email")
         val linkedUser = userRepository.findByGoogleSubject(identity.subject)
         if (linkedUser != null && linkedUser.id != user.id) {
             throw WebApplicationException("Этот аккаунт Google уже привязан к другому пользователю", 409)
@@ -61,6 +63,12 @@ class AccountService(
         val username = request.username.trim()
         require(username.isNotBlank()) { "Имя пользователя не должно быть пустым" }
         val user = userRepository.findByIdOptional(userId).orElseThrow { IllegalArgumentException("User not found") }
+        if (demoModePolicy.isDemoUsername(username) && !demoModePolicy.isDemoUsername(user.username)) {
+            throw WebApplicationException("Имя demo зарезервировано", 403)
+        }
+        if (demoModePolicy.isDemoUsername(user.username) && !demoModePolicy.isDemoUsername(username)) {
+            throw WebApplicationException("Имя демонстрационного аккаунта нельзя изменить", 403)
+        }
         val existingUser = userRepository.findByUsername(username)
         require(existingUser == null || existingUser.id == user.id) { "Это имя пользователя уже занято" }
         user.username = username
@@ -78,6 +86,7 @@ class AccountService(
     @Transactional
     fun deleteAccount(userId: UUID) {
         val user = userRepository.findByIdOptional(userId).orElseThrow { IllegalArgumentException("User not found") }
+        demoModePolicy.requireNotDemoUser(user, "delete")
 
         val eventPayload = mapOf(
             "eventId" to UUID.randomUUID(),

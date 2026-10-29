@@ -19,6 +19,8 @@ Compose подключает внешний volume `finfast_postgres-data`; пр
 
 Vite `base` задан как `/FinFast/`; клиентская конфигурация использует build-time VITE variables. Backend production properties ожидают PORT, DB host/port/name/credentials, Kafka SASL_SSL settings, TLS CA, Auth Service URL и client URL. Сами secret values и Render service settings находятся вне репозитория.
 
+В production Auth Service запускается с `DEMO_MODE=true` по умолчанию; Render environment variable `DEMO_ALLOWED_EMAILS` должна содержать разрешённые Google email через запятую (сравнение без учёта регистра). Переменная может быть переопределена через Render, но рекомендуется оставлять demo mode включённым. GitHub Pages production workflow собирает клиент с `VITE_DEMO_MODE=true`, чтобы форма регистрации показывала предупреждение. В других окружениях Auth Service использует `DEMO_MODE=false` по умолчанию. Клиентская настройка не заменяет серверную проверку.
+
 README описывает PostgreSQL на Supabase, Kafka на Aiven, backend hosting на Render и static frontend на GitHub Pages. Backend production configs подтверждают настройки PostgreSQL и TLS/SASL_SSL Kafka; фактические адреса задаются окружением.
 
 ## PWA

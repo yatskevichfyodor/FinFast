@@ -29,6 +29,7 @@ const showRetryButton = ref(false)
 
 const isRegistration = computed(() => route.name === 'register')
 const title = computed(() => isRegistration.value ? 'Регистрация' : 'Вход')
+const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true'
 const isGoogleSignInConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
 const isOfflineMode = computed(() =>
   !isRegistration.value && !isCheckingService.value && !isServiceAvailable.value
@@ -63,6 +64,9 @@ function getErrorMessage(error: any): string {
     if (typeof responseMessage === 'string' && responseMessage.length > 0) {
       if (responseMessage === 'Passkey authentication failed' && error.response.status === 401)
       return 'Этот ключ доступа не подходит для аккаунта. Если вы отвязали его ранее, удалите его из менеджера паролей и войдите другим способом.'
+      if (error.response.status === 403) {
+        return responseMessage
+      }
     }
 
     if (error.response.status >= 500) {
@@ -71,6 +75,10 @@ function getErrorMessage(error: any): string {
 
     if (error.response.status === 401) {
       return 'Неверный логин или пароль'
+    }
+
+    if (error.response.status === 403 && isRegistration.value) {
+      return 'Приложение запущено в демонстрационном режиме. Регистрация новых аккаунтов недоступна.'
     }
 
     if (error.response.status === 409 && isRegistration.value) {
@@ -290,6 +298,15 @@ onMounted(() => {
         <v-card-title class="text-h5 text-center">{{ title }}</v-card-title>
 
         <v-alert
+          v-if="isRegistration && isDemoMode"
+          class="mt-4"
+          type="info"
+          variant="tonal"
+        >
+          Включён демонстрационный режим: регистрация новых пользователей недоступна.
+        </v-alert>
+
+        <v-alert
           v-if="route.query.registered === 'true' && !isRegistration"
           class="mt-4"
           type="success"
@@ -404,7 +421,7 @@ onMounted(() => {
         </template>
 
         <v-btn
-          v-if="!isOfflineMode"
+          v-if="!isOfflineMode && (!isRegistration || !isDemoMode)"
           class="mt-3"
           block
           variant="outlined"

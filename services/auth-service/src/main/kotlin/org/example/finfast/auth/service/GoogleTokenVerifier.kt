@@ -7,7 +7,7 @@ import jakarta.enterprise.context.ApplicationScoped
 import jakarta.ws.rs.WebApplicationException
 import org.eclipse.microprofile.config.inject.ConfigProperty
 
-data class GoogleIdentity(val subject: String, val email: String?)
+data class GoogleIdentity(val subject: String, val email: String?, val emailVerified: Boolean)
 
 @ApplicationScoped
 class GoogleTokenVerifier(
@@ -28,6 +28,6 @@ class GoogleTokenVerifier(
             ?: throw WebApplicationException("Google id token verification failed", 401)
         val subject = payload.subject?.takeIf { it.isNotBlank() }
             ?: throw WebApplicationException("Google id token is blank", 401)
-        return GoogleIdentity(subject, payload["email"] as? String)
+        return GoogleIdentity(subject, payload["email"] as? String, payload["email_verified"] == true)
     }
 }

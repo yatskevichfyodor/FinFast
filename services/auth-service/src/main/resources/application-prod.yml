@@ -48,5 +48,8 @@ logging:
     org.springframework.security: WARN
 
 finfast:
+  demo-mode:
+    enabled: ${DEMO_MODE:false}
+    allowed-emails: "${DEMO_ALLOWED_EMAILS:}"
   google:
     client-id: ${GOOGLE_CLIENT_ID}

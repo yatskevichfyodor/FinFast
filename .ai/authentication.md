@@ -17,6 +17,10 @@ Endpoints в `AuthResource` и `AccountResource` включают `/auth/registe
 - Logout сначала очищает локальные auth-поля/localStorage; затем best-effort вызывает серверный logout, если был refresh token. При ошибке сети серверный refresh token мог остаться действительным до собственного срока/отзыва, но локальная сессия уже закрыта.
 - При инициализации `authStore` начальные refs читают реальные storage keys; вспомогательная `restoreUserFromStorage()` дополнительно читает литералы `"USER_ID_KEY"`/`"USERNAME_KEY"` вместо констант и при наличии таких одноимённых записей может перезаписать `userId`. Это несогласованность текущего кода, не контракт хранения.
 
+## Демонстрационный режим
+
+Auth Service включает режим через `DEMO_MODE=true`; `DEMO_ALLOWED_EMAILS` — список разрешённых Google email через запятую. В режиме доступны регистрация паролем только под именем `demo` (без учёта регистра) и создание Google-аккаунта только для подтверждённого адреса из списка. Обычная регистрация через passkey отключена, поскольку в этом потоке нет email для проверки. Backend запрещает привязывать Google/email или passkey к аккаунту `demo`, менять его имя и удалять его. Клиентское предупреждение управляется build-time переменной `VITE_DEMO_MODE=true`; серверная проверка является обязательной.
+
 ## Offline и guest account
 
 - `continueWithoutAccount()` создаёт локальную сессию с `userId = "anonymous"`, `isAnonymous = true` и флагами offline/anonymous в localStorage. Это не регистрация и не серверный пользователь.

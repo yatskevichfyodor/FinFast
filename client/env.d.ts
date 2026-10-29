@@ -2,6 +2,7 @@
 /// <reference types="vite-plugin-pwa/client" />
 
 interface ImportMetaEnv {
+  readonly VITE_DEMO_MODE?: string
   readonly VITE_BUILD_NUMBER?: string
   readonly VITE_GIT_COMMIT?: string
 }

@@ -36,12 +36,14 @@ class PasskeyService(
     private val webAuthnSecurity: WebAuthnSecurity,
     private val authService: AuthService,
     private val challengeRepository: PasskeyChallengeRepository,
+    private val demoModePolicy: DemoModePolicy,
     @ConfigProperty(name = "quarkus.webauthn.relying-party.id")
     private val relyingPartyId: String,
 ) {
     @Transactional
     fun createLinkOptions(userId: UUID, displayName: String?, routingContext: RoutingContext): JsonObject {
         val user = getUserById(userId)
+        demoModePolicy.requireNotDemoUser(user, "passkey")
         val options = webAuthnSecurity.getRegisterChallenge(
             user.username,
             displayName?.takeIf { it.isNotBlank() } ?: user.username,
@@ -56,6 +58,7 @@ class PasskeyService(
 
     @Transactional
     fun createRegistrationOptions(username: String, displayName: String?, routingContext: RoutingContext): JsonObject {
+        demoModePolicy.requirePasskeyRegistrationAllowed()
         val normalizedUsername = username.trim()
         if (normalizedUsername.isBlank() || normalizedUsername.length > 100) {
             throw WebApplicationException("Username must contain between 1 and 100 characters", 400)
@@ -102,6 +105,7 @@ class PasskeyService(
         routingContext: RoutingContext
     ) {
         val user = getUserById(userId)
+        demoModePolicy.requireNotDemoUser(user, "passkey")
         if (!userRegisterResponse.isSet || !userRegisterResponse.isValid) {
             throw WebApplicationException("Invalid passkey registration response", 400)
         }
@@ -146,6 +150,7 @@ class PasskeyService(
         challenge: String,
         routingContext: RoutingContext
     ): TokenResponse {
+        demoModePolicy.requirePasskeyRegistrationAllowed()
         if (!userRegisterResponse.isSet || !userRegisterResponse.isValid) {
             throw WebApplicationException("Invalid passkey registration response", 400)
         }

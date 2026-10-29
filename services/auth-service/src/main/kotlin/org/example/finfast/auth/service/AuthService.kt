@@ -23,6 +23,7 @@ class AuthService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val jwtService: JwtService,
     private val googleTokenVerifier: GoogleTokenVerifier,
+    private val demoModePolicy: DemoModePolicy,
     @ConfigProperty(name = "finfast.jwt.access-token-lifetime-seconds") private val accessTokenLifetimeSeconds: Long
 ) {
     private val random = SecureRandom()
@@ -31,6 +32,7 @@ class AuthService(
     fun register(request: RegisterRequest): UserResponse {
         val username = request.username.trim()
         require(username.isNotBlank() && request.password.isNotBlank()) { "Username and password are required" }
+        demoModePolicy.requirePasswordRegistrationAllowed(username)
         if (userRepository.findByUsername(username) != null) {
             throw WebApplicationException("Username is already taken", 409)
         }
@@ -52,8 +54,12 @@ class AuthService(
     @Transactional
     fun loginWithGoogle(request: GoogleIdTokenRequest): TokenResponse {
         val identity = googleTokenVerifier.verify(request.credential)
-        val user = userRepository.findByGoogleSubject(identity.subject)
-            ?: userRepository.save(User(UUID.randomUUID(), uniqueGoogleUsername(identity.email), null, identity.subject, identity.email))
+        val existingUser = userRepository.findByGoogleSubject(identity.subject)
+        val user = existingUser ?: run {
+            demoModePolicy.requireGoogleRegistrationAllowed(identity.email, identity.emailVerified)
+            val username = uniqueGoogleUsername(identity.email)
+            userRepository.save(User(UUID.randomUUID(), username, null, identity.subject, identity.email))
+        }
         return issueTokens(user)
     }
 
@@ -102,7 +108,7 @@ class AuthService(
             .take(90)
         var candidate = base
         var suffix = 2
-        while (userRepository.findByUsername(candidate) != null) {
+        while (demoModePolicy.isDemoUsername(candidate) || userRepository.findByUsername(candidate) != null) {
             candidate = "${base.take(90 - suffix.toString().length)}-$suffix"
             suffix++
         }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { isAxiosError } from 'axios'
@@ -37,6 +37,7 @@ const passkeyError = ref('')
 const isLinkingPasskey = ref(false)
 const isUnlinkingPasskey = ref(false)
 const isGoogleSignInConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID)
+const isDemoUser = computed(() => authStore.username?.toLowerCase() === 'demo')
 
 editedUsername.value = authStore.username ?? ''
 
@@ -259,6 +260,9 @@ function getRequestErrorMessage(
 
       <v-card-text class="dialog-content">
         <div class="scrollable-content">
+          <v-alert v-if="isDemoUser" class="mb-4" type="info" variant="tonal">
+            Это демонстрационный аккаунт. К нему нельзя привязать email или passkey, а сам аккаунт нельзя удалить.
+          </v-alert>
           <div class="info-sections">
           <!-- Username Card -->
           <div class="info-card">
@@ -281,6 +285,7 @@ function getRequestErrorMessage(
                 <div class="username-actions">
                   <template v-if="!isEditingUsername">
                     <v-btn
+                      v-if="!isDemoUser"
                       size="small"
                       variant="tonal"
                       color="#1976d2"
@@ -415,7 +420,7 @@ function getRequestErrorMessage(
                   </div>
                 </div>
               </template>
-              <template v-else-if="!authStore.googleLinked && isGoogleSignInConfigured && isGoogleSignInAvailable()">
+              <template v-else-if="!isDemoUser && !authStore.googleLinked && isGoogleSignInConfigured && isGoogleSignInAvailable()">
                 <div class="google-link-container">
                   <GoogleSignInButton
                     hint="Привяжите аккаунт Google для входа без пароля"
@@ -439,11 +444,14 @@ function getRequestErrorMessage(
               </v-chip>
             </div>
             <div class="card-content">
-              <v-btn v-if="!authStore.passkeyLinked" block size="small" variant="tonal" color="#1976d2" :loading="isLinkingPasskey" @click="linkPasskey">
+              <v-btn v-if="!authStore.passkeyLinked && !isDemoUser" block size="small" variant="tonal" color="#1976d2" :loading="isLinkingPasskey" @click="linkPasskey">
                 <v-icon size="16" start>mdi-fingerprint</v-icon>
                 Привязать passkey
               </v-btn>
-              <div v-else class="passkey-linked-content">
+              <div v-if="!authStore.passkeyLinked && isDemoUser" class="google-placeholder">
+                К демонстрационному аккаунту нельзя привязать passkey.
+              </div>
+              <div v-if="authStore.passkeyLinked" class="passkey-linked-content">
                 <div class="google-placeholder">Используйте passkey для входа без пароля</div>
                 <v-btn
                   size="small"
@@ -489,6 +497,7 @@ function getRequestErrorMessage(
             <span class="danger-label">Опасная зона</span>
           </div>
           <v-btn 
+            v-if="!isDemoUser"
             variant="tonal" 
             color="#d32f2f" 
             class="delete-btn"
@@ -497,6 +506,7 @@ function getRequestErrorMessage(
             <v-icon start>mdi-delete-outline</v-icon>
             Удалить аккаунт
           </v-btn>
+          <div v-else class="google-placeholder">Демонстрационный аккаунт нельзя удалить.</div>
         </div>
         </div>
       </v-card-text>

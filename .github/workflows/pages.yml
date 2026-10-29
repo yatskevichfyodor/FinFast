@@ -47,6 +47,7 @@ jobs:
         env:
           VITE_BUILD_NUMBER: ${{ github.run_number }}
           VITE_GIT_COMMIT: ${{ github.sha }}
+          VITE_DEMO_MODE: 'true'
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
