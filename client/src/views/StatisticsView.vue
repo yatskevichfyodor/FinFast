@@ -319,10 +319,10 @@ function formatExpenseDate(expense: Expense): string {
                       <span class="category-expense-amount">
                         {{ expense.amount.toFixed(2) }} ₽
                       </span>
+                      <span v-if="expense.description" class="category-expense-description">
+                        {{ expense.description }}
+                      </span>
                     </div>
-                    <span v-if="expense.description" class="category-expense-description">
-                      {{ expense.description }}
-                    </span>
                   </div>
                 </div>
               </div>
@@ -527,19 +527,23 @@ function formatExpenseDate(expense: Expense): string {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  color: #78909c;
+  color: #3f535c;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 550;
   white-space: nowrap;
 }
 
 .category-expense-description {
-  overflow: hidden;
-  margin-top: 4px;
-  color: rgb(var(--v-theme-on-surface-variant));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #546e7a;
   font-size: 13px;
-  text-overflow: ellipsis;
+  font-weight: 550;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .category-expense-amount {
