@@ -517,7 +517,7 @@ function formatExpenseDate(expense: Expense): string {
 
 .category-expense-topline {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 60% 40%;
   align-items: center;
   gap: 8px;
 }
@@ -541,9 +541,7 @@ function formatExpenseDate(expense: Expense): string {
   color: #546e7a;
   font-size: 13px;
   font-weight: 550;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-left: 20px;
 }
 
 .category-expense-amount {
