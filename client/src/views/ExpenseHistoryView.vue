@@ -172,7 +172,7 @@ function getDayTotals(expenses: Expense[]) {
                 :key="total.currency"
                 :amount="total.amount"
                 :currency="total.currency"
-                :symbol-size="12"
+                :symbol-size="10"
               />
             </div>
           </div>

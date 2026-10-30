@@ -286,7 +286,7 @@ function handleBackdropClick(event: MouseEvent) {
                     <v-list-item v-bind="itemProps" class="currency-option">
                       <template #prepend>
                         <span class="currency-symbol-badge currency-symbol-badge-option">
-                          <CurrencySymbol :currency="item.value" :size="16" />
+                          <CurrencySymbol :currency="item.value" :size="11" />
                         </span>
                       </template>
                       <template #title>{{ item.title }}</template>

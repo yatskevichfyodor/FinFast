@@ -5,15 +5,22 @@ defineProps<{
   currency: CurrencyCode;
   size?: number;
 }>();
+
+const baseUrl = import.meta.env.BASE_URL;
 </script>
 
 <template>
-  <img
+  <span
     v-if="currency === 'BYN'"
-    src="/byn-symbol.webp"
-    alt="BYN"
     class="currency-image"
-    :style="{ height: `${size ?? 14}px` }"
+    role="img"
+    aria-label="BYN"
+    :style="{
+      width: `${size ?? 14}px`,
+      height: `${size ?? 14}px`,
+      maskImage: `url('${baseUrl}BYN_symbol.svg')`,
+      WebkitMaskImage: `url('${baseUrl}BYN_symbol.svg')`,
+    }"
   />
   <span v-else>{{ getCurrencySymbol(currency) }}</span>
 </template>
@@ -21,8 +28,13 @@ defineProps<{
 <style scoped>
 .currency-image {
   display: inline-block;
-  width: auto;
   vertical-align: middle;
-  object-fit: contain;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-size: contain;
+  -webkit-mask-size: contain;
 }
 </style>

@@ -245,7 +245,7 @@ function formatExpenseDate(expense: Expense): string {
 
           <div v-if="currentMonth?.totals.length" class="total-amount-list">
             <div v-for="total in currentMonth.totals" :key="total.currency" class="total-amount">
-              <CurrencyAmount :amount="total.amount" :currency="total.currency" :symbol-size="18" />
+              <CurrencyAmount :amount="total.amount" :currency="total.currency" :symbol-size="15" />
             </div>
           </div>
           <div v-else class="total-amount">—</div>
@@ -293,7 +293,7 @@ function formatExpenseDate(expense: Expense): string {
 
                   <div class="category-currency-amounts">
                     <span v-for="amount in category.amounts" :key="amount.currency" class="category-amount">
-                      <CurrencyAmount :amount="amount.amount" :currency="amount.currency" :symbol-size="13" />
+                      <CurrencyAmount :amount="amount.amount" :currency="amount.currency" :symbol-size="11" />
                     </span>
                   </div>
                 </div>
