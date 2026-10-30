@@ -2,12 +2,14 @@ import type { Expense } from '@/types/expense';
 import type { CustomCategory } from '@/types/category';
 import { getLocale, i18n } from '@/i18n';
 import { CURRENT_IMPORT_FORMAT_VERSION } from '@/services/expenseImport';
+import { formatCurrencyAmount, type CurrencyCode } from '@/types/currency';
 
 export type ExportFormat = 'json' | 'csv'
 
 interface ExportRow {
   expenseId: string
   amount: number
+  currency: CurrencyCode
   categoryId?: string
   customCategoryId?: string
   createdAt: string
@@ -19,9 +21,9 @@ interface ExportRow {
 
 interface JsonExport {
   format: 'finfast'
-  version: 2
+  version: 3
   categories: Array<Pick<CustomCategory, 'id' | 'name' | 'icon' | 'color'>>
-  expenses: Array<Pick<ExportRow, 'expenseId' | 'amount' | 'categoryId' | 'customCategoryId' | 'createdAt' | 'description' | 'paymentDate'>>
+  expenses: Array<Pick<ExportRow, 'expenseId' | 'amount' | 'currency' | 'categoryId' | 'customCategoryId' | 'createdAt' | 'description' | 'paymentDate'>>
 }
 
 function toExportRows(expenses: Expense[]): ExportRow[] {
@@ -30,6 +32,7 @@ function toExportRows(expenses: Expense[]): ExportRow[] {
     .map(expense => ({
       expenseId: expense.id,
       amount: expense.amount,
+      currency: expense.currency,
       categoryId: expense.categoryId,
       customCategoryId: expense.customCategoryId,
       createdAt: expense.createdAt,
@@ -63,9 +66,10 @@ export function createJsonExport(expenses: Expense[], customCategories: CustomCa
     categories: customCategories
       .filter(category => referencedCategoryIds.has(category.id))
       .map(({ id, name, icon, color }) => ({ id, name, icon, color })),
-    expenses: rows.map(({ expenseId, amount, categoryId, customCategoryId, createdAt, description, paymentDate }) => ({
+    expenses: rows.map(({ expenseId, amount, currency, categoryId, customCategoryId, createdAt, description, paymentDate }) => ({
       expenseId,
       amount,
+      currency,
       createdAt,
       ...(typeof categoryId === 'string' ? { categoryId } : {}),
       ...(typeof customCategoryId === 'string' ? { customCategoryId } : {}),
@@ -97,7 +101,7 @@ export function createCsvExport(expenses: Expense[], getCategoryName: (expense: 
     header,
     ...rows.map(row => [
       row.date,
-      row.amount.toFixed(2),
+      formatCurrencyAmount(row.amount, row.currency),
       getCategoryName(expensesById.get(row.expenseId)!),
       row.description || ''
     ])

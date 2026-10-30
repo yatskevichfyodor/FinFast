@@ -1,9 +1,11 @@
+import { DEFAULT_CURRENCY } from "@/types/currency";
 import type { ApiResponseExpenseDto, BatchUpdateExpenseDto, CreateExpenseDto, Expense, UpdateExpenseDto } from "@/types/expense";
 
 export function parseApiExpense(apiExpense: ApiResponseExpenseDto): Expense {
   return {
     id: apiExpense.id,
     amount: apiExpense.amount ?? 0,
+    currency: apiExpense.currency ?? DEFAULT_CURRENCY,
     categoryId: apiExpense.categoryId,
     customCategoryId: apiExpense.customCategoryId,
     createdAt: apiExpense.createdAt,
@@ -19,6 +21,7 @@ export function mapExpenseToCreateDto(expense: Expense): CreateExpenseDto {
   return {
     id: expense.id,
     amount: expense.amount,
+    currency: expense.currency,
     categoryId: expense.categoryId,
     customCategoryId: expense.customCategoryId,
     createdAt: expense.createdAt,
@@ -30,6 +33,7 @@ export function mapExpenseToCreateDto(expense: Expense): CreateExpenseDto {
 export function mapExpenseToUpdateDto(expense: Expense): UpdateExpenseDto {
   return {
     amount: expense.amount,
+    currency: expense.currency,
     categoryId: expense.categoryId,
     customCategoryId: expense.customCategoryId,
     clearCategory: expense.clearCategory,
@@ -42,6 +46,7 @@ export function mapExpenseToBatchUpdateDto(expense: Expense): BatchUpdateExpense
   return {
     id: expense.id,
     amount: expense.amount,
+    currency: expense.currency,
     categoryId: expense.categoryId,
     customCategoryId: expense.customCategoryId,
     clearCategory: expense.clearCategory,

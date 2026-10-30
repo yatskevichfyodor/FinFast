@@ -7,6 +7,7 @@ import java.util.*
 class BatchUpdateExpenseDto(
     val id: UUID,
     val amount: BigDecimal?,
+    val currency: String? = null,
     val categoryId: String?,
     val customCategoryId: UUID?,
     /** Explicitly removes both system and custom category assignments. */
@@ -18,6 +19,7 @@ class BatchUpdateExpenseDto(
 fun BatchUpdateExpenseDto.toUpdateDto() =
     UpdateExpenseDto(
         amount = amount,
+        currency = currency,
         categoryId = categoryId,
         customCategoryId = customCategoryId,
         clearCategory = clearCategory,

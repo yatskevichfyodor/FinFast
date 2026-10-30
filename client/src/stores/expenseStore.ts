@@ -243,6 +243,7 @@ export function createExpenseStore(userId: string) {
     const expense: Expense = {
       id: crypto.randomUUID(),
       amount: payload.amount,
+      currency: payload.currency,
       categoryId: payload.categoryId,
       customCategoryId: payload.customCategoryId,
       createdAt: new Date().toISOString(),

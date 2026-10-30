@@ -7,6 +7,7 @@ import ExpenseAmountInput from "@/components/ExpenseAmountInput.vue";
 import { format, parse } from "date-fns";
 import type { CreateExpensePayload, ExpenseUpdatePayload } from "@/types/expense";
 import { useExpenseStore } from "@/stores";
+import { useCurrencyStore } from "@/stores/currencyStore";
 import { useI18n } from "vue-i18n";
 
 const router = useRouter();
@@ -19,6 +20,7 @@ const emit = defineEmits<{
 }>();
 
 const expenseStore = useExpenseStore().value!;
+const currencyStore = useCurrencyStore();
 
 // Breakpoint for mobile/desktop mode
 const MOBILE_BREAKPOINT = 960;
@@ -73,6 +75,13 @@ const initialAmount = computed(() => {
   return value !== undefined ? Number(value) : undefined;
 });
 
+const activeCurrency = computed(() => {
+  if (isEditing.value && editingExpenseId.value) {
+    return expenseStore.getExpenseById(editingExpenseId.value)?.currency ?? currencyStore.currency;
+  }
+  return currencyStore.currency;
+});
+
 const getButtonText = computed(() => {
   if (isEditing.value) {
     return t("expense.saveChanges");
@@ -103,6 +112,7 @@ async function handleMobileStep1Submit() {
 
   const payload: CreateExpensePayload = {
     amount: amountValue,
+    currency: currencyStore.currency,
     categoryId: selectedCategoryId.value || undefined,
     customCategoryId: selectedCustomCategoryId.value || undefined,
     description: description.value || undefined,
@@ -187,6 +197,7 @@ function handleDesktopSubmit() {
   } else {
     const payload: CreateExpensePayload = {
       amount: amountValue,
+      currency: currencyStore.currency,
       categoryId: selectedCategoryId.value || undefined,
       customCategoryId: selectedCustomCategoryId.value || undefined,
       description: description.value || undefined,
@@ -260,6 +271,7 @@ watchCategoryId();
               <ExpenseAmountInput
                 :expense-id="editingExpenseId"
                 :amount="initialAmount"
+                :currency-code="activeCurrency"
                 :show-header="false"
                 :isInputMode="true"
                 @submit="handleSubmit"
@@ -334,6 +346,7 @@ watchCategoryId();
             <ExpenseAmountInput
               :expense-id="editingExpenseId"
               :amount="initialAmount"
+              :currency-code="activeCurrency"
               :show-header="true"
               :isInputMode="isMobile ? mobileStep === 1 : true"
               @submit="handleSubmit"

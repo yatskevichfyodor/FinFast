@@ -1,5 +1,6 @@
 import { toRaw } from "vue";
 import type { Expense } from "@/types/expense";
+import { DEFAULT_CURRENCY } from "@/types/currency";
 import { openDatabase } from "./indexedDB";
 import { EXPENSES_STORE_NAME } from "./indexedDB";
 
@@ -14,14 +15,21 @@ export const expenseStorage = {
     const database = await openDatabase();
 
     return new Promise((resolve, reject) => {
-      const transaction = database.transaction(EXPENSES_STORE_NAME, "readonly");
+      const transaction = database.transaction(EXPENSES_STORE_NAME, "readwrite");
       const range = IDBKeyRange.bound([userId, ""], [userId, "\uffff"]);
       const request = transaction
         .objectStore(EXPENSES_STORE_NAME)
         .getAll(range) as IDBRequest<ExpenseRecord[]>;
 
       request.onsuccess = () => {
-        resolve(request.result.map((record) => record.expense));
+        const expenses = request.result.map((record) => {
+          if (!record.expense.currency) {
+            record.expense.currency = DEFAULT_CURRENCY;
+            transaction.objectStore(EXPENSES_STORE_NAME).put(record);
+          }
+          return record.expense;
+        });
+        resolve(expenses);
       };
       request.onerror = () => {
         reject(request.error ?? new Error("Failed to load expenses"));

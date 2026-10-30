@@ -55,6 +55,7 @@ class ExpenseService(
         val expense = Expense(
             expenseId = ExpenseId(currentUserId, dto.id),
             amount = dto.amount,
+            currency = validateCurrency(dto.currency),
             categoryId = dto.categoryId?.let(SystemCategory::normalize),
             customCategoryId = dto.customCategoryId,
             createdAt = dto.createdAt,
@@ -111,6 +112,7 @@ class ExpenseService(
             Expense(
                 expenseId = ExpenseId(userId, dto.id),
                 amount = dto.amount,
+                currency = validateCurrency(dto.currency),
                 categoryId = dto.categoryId?.let(SystemCategory::normalize),
                 customCategoryId = dto.customCategoryId,
                 createdAt = dto.createdAt,
@@ -179,6 +181,10 @@ class ExpenseService(
             expense.amount = it
         }
 
+        dto.currency?.let {
+            expense.currency = validateCurrency(it)
+        }
+
         if (dto.clearCategory) {
             expense.categoryId = null
             expense.customCategoryId = null
@@ -207,6 +213,19 @@ class ExpenseService(
         ) {
             throw InvalidCategoryException("Custom category is not available")
         }
+    }
+
+    private fun validateCurrency(currency: String): String {
+        require(currency in setOf(
+            "BYN", "RUB", "GEL", "USD", "EUR", "JPY", "GBP", "CHF", "CAD", "AUD",
+            "NZD", "CNY", "INR", "KRW", "SGD", "HKD", "BRL", "MXN", "ZAR", "TRY",
+            "PLN", "CZK", "HUF", "SEK", "NOK", "DKK", "TWD", "UAH", "KZT", "AMD",
+            "AZN", "THB", "IDR", "MYR", "PHP", "VND", "ILS", "SAR", "AED", "QAR",
+            "RON", "PEN", "MAD", "EGP", "NGN", "PKR", "BDT", "CLP", "ARS", "COP"
+        )) {
+            "Unsupported currency: $currency"
+        }
+        return currency
     }
 
     private fun saveExpensesChangeTimestamp(userId: UUID) {

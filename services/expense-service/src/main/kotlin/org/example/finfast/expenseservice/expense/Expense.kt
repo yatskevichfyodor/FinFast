@@ -24,6 +24,9 @@ class Expense(
     @Column(nullable = false, precision = 19, scale = 2)
     var amount: BigDecimal,
 
+    @Column(nullable = false, length = 3)
+    var currency: String = "BYN",
+
     @Column(name = "category")
     var categoryId: String? = null,
 

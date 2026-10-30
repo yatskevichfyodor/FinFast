@@ -4,23 +4,34 @@ import { formatMonthName, parseDate } from "@/utils/dateHelpers";
 import { useCategoryStore, useExpenseStore } from "@/stores";
 import type { Expense } from "@/types/expense";
 import { useI18n } from "vue-i18n";
+import { useCurrencyStore } from "@/stores/currencyStore";
+import { CURRENCY_OPTIONS, DEFAULT_CURRENCY, formatCurrencyAmount, type CurrencyCode } from "@/types/currency";
+import CurrencyAmount from "@/components/CurrencyAmount.vue";
+import CurrencySymbol from "@/components/CurrencySymbol.vue";
+
+interface CurrencyAmount {
+  currency: CurrencyCode;
+  amount: number;
+}
 
 interface CategoryStat {
   id: string;
   name: string;
   icon: string;
   color: string;
-  amount: number;
+  amounts: CurrencyAmount[];
 }
 
 interface MonthStat {
   year: number;
   month: number;
+  totals: CurrencyAmount[];
   categories: CategoryStat[];
 }
 
 const expenseStore = useExpenseStore().value!;
 const categoryStore = useCategoryStore().value!;
+const currencyStore = useCurrencyStore();
 const { t, locale } = useI18n();
 
 onMounted(() => {
@@ -40,7 +51,7 @@ const months = computed<MonthStat[]>(() => {
     {
       year: number;
       month: number;
-      categories: Map<string, number>;
+      categories: Map<string, Map<CurrencyCode, number>>;
     }
   >();
 
@@ -57,22 +68,23 @@ const months = computed<MonthStat[]>(() => {
     const group = monthGroups.get(monthKey) ?? {
       year,
       month,
-      categories: new Map<string, number>(),
+      categories: new Map<string, Map<CurrencyCode, number>>(),
     };
-
-    group.categories.set(
-      categoryId,
-      (group.categories.get(categoryId) ?? 0) + expense.amount,
-    );
+    const currency = expense.currency ?? DEFAULT_CURRENCY;
+    const categoryTotals = group.categories.get(categoryId) ?? new Map<CurrencyCode, number>();
+    categoryTotals.set(currency, (categoryTotals.get(currency) ?? 0) + expense.amount);
+    group.categories.set(categoryId, categoryTotals);
     monthGroups.set(monthKey, group);
   });
 
   return [...monthGroups.values()]
     .sort((a, b) => b.year - a.year || b.month - a.month)
-    .map((group) => ({
-      year: group.year,
-      month: group.month,
-      categories: [...group.categories.entries()].map(([id, amount]) => {
+    .map((group) => {
+      const totals = new Map<CurrencyCode, number>();
+      const categories = [...group.categories.entries()].map(([id, currencyTotals]) => {
+        currencyTotals.forEach((amount, currency) => {
+          totals.set(currency, (totals.get(currency) ?? 0) + amount);
+        });
         const category =
           id === "__uncategorized__"
             ? categoryStore.getCategoryDisplay(undefined)
@@ -83,10 +95,22 @@ const months = computed<MonthStat[]>(() => {
           name: category.name,
           icon: category.icon,
           color: category.color,
-          amount,
+          amounts: CURRENCY_OPTIONS.flatMap(({ code }) => {
+            const amount = currencyTotals.get(code);
+            return amount === undefined ? [] : [{ currency: code, amount }];
+          }),
         };
-      }),
-    }));
+      });
+      return {
+        year: group.year,
+        month: group.month,
+        totals: CURRENCY_OPTIONS.flatMap(({ code }) => {
+          const amount = totals.get(code);
+          return amount === undefined ? [] : [{ currency: code, amount }];
+        }),
+        categories,
+      };
+    });
 });
 
 watch(months, (value) => {
@@ -96,17 +120,6 @@ watch(months, (value) => {
 });
 
 const currentMonth = computed(() => months.value[selectedMonthIndex.value]);
-
-const totalAmount = computed(() => {
-  return (currentMonth.value?.categories ?? []).reduce(
-    (total, category) => total + category.amount,
-    0,
-  );
-});
-
-const formattedTotal = computed(() => {
-  return totalAmount.value.toFixed(2);
-});
 
 const monthName = computed(() => {
   if (!currentMonth.value) {
@@ -122,7 +135,10 @@ const monthName = computed(() => {
 
 const sortedCategories = computed(() => {
   return [...(currentMonth.value?.categories ?? [])].sort(
-    (a, b) => b.amount - a.amount,
+    (a, b) =>
+      (b.amounts.find((amount) => amount.currency === currencyStore.currency)?.amount ?? 0) -
+      (a.amounts.find((amount) => amount.currency === currencyStore.currency)?.amount ?? 0) ||
+      a.name.localeCompare(b.name),
   );
 });
 
@@ -138,12 +154,13 @@ function nextMonth() {
   }
 }
 
-function getPercentage(amount: number) {
-  if (!totalAmount.value) {
+function getPercentage(amount: number, currency: CurrencyCode) {
+  const total = currentMonth.value?.totals.find((item) => item.currency === currency)?.amount ?? 0;
+  if (!total) {
     return 0;
   }
 
-  return Math.round((amount / totalAmount.value) * 100);
+  return Math.round((amount / total) * 100);
 }
 
 function getExpenseCategoryId(expense: Expense): string {
@@ -226,10 +243,12 @@ function formatExpenseDate(expense: Expense): string {
         <v-card-text class="pa-6">
           <div class="total-label">{{ t("stats.total") }}</div>
 
-          <div class="total-amount">
-            {{ formattedTotal }}
-            <span>₽</span>
+          <div v-if="currentMonth?.totals.length" class="total-amount-list">
+            <div v-for="total in currentMonth.totals" :key="total.currency" class="total-amount">
+              <CurrencyAmount :amount="total.amount" :currency="total.currency" :symbol-size="18" />
+            </div>
           </div>
+          <div v-else class="total-amount">—</div>
 
           <div class="total-caption">{{ t("stats.forMonth") }} {{ monthName }}</div>
         </v-card-text>
@@ -248,7 +267,7 @@ function formatExpenseDate(expense: Expense): string {
           role="button"
           tabindex="0"
           :aria-expanded="expandedCategoryId === category.id"
-          :aria-label="`${category.name}: ${category.amount.toFixed(2)} ₽`"
+          :aria-label="`${category.name}: ${category.amounts.map(({ amount, currency }) => formatCurrencyAmount(amount, currency)).join(' + ')}`"
           @click="toggleCategory(category.id)"
           @keydown.enter.prevent="toggleCategory(category.id)"
           @keydown.space.prevent="toggleCategory(category.id)"
@@ -272,22 +291,25 @@ function formatExpenseDate(expense: Expense): string {
                     {{ category.name }}
                   </span>
 
-                  <span class="category-amount">
-                    {{ category.amount.toFixed(2) }} ₽
-                  </span>
+                  <div class="category-currency-amounts">
+                    <span v-for="amount in category.amounts" :key="amount.currency" class="category-amount">
+                      <CurrencyAmount :amount="amount.amount" :currency="amount.currency" :symbol-size="13" />
+                    </span>
+                  </div>
                 </div>
 
                 <!-- Progress -->
-                <v-progress-linear
-                  :model-value="getPercentage(category.amount)"
-                  :color="category.color"
-                  height="7"
-                  rounded
-                  class="mt-2"
-                />
-
-                <div class="percentage">
-                  {{ getPercentage(category.amount) }}%
+                <div v-for="amount in category.amounts" :key="amount.currency" class="category-currency-progress">
+                  <v-progress-linear
+                    :model-value="getPercentage(amount.amount, amount.currency)"
+                    :color="category.color"
+                    height="7"
+                    rounded
+                    class="mt-2"
+                  />
+                  <div class="percentage">
+                    {{ getPercentage(amount.amount, amount.currency) }}%
+                  </div>
                 </div>
               </div>
 
@@ -317,7 +339,7 @@ function formatExpenseDate(expense: Expense): string {
                         {{ formatExpenseDate(expense) }}
                       </span>
                       <span class="category-expense-amount">
-                        {{ expense.amount.toFixed(2) }} ₽
+                        <CurrencyAmount :amount="expense.amount" :currency="expense.currency ?? DEFAULT_CURRENCY" :symbol-size="13" />
                       </span>
                       <span v-if="expense.description" class="category-expense-description">
                         {{ expense.description }}
@@ -392,6 +414,23 @@ function formatExpenseDate(expense: Expense): string {
   color: #263238;
 }
 
+.total-amount-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.total-amount-list .total-amount {
+  font-size: 32px;
+}
+
+.total-amount-list .total-amount:not(:first-child)::before {
+  content: "+";
+  margin-right: 12px;
+  color: #607d8b;
+  font-size: 22px;
+}
+
 .total-amount span {
   font-size: 23px;
   color: #546e7a;
@@ -462,6 +501,17 @@ function formatExpenseDate(expense: Expense): string {
 .category-amount {
   font-size: 15px;
   font-weight: 600;
+}
+
+.category-currency-amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.category-currency-progress {
+  margin-top: 6px;
 }
 
 .percentage {

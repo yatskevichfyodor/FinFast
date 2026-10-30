@@ -2,7 +2,7 @@
 
 ## Модель
 
-Frontend-модель `Expense` находится в `client/src/types/expense.ts`. Основные бизнес-поля: UUID `id`, сумма, системная `categoryId` и/или `customCategoryId`, `createdAt`, описание, `paymentDate`. Клиентские поля `isSynced`, `isCreatedLocally` и `deletedAt` описывают состояние локальной синхронизации/мягкого удаления; это не все серверные поля и их нельзя отправлять как публичный API-контракт.
+Frontend-модель `Expense` находится в `client/src/types/expense.ts`. Основные бизнес-поля: UUID `id`, сумма, валюта (`currency`, ISO 4217 code), системная `categoryId` и/или `customCategoryId`, `createdAt`, описание, `paymentDate`. UI и Expense Service принимают один согласованный список из 50 валют; список UI хранится в `client/src/types/currency.ts`. Для старых записей валюта по умолчанию — BYN; серверная migration V7 добавляет `currency` с этим default. Клиентские поля `isSynced`, `isCreatedLocally` и `deletedAt` описывают состояние локальной синхронизации/мягкого удаления; это не все серверные поля и их нельзя отправлять как публичный API-контракт.
 
 Backend entity `Expense` (`services/expense-service/.../expense/Expense.kt`) использует `@EmbeddedId ExpenseId(userId, expenseId)`. Логический серверный ключ — пара пользователя и расхода; один UUID расхода не является глобальной идентичностью. Все чтение/изменение ограничивается текущим пользователем из Spring Security через `CurrentUser`; `userId` от frontend не назначает владельца.
 

@@ -1,6 +1,9 @@
+import type { CurrencyCode } from "@/types/currency";
+
 export interface Expense {
   id: string
   amount: number
+  currency: CurrencyCode
   categoryId?: string
   customCategoryId?: string
   /** Explicitly removes both system and custom category assignments during update. */
@@ -22,6 +25,7 @@ export interface Expense {
 
 export interface CreateExpensePayload {
   amount: number
+  currency: CurrencyCode
   categoryId?: string
   customCategoryId?: string
   description?: string
@@ -31,6 +35,7 @@ export interface CreateExpensePayload {
 export interface ExpenseUpdatePayload {
   id: string
   amount?: number
+  currency?: CurrencyCode
   categoryId?: string
   customCategoryId?: string
   /** Explicitly removes both system and custom category assignments during update. */
@@ -42,6 +47,7 @@ export interface ExpenseUpdatePayload {
 export interface ApiResponseExpenseDto {
   id: string;
   amount?: number;
+  currency?: CurrencyCode;
   categoryId?: string;
   customCategoryId?: string;
   createdAt: string;
@@ -53,6 +59,7 @@ export interface ApiResponseExpenseDto {
 export interface CreateExpenseDto {
   id: string;
   amount: number;
+  currency: CurrencyCode;
   categoryId?: string;
   customCategoryId?: string;
   createdAt: string;
@@ -62,6 +69,7 @@ export interface CreateExpenseDto {
 
 export interface UpdateExpenseDto {
   amount?: number;
+  currency?: CurrencyCode;
   categoryId?: string;
   customCategoryId?: string;
   clearCategory?: boolean;

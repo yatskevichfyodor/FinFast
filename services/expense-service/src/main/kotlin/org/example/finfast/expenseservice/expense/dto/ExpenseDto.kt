@@ -9,6 +9,7 @@ import java.util.UUID
 data class ExpenseDto(
     val id: UUID,
     val amount: BigDecimal,
+    val currency: String = "BYN",
     val categoryId: String?,
     val customCategoryId: UUID?,
     val createdAt: Instant,
@@ -21,6 +22,7 @@ fun Expense.toDto() =
     ExpenseDto(
         id = id,
         amount = amount,
+        currency = currency,
         categoryId = categoryId,
         customCategoryId = customCategoryId,
         createdAt = createdAt,

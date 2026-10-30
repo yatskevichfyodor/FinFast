@@ -7,6 +7,8 @@ import { format, parse } from "date-fns";
 import type { Expense } from "@/types/expense";
 import { useCategoryStore, useExpenseStore } from "@/stores";
 import { useI18n } from "vue-i18n";
+import { CURRENCY_OPTIONS, formatCurrencyAmount, type CurrencyCode } from "@/types/currency";
+import CurrencyAmount from "@/components/CurrencyAmount.vue";
 
 const router = useRouter();
 const expenseStore = useExpenseStore().value!;
@@ -112,6 +114,17 @@ function editExpense(expense: Expense) {
     },
   });
 }
+
+function getDayTotals(expenses: Expense[]) {
+  const totals = new Map<CurrencyCode, number>();
+  expenses.forEach((expense) => {
+    totals.set(expense.currency, (totals.get(expense.currency) ?? 0) + expense.amount);
+  });
+  return CURRENCY_OPTIONS.flatMap(({ code }) => {
+    const amount = totals.get(code);
+    return amount === undefined ? [] : [{ currency: code, amount }];
+  });
+}
 </script>
 
 <template>
@@ -154,12 +167,13 @@ function editExpense(expense: Expense) {
             </div>
 
             <div class="day-total">
-              {{
-                dayExpenses
-                  .reduce((sum: number, exp: Expense) => sum + exp.amount, 0)
-                  .toFixed(2)
-              }}
-              <img src="/byn-symbol.webp" alt="BYN" class="currency-symbol" />
+              <CurrencyAmount
+                v-for="total in getDayTotals(dayExpenses)"
+                :key="total.currency"
+                :amount="total.amount"
+                :currency="total.currency"
+                :symbol-size="12"
+              />
             </div>
           </div>
 
@@ -202,13 +216,7 @@ function editExpense(expense: Expense) {
                 </div>
 
                 <div class="expense-amount">
-                  {{ expense.amount.toFixed(2) }}
-                  <span
-                    ><img
-                      src="/byn-symbol.webp"
-                      alt="BYN"
-                      class="currency-symbol"
-                  /></span>
+                  <CurrencyAmount :amount="expense.amount" :currency="expense.currency" />
                 </div>
 
                 <v-menu location="bottom end">
@@ -252,7 +260,7 @@ function editExpense(expense: Expense) {
 
           <v-card-text class="px-5">
             <template v-if="expenseToDelete">
-              {{ t("expense.deleteMessage", { amount: expenseToDelete.amount.toFixed(2) }) }}
+              {{ t("expense.deleteMessage", { amount: formatCurrencyAmount(expenseToDelete.amount, expenseToDelete.currency) }) }}
             </template>
           </v-card-text>
 
@@ -299,10 +307,14 @@ function editExpense(expense: Expense) {
   font-size: 14px;
   font-weight: 600;
   color: #263238;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
 }
 
-.day-total .currency-symbol {
-  height: 10px;
+.day-total span + span::before {
+  content: "+";
+  margin-right: 8px;
 }
 
 .expense-card {

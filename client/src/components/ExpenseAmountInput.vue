@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import CurrencySymbol from '@/components/CurrencySymbol.vue'
+import type { CurrencyCode } from '@/types/currency'
 
 const props = defineProps<{
   expenseId?: string,
   amount?: number,
+  currencyCode?: CurrencyCode,
   isInputMode?: boolean,
   showHeader?: boolean
 }>()
@@ -139,11 +142,7 @@ watch(
           </span>
 
           <span class="currency">
-            <img
-              src="/byn-symbol.webp"
-              alt="BYN"
-              class="currency-symbol"
-            />
+            <CurrencySymbol :currency="currencyCode ?? 'BYN'" :size="18" />
           </span>
         </div>
 

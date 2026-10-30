@@ -1,8 +1,9 @@
 import type { Expense } from '@/types/expense'
+import { DEFAULT_CURRENCY, isCurrencyCode, type CurrencyCode } from '@/types/currency'
 import { i18n } from '@/i18n'
 
 export const IMPORT_FORMAT_VERSION = 1
-export const CURRENT_IMPORT_FORMAT_VERSION = 2
+export const CURRENT_IMPORT_FORMAT_VERSION = 3
 
 export interface ImportedCustomCategory {
   id: string
@@ -14,6 +15,7 @@ export interface ImportedCustomCategory {
 export interface ImportedExpense {
   expenseId: string
   amount: number
+  currency?: CurrencyCode
   categoryId?: string
   customCategoryId?: string
   createdAt: string
@@ -59,12 +61,12 @@ export function validateJson(content: string): { data: ImportFileData; error: nu
       return { data: null, error: i18n.global.t('import.versionNumber') }
     }
 
-    if (obj.version !== IMPORT_FORMAT_VERSION && obj.version !== CURRENT_IMPORT_FORMAT_VERSION) {
+    if (![IMPORT_FORMAT_VERSION, 2, CURRENT_IMPORT_FORMAT_VERSION].includes(obj.version)) {
       return {
         data: null,
         error: i18n.global.t('import.unsupportedVersion', {
           version: obj.version,
-          supported: `${IMPORT_FORMAT_VERSION}, ${CURRENT_IMPORT_FORMAT_VERSION}`
+          supported: `${IMPORT_FORMAT_VERSION}, 2, ${CURRENT_IMPORT_FORMAT_VERSION}`
         })
       }
     }
@@ -79,7 +81,7 @@ export function validateJson(content: string): { data: ImportFileData; error: nu
     }
 
     let categories: ImportedCustomCategory[] = []
-    if (obj.version === CURRENT_IMPORT_FORMAT_VERSION) {
+    if (obj.version >= 2) {
       if (!Array.isArray(obj.categories)) {
         return { data: null, error: i18n.global.t('import.validationErrors', { errors: 'Custom category definitions are missing.' }) }
       }
@@ -136,7 +138,7 @@ export function validateJson(content: string): { data: ImportFileData; error: nu
       }
     }
 
-    if (obj.version === CURRENT_IMPORT_FORMAT_VERSION) {
+    if (obj.version >= 2) {
       const categoryIds = new Set(categories.map(category => category.id))
       const missingCategoryIds = [...new Set((obj.expenses as unknown as Record<string, unknown>[])
         .map(expense => expense.customCategoryId)
@@ -200,6 +202,10 @@ function validateExpense(expense: unknown, index: number): string | null {
     return i18n.global.t('import.amountPositive', { index: index + 1 })
   }
 
+  if (exp.currency !== undefined && !isCurrencyCode(exp.currency)) {
+    return `Expense #${index + 1}: "currency" must be a supported currency code`
+  }
+
   if (exp.categoryId !== undefined && exp.categoryId !== null && typeof exp.categoryId !== 'string') {
     return i18n.global.t('import.categoryType', { index: index + 1 })
   }
@@ -247,6 +253,7 @@ export function convertImportedExpenseToExpense(
   return {
     id: imported.expenseId,
     amount: imported.amount,
+    currency: imported.currency ?? DEFAULT_CURRENCY,
     categoryId: imported.categoryId,
     customCategoryId: imported.customCategoryId,
     createdAt: imported.createdAt,
@@ -279,6 +286,7 @@ export function mergeExpenses(
       const updated_expense: Expense = {
         ...existing_expense,
         amount: imported_expense.amount,
+        currency: imported_expense.currency ?? DEFAULT_CURRENCY,
         categoryId: imported_expense.categoryId,
         customCategoryId: imported_expense.customCategoryId,
         createdAt: imported_expense.createdAt,

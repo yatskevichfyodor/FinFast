@@ -11,6 +11,9 @@ import { format } from "date-fns/format";
 import { useExpenseStore } from "@/stores";
 import { useI18n } from "vue-i18n";
 import { setLocale, type AppLocale } from "@/i18n";
+import { useCurrencyStore } from "@/stores/currencyStore";
+import { CURRENCY_OPTIONS, isCurrencyCode } from "@/types/currency";
+import CurrencySymbol from "@/components/CurrencySymbol.vue";
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{
@@ -20,7 +23,17 @@ const emit = defineEmits<{
 const router = useRouter();
 const { t, locale } = useI18n();
 const authStore = useAuthStore();
+const currencyStore = useCurrencyStore();
 const expenseStore = useExpenseStore().value!;
+const currencyNames = computed(
+  () => new Intl.DisplayNames([locale.value], { type: "currency" }),
+);
+const currencyItems = computed(() =>
+  CURRENCY_OPTIONS.map(({ code }) => ({
+    value: code,
+    title: currencyNames.value.of(code) ?? code,
+  })),
+);
 
 const localOpen = ref(props.modelValue);
 const showExportDialog = ref(false);
@@ -63,6 +76,10 @@ function closeMenu() {
 
 function changeLocale(value: string) {
   if (value === "ru" || value === "en") setLocale(value as AppLocale);
+}
+
+function changeCurrency(value: unknown) {
+  if (isCurrencyCode(value)) currencyStore.setCurrency(value);
 }
 
 function openExport() {
@@ -241,6 +258,54 @@ function handleBackdropClick(event: MouseEvent) {
 
               <v-divider class="my-2" />
 
+              <div class="currency-picker">
+                <div class="locale-picker-label">
+                  <v-icon class="menu-icon">mdi-currency-usd</v-icon>
+                  <span>{{ locale === "ru" ? "Валюта расходов" : "Expense currency" }}</span>
+                </div>
+                <v-select
+                  :model-value="currencyStore.currency"
+                  :items="currencyItems"
+                  item-title="title"
+                  item-value="value"
+                  :menu-props="{ zIndex: 3000, width: 268, maxWidth: 'calc(85vw - 32px)' }"
+                  density="compact"
+                  variant="outlined"
+                  hide-details
+                  @update:model-value="changeCurrency"
+                >
+                  <template #selection="{ item }">
+                    <span class="currency-selection">
+                      <span class="currency-symbol-badge">
+                        <CurrencySymbol :currency="item.value" :size="16" />
+                      </span>
+                      <span class="currency-selection-name">{{ item.title }}</span>
+                    </span>
+                  </template>
+                  <template #item="{ props: itemProps, item }">
+                    <v-list-item v-bind="itemProps" class="currency-option">
+                      <template #prepend>
+                        <span class="currency-symbol-badge currency-symbol-badge-option">
+                          <CurrencySymbol :currency="item.value" :size="16" />
+                        </span>
+                      </template>
+                      <template #title>{{ item.title }}</template>
+                      <template #subtitle>{{ item.value }}</template>
+                      <template #append>
+                        <v-icon
+                          v-if="item.value === currencyStore.currency"
+                          icon="mdi-check"
+                          color="primary"
+                          size="18"
+                        />
+                      </template>
+                    </v-list-item>
+                  </template>
+                </v-select>
+              </div>
+
+              <v-divider class="my-2" />
+
               <v-btn variant="text" class="menu-button" @click="openImport">
                 <template #prepend>
                   <v-icon class="menu-icon menu-icon-import"
@@ -392,6 +457,66 @@ function handleBackdropClick(event: MouseEvent) {
   flex-direction: column;
   gap: 8px;
   padding: 8px 0;
+}
+
+.currency-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.currency-selection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.currency-symbol-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 28px;
+  border-radius: 8px;
+  background: #eef4fb;
+  color: #35566f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.currency-symbol-badge-option {
+  flex-basis: 38px;
+  width: 38px;
+  height: 30px;
+}
+
+.currency-selection-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.currency-option :deep(.v-list-item__prepend) {
+  margin-inline-end: 12px;
+}
+
+.currency-option :deep(.v-list-item-title) {
+  font-weight: 600;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.currency-option :deep(.v-list-item__content) {
+  min-width: 0;
+}
+
+.currency-option :deep(.v-list-item-subtitle) {
+  font-size: 11px;
+  letter-spacing: 0.08em;
 }
 
 .locale-picker-label {
